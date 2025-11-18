@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* AnythingForYou Design System - Dark theme inspired by Zedge */
-
 @layer base {
   :root {
     /* Dark theme base colors */
