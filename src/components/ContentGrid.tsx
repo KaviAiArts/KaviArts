@@ -3,9 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Download, Heart, Eye, Play, Music } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Each file from Supabase looks like:
-// { id, file_name, file_url, file_type, downloads, likes, views }
-
+// Supabase item structure
 const ContentItem = ({ item }) => {
   const navigate = useNavigate();
 
@@ -30,6 +28,8 @@ const ContentItem = ({ item }) => {
       onClick={handleItemClick}
     >
       <div className="relative aspect-[9/16] overflow-hidden">
+
+        {/* Wallpaper / Ringtone / Video Preview */}
         {item.file_type === "ringtone" ? (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-6xl">
             🎵
@@ -42,6 +42,7 @@ const ContentItem = ({ item }) => {
           />
         )}
 
+        {/* Play icon overlay for videos */}
         {item.file_type === "video" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-black/50 rounded-full p-3">
@@ -50,6 +51,7 @@ const ContentItem = ({ item }) => {
           </div>
         )}
 
+        {/* Hover overlay for Download/Watch/Listen */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <Button size="sm" className="bg-gradient-primary text-primary-foreground shadow-glow">
             {getIcon()}
@@ -61,6 +63,7 @@ const ContentItem = ({ item }) => {
           </Button>
         </div>
 
+        {/* File type badge */}
         <div className="absolute top-2 left-2">
           <span className="bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-full">
             {item.file_type}
@@ -68,8 +71,10 @@ const ContentItem = ({ item }) => {
         </div>
       </div>
 
+      {/* Card Content */}
       <div className="p-4">
         <h3 className="font-semibold text-sm mb-3 truncate">{item.file_name}</h3>
+
         <div className="flex justify-between items-center text-xs text-muted-foreground">
           <div className="flex items-center space-x-1">
             <Download className="w-3 h-3" />
@@ -101,16 +106,25 @@ const ContentGrid = ({ items = [] }) => {
   return (
     <section className="py-6 md:py-10 px-3">
       <div className="container mx-auto">
-        <h2 className="text-2xl font-bold mb-8 text-center">
+
+        {/* Heading */}
+        <h2 className="text-2xl font-bold mb-6 md:mb-8 text-center">
           Latest Uploads
         </h2>
 
-        <div className="flex gap-3 overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-6 scrollbar-hide px-2 md:px-0">
+        {/* MOBILE → horizontal scroll (2.5 cards visible)
+            DESKTOP → normal responsive grid */}
+        <div className="
+          flex gap-3 overflow-x-auto scrollbar-hide px-1 
+          md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 md:gap-6 md:px-0
+        ">
           {items.map((item) => (
-            <div className="min-w-[48%] sm:min-w-[45%] md:min-w-0 md:w-full">
-  <ContentItem key={item.id} item={item} />
-</div>
-
+            <div
+              key={item.id}
+              className="min-w-[48%] sm:min-w-[45%] md:min-w-0 md:w-full"
+            >
+              <ContentItem item={item} />
+            </div>
           ))}
         </div>
       </div>
