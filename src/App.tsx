@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ItemDetails from "./pages/ItemDetails";
 import CategoryView from "./pages/CategoryView";
+import Admin from "./pages/Admin";   // ⭐ ADDED
 
 const queryClient = new QueryClient();
 
@@ -20,7 +21,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/item/:id" element={<ItemDetails />} />
           <Route path="/category/:category" element={<CategoryView />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+          {/* ⭐ ADMIN ROUTE ADDED */}
+          <Route path="/admin" element={<Admin />} />
+
+          {/* Must be last */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
