@@ -1,0 +1,5 @@
+{
+  "functions": {
+    "cloudinary-hook": "functions/cloudinary-hook"
+  }
+}

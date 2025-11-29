@@ -1,71 +1,69 @@
-// supabase/functions/cloudinary-hook/index.ts
-
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { serve } from "https://deno.land/std@0.195.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ENV VARIABLES FROM SUPABASE 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
-
-Deno.serve(async (req) => {
+serve(async (req) => {
   try {
-    const payload = await req.json();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    // VALIDATION
-    if (!payload || !payload.secure_url) {
-      return new Response("Invalid Cloudinary payload", { status: 400 });
+    if (!supabaseUrl || !serviceKey) {
+      return new Response("Missing Supabase env vars", { status: 500 });
     }
 
-    // Detect file_type automatically
-    let file_type = "wallpaper";
-    if (payload.resource_type === "video") file_type = "video";
-    if (payload.resource_type === "raw") file_type = "ringtone";
+    const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Detect category from folder
-    const folder = payload.folder || "general";
+    const contentType = req.headers.get("content-type") || "";
 
-    // Extract metadata
-    const width = payload.width || null;
-    const height = payload.height || null;
-    const format = payload.format || null;
-    const duration = payload.duration || null;
+    let body: any = {};
 
-    const colors = payload.colors
-      ? payload.colors.map((c: any) => c[0])
-      : null;
+    // Cloudinary sends x-www-form-urlencoded
+    if (contentType.includes("application/json")) {
+      body = await req.json();
+    } else if (contentType.includes("application/x-www-form-urlencoded")) {
+      const form = await req.formData();
+      body = Object.fromEntries(form);
+      // Cloudinary nests JSON inside string → parse it
+      if (typeof body.data === "string") {
+        body = JSON.parse(body.data);
+      }
+    } else {
+      return new Response("Unsupported content type", { status: 400 });
+    }
 
-    // Tags from Cloudinary AI or user upload
-    const tags = payload.tags || [];
+    // Event type
+    if (body?.notification_type !== "upload") {
+      return new Response("ignored", { status: 200 });
+    }
 
-    // Prepare row for DB
-    const row = {
-      file_name: payload.original_filename,
-      file_type,
-      file_url: payload.secure_url,
-      public_id: payload.public_id,
-      width,
-      height,
-      format,
-      duration,
-      colors,
-      tags,
-      category: folder,
+    const type =
+      body.resource_type === "image"
+        ? "wallpaper"
+        : body.resource_type === "video"
+        ? "video"
+        : "ringtone";
+
+    const record = {
+      file_name: body.original_filename ?? "Untitled",
+      file_type: type,
+      file_url: body.secure_url,
+      public_id: body.public_id,
+      width: Number(body.width) || null,
+      height: Number(body.height) || null,
+      format: body.format ?? null,
+      duration: body.duration ?? null,
+      tags: body.tags ?? []
     };
 
-    // Insert into Supabase
-    const { error } = await supabase.from("files").insert([row]);
+    const { error } = await supabase.from("files").insert(record);
 
     if (error) {
-      console.error("DB Insert Error:", error);
-      return new Response("Database insert failed", { status: 500 });
+      console.error(error);
+      return new Response("DB error", { status: 500 });
     }
 
-    return new Response("OK", { status: 200 });
+    return new Response("ok", { status: 200 });
   } catch (err) {
-    console.error("Webhook Error:", err);
-    return new Response("Internal Error", { status: 500 });
+    console.error(err);
+    return new Response("fail", { status: 500 });
   }
 });

@@ -12,9 +12,8 @@ export default function Gallery() {
     const fetchFiles = async () => {
       try {
         const { data, error } = await supabase
-          .from('user_files')
+          .from('files')
           .select('*')
-          .eq('is_public', true)
           .order('created_at', { ascending: false });
 
         if (error) setError(error.message);
@@ -39,7 +38,7 @@ export default function Gallery() {
       {files.map(file => (
         <div key={file.id} className="text-center border rounded-lg p-2 shadow-sm">
           <img
-            src={`${file.file_url}?t=${file.created_at}`}
+            src={file.file_url}
             alt={file.file_name}
             className="rounded-lg shadow-md w-full h-48 object-cover"
           />
