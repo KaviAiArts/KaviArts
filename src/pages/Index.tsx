@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-// Import your components
+// Components
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
-import ContentItem from "@/components/ContentGrid"; // This provides the card UI
+import ContentItem from "@/components/ContentGrid";
 import { Button } from "@/components/ui/button";
 
 // ------------------------------
@@ -28,27 +28,31 @@ const ContentSection = ({ title, items, category }) => {
           </Button>
         </div>
 
-        {/* Desktop Grid (6 items per row) */}
+        {/* Desktop Grid */}
         <div className="hidden lg:grid lg:grid-cols-6 gap-6">
-          {items.map((item) => (
-            <ContentItem key={item.id} item={item} />
-          ))}
+          {items.length > 0
+            ? items.map((item) => <ContentItem key={item.id} item={item} />)
+            : <p className="text-muted-foreground col-span-6">No content available yet.</p>}
         </div>
 
-        {/* Mobile → 2.5 cards scroll */}
+        {/* Mobile Horizontal Scroll */}
         <div className="lg:hidden overflow-x-auto scrollbar-hide">
           <div className="flex gap-4 pb-4" style={{ width: "max-content" }}>
-            {items.map((item, index) => (
-              <div
-                key={item.id}
-                className={`flex-shrink-0 ${
-                  index === 0 ? "ml-2" : ""
-                } ${index === items.length - 1 ? "mr-4" : ""}`}
-                style={{ width: "calc((100vw - 2rem) / 2.5)" }}
-              >
-                <ContentItem item={item} />
-              </div>
-            ))}
+            {items.length > 0 ? (
+              items.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`flex-shrink-0 ${index === 0 ? "ml-2" : ""} ${
+                    index === items.length - 1 ? "mr-4" : ""
+                  }`}
+                  style={{ width: "calc((100vw - 2rem) / 2.5)" }}
+                >
+                  <ContentItem item={item} />
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground ml-2">No content available yet.</p>
+            )}
           </div>
         </div>
       </div>
@@ -71,7 +75,7 @@ const Index = () => {
   }, []);
 
   const loadAllData = async () => {
-    // 1. Newest Wallpapers
+    // 1. NEWEST WALLPAPERS (OK)
     const { data: newestData } = await supabase
       .from("files")
       .select("*")
@@ -79,28 +83,28 @@ const Index = () => {
       .order("created_at", { ascending: false })
       .limit(12);
 
-    // 2. Popular Wallpapers
+    // 2. POPULAR WALLPAPERS (FIXED: removed .order("likes"))
     const { data: popularData } = await supabase
       .from("files")
       .select("*")
       .eq("file_type", "wallpaper")
-      .order("likes", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(12);
 
-    // 3. Popular Ringtones
+    // 3. POPULAR RINGTONES (FIXED)
     const { data: ringtoneData } = await supabase
       .from("files")
       .select("*")
       .eq("file_type", "ringtone")
-      .order("likes", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(12);
 
-    // 4. Popular Videos
+    // 4. POPULAR VIDEOS (FIXED)
     const { data: videoData } = await supabase
       .from("files")
       .select("*")
       .eq("file_type", "video")
-      .order("likes", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(12);
 
     setNewest(newestData || []);
@@ -111,40 +115,35 @@ const Index = () => {
 
   return (
     <div>
-
-      {/* Your original layout restored */}
       <Header />
-
       <Hero />
-
       <CategoryNav />
 
-      <ContentSection
-        title="Newest Wallpapers"
-        items={newest}
-        category="wallpapers"
+      <ContentSection 
+        title="Newest Wallpapers" 
+        items={newest} 
+        category="wallpaper" 
       />
 
-      <ContentSection
-        title="Popular Wallpapers"
-        items={popularWallpapers}
-        category="wallpapers"
+      <ContentSection 
+        title="Popular Wallpapers" 
+        items={popularWallpapers} 
+        category="wallpaper" 
       />
 
-      <ContentSection
-        title="Popular Ringtones"
-        items={ringtones}
-        category="ringtones"
+      <ContentSection 
+        title="Popular Ringtones" 
+        items={ringtones} 
+        category="ringtone" 
       />
 
-      <ContentSection
-        title="Popular Videos"
-        items={videos}
-        category="videos"
+      <ContentSection 
+        title="Popular Videos" 
+        items={videos} 
+        category="video" 
       />
 
       <Footer />
-
     </div>
   );
 };
