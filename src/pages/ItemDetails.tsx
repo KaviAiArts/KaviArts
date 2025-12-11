@@ -37,7 +37,7 @@ const ItemDetails = () => {
     setItem(itemData);
 
     if (itemData) {
-      document.title = `${itemData.title} - AnythingForYou`;
+      document.title = `${itemData.title} - KaviArts`;
     }
   }, [id]);
 

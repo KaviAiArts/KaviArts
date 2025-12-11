@@ -85,7 +85,7 @@ const CategoryView = () => {
     setData(categoryInfo);
 
     if (categoryInfo) {
-      document.title = `${categoryInfo.title} - AnythingForYou`;
+      document.title = `${categoryInfo.title} - KaviArts`;
     }
   }, [category]);
 

@@ -12,7 +12,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
                 <Download className="w-5 h-5 text-primary-foreground" />
               </div>
-              <h3 className="text-xl font-bold gradient-text">AnythingForYou</h3>
+              <h3 className="text-xl font-bold gradient-text">KaviArts</h3>
             </div>
             <p className="text-muted-foreground mb-6 max-w-md">
               Your ultimate destination for wallpapers, ringtones, and digital customization content. 
@@ -61,7 +61,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 AnythingForYou. All rights reserved.</p>
+          <p>&copy; 2025 KaviArts. All rights reserved.</p>
         </div>
       </div>
     </footer>
