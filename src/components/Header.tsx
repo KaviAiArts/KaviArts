@@ -144,11 +144,13 @@ const Header = () => {
 
             {/* Autocomplete */}
             <Autocomplete
-              suggestions={suggestions}
-              visible={showDropdown}
-              activeIndex={activeIndex}
-              onSelect={(item) => performFullSearch(item.file_name)}
-            />
+  suggestions={suggestions}
+  visible={showDropdown}
+  activeIndex={activeIndex}
+  // When user clicks a suggestion, search by what the user typed (query),
+  // not by the long internal filename — this returns all matches for that keyword
+  onSelect={() => performFullSearch()}
+/>
           </div>
 
           {/* Navigation */}
@@ -185,11 +187,13 @@ const Header = () => {
           />
 
           <Autocomplete
-            suggestions={suggestions}
-            visible={showDropdown}
-            activeIndex={activeIndex}
-            onSelect={(item) => performFullSearch(item.file_name)}
-          />
+  suggestions={suggestions}
+  visible={showDropdown}
+  activeIndex={activeIndex}
+  // When user clicks a suggestion, search by what the user typed (query),
+  // not by the long internal filename — this returns all matches for that keyword
+  onSelect={() => performFullSearch()}
+/>
         </div>
       </div>
     </header>
