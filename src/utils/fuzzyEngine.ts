@@ -1,4 +1,4 @@
-import Fuse from "fuse.js";
+import Fuse from "fuse.js/dist/fuse";
 import { supabase } from "@/lib/supabaseClient";
 
 // Cache results to avoid refetching entire table repeatedly
