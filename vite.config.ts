@@ -8,10 +8,24 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+
   plugins: [react()],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+
+  // ⭐ REQUIRED FIX FOR FUSE.JS v7 (Vercel + Rollup compatible)
+  optimizeDeps: {
+    include: ["fuse.js"],
+  },
+
+  build: {
+    rollupOptions: {
+      // ensure fuse.js is bundled and not treated as external
+      external: [],
     },
   },
 }));

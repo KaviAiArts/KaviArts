@@ -1,4 +1,4 @@
-import Fuse from "fuse.js/dist/fuse.mjs";
+import Fuse from "fuse.js";
 import { supabase } from "@/lib/supabaseClient";
 
 let cachedFiles: any[] | null = null;
