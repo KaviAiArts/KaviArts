@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
-import ContentItem from "@/components/ContentGrid";
+import ContentItem from "@/components/ContentItem";  // ✅ correct
 import { Button } from "@/components/ui/button";
 
 // ------------------------------
