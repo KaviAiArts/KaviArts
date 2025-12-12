@@ -13,7 +13,7 @@ import highlight from "@/utils/highlight";
 import { Button } from "@/components/ui/button";
 
 // ---------------------------------------------------------
-// Read query string (?query=xxxx)
+// Extract ?query= from URL
 // ---------------------------------------------------------
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -31,126 +31,125 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(false);
 
   // ---------------------------------------------------------
-  // Perform multi-source search
+  // PERFORM SEARCH
   // ---------------------------------------------------------
   const performSearch = async () => {
     if (!searchText.trim()) return;
 
     setLoading(true);
 
-    let finalResults: any[] = [];
+    let combined: any[] = [];
 
-    // -- 1) Exact / partial Supabase title match --
+    // 1️⃣ Title match
     const { data: titleMatches } = await supabase
       .from("files")
       .select("*")
       .ilike("file_name", `%${searchText}%`)
       .limit(200);
 
-    // -- 2) Tag match --
+    // 2️⃣ Tag match
     const { data: tagMatches } = await supabase
       .from("files")
       .select("*")
       .contains("tags", [searchText.toLowerCase()])
       .limit(200);
 
-    // -- 3) Category match --
-    const { data: catMatches } = await supabase
+    // 3️⃣ Category match
+    const { data: categoryMatches } = await supabase
       .from("files")
       .select("*")
       .ilike("category", `%${searchText}%`)
       .limit(100);
 
-    // Combine
-    finalResults = [
+    combined = [
       ...(titleMatches || []),
       ...(tagMatches || []),
-      ...(catMatches || []),
+      ...(categoryMatches || []),
     ];
 
-    // Remove duplicates
+    // Deduplicate
     const map = new Map();
-    finalResults.forEach((item) => map.set(item.id, item));
-    finalResults = Array.from(map.values());
+    combined.forEach((item) => map.set(item.id, item));
+    combined = Array.from(map.values());
 
-    // -- 4) Fuzzy fallback if needed --
-    if (finalResults.length < 12) {
+    // 4️⃣ Fuzzy fallback
+    if (combined.length < 12) {
       const fuzzy = await fuzzySearch(searchText);
       fuzzy.forEach((item) => map.set(item.id, item));
-      finalResults = Array.from(map.values());
+      combined = Array.from(map.values());
     }
 
-    // finalResults contains ALL matches now
-    setResults(finalResults);
-    setVisibleResults(finalResults.slice(0, ITEMS_PER_PAGE));
-
+    setResults(combined);
+    setVisibleResults(combined.slice(0, ITEMS_PER_PAGE));
     setPage(1);
     setLoading(false);
   };
 
-  // ---------------------------------------------------------
-  // Run search on mount & when query changes
-  // ---------------------------------------------------------
+  // Run search
   useEffect(() => {
     performSearch();
   }, [searchText]);
 
   // ---------------------------------------------------------
-  // Pagination: Load More button
+  // Pagination: Load More
   // ---------------------------------------------------------
   const loadMore = () => {
     const nextPage = page + 1;
-    const start = 0;
     const end = nextPage * ITEMS_PER_PAGE;
-
-    setVisibleResults(results.slice(start, end));
+    setVisibleResults(results.slice(0, end));
     setPage(nextPage);
   };
 
   // ---------------------------------------------------------
-  // Highlight matches
+  // Highlighting — only used in the header text display
   // ---------------------------------------------------------
-  const prepareHighlighted = (items: any[]) => {
-    return items.map((item) => ({
-      ...item,
-      file_name_highlight: highlight(item.file_name, searchText),
-    }));
-  };
-
-  const finalVisible = prepareHighlighted(visibleResults);
+  const highlightTrimmed = highlight(searchText, searchText);
 
   // ---------------------------------------------------------
-  // UI output
+  // UI
   // ---------------------------------------------------------
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-3">
-          Search results for:{" "}
-          <span className="text-primary">{searchText}</span>
-        </h1>
 
+        {/* Page Title */}
+        <h1 className="text-3xl font-bold">Search results for:</h1>
+
+        {/* Query text — truncated (clean UI) */}
+        <p className="text-xl text-primary font-semibold truncate max-w-[80%] mt-1">
+          {searchText}
+        </p>
+
+        {/* Back Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          onClick={() => window.history.back()}
+        >
+          ← Back
+        </Button>
+
+        {/* RESULTS */}
         {loading ? (
-          <p className="text-center mt-10">Searching...</p>
-        ) : finalVisible.length === 0 ? (
+          <p className="text-center py-16">Searching...</p>
+        ) : visibleResults.length === 0 ? (
           <div className="text-center py-20">
             <h2 className="text-xl mb-2">No results found</h2>
             <p className="text-muted-foreground">
-              Try a different keyword or check spelling
+              Try another keyword or refine your search.
             </p>
           </div>
         ) : (
           <>
+            {/* Render results using your existing grid */}
             <ContentGrid
-              items={finalVisible.map((item) => ({
-                ...item,
-                // The grid still shows the real name,
-                // highlight only on autocomplete and results header
-              }))}
+              items={visibleResults}
             />
 
+            {/* Load More */}
             {visibleResults.length < results.length && (
               <div className="text-center mt-10">
                 <Button variant="outline" onClick={loadMore}>
