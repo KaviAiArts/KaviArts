@@ -22,11 +22,12 @@ const Header = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // ---------------------------------------------
-  // Navigate to search page ALWAYS using typed query
+  // Navigate to search page (keyword or suggestion)
   // ---------------------------------------------
-  const performFullSearch = () => {
-    const q = query.trim();
+  const performFullSearch = (value?: string) => {
+    const q = (value ?? query).trim();
     if (!q) return;
+
     navigate(`/search?query=${encodeURIComponent(q)}`);
     setShowDropdown(false);
   };
@@ -40,10 +41,9 @@ const Header = () => {
       return;
     }
 
-    // Get FULL file data so images never break
     const { data } = await supabase
       .from("files")
-      .select("*") // ⭐ MUST select full row
+      .select("*")
       .ilike("file_name", `%${text}%`)
       .limit(20);
 
@@ -76,7 +76,7 @@ const Header = () => {
   const debouncedFetch = debounce(fetchSuggestions, 250);
 
   // ---------------------------------------------
-  // Keyboard Navigation — ALWAYS search by query
+  // Keyboard Navigation — Enter searches typed text
   // ---------------------------------------------
   const handleKeyDown = (e: any) => {
     if (e.key === "ArrowDown") {
@@ -86,14 +86,14 @@ const Header = () => {
     } else if (e.key === "ArrowUp") {
       setActiveIndex((prev) => (prev - 1 >= 0 ? prev - 1 : prev));
     } else if (e.key === "Enter") {
-      performFullSearch(); // ⭐ FIXED — search keyword typed, not suggestion
+      performFullSearch(); // typed query, not suggestion
     } else if (e.key === "Escape") {
       setShowDropdown(false);
     }
   };
 
   // ---------------------------------------------
-  // Close dropdown on outside click
+  // Close dropdown on click outside
   // ---------------------------------------------
   useEffect(() => {
     function handleClickOutside(e: any) {
@@ -102,6 +102,7 @@ const Header = () => {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
@@ -120,9 +121,11 @@ const Header = () => {
 
           {/* Desktop Search */}
           <div className="hidden md:flex items-center space-x-4 flex-1 max-w-md mx-8 relative h-[48px]">
+            
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 cursor-pointer"
-              onClick={performFullSearch}
+              className="absolute left-3 top-1/2 -translate-y-1/2 
+              text-muted-foreground w-4 h-4 cursor-pointer"
+              onClick={() => performFullSearch()}
             />
 
             <Input
@@ -142,8 +145,10 @@ const Header = () => {
               suggestions={suggestions}
               visible={showDropdown}
               activeIndex={activeIndex}
-              // ⭐ ALWAYS search keyword typed
-              onSelect={() => performFullSearch()}
+              onSelect={(item) => {
+                setQuery(item.file_name);              // Show suggestion in input
+                performFullSearch(item.file_name);     // Search suggestion text
+              }}
             />
           </div>
 
@@ -154,18 +159,19 @@ const Header = () => {
             <Button variant="ghost">Videos</Button>
           </nav>
 
-          {/* Mobile menu */}
+          {/* Mobile */}
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Mobile search */}
+        {/* Mobile Search */}
         <div className="md:hidden mt-4 relative h-[48px]">
 
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 cursor-pointer"
-            onClick={performFullSearch}
+            className="absolute left-3 top-1/2 -translate-y-1/2 
+            text-muted-foreground w-4 h-4 cursor-pointer"
+            onClick={() => performFullSearch()}
           />
 
           <Input
@@ -185,7 +191,10 @@ const Header = () => {
             suggestions={suggestions}
             visible={showDropdown}
             activeIndex={activeIndex}
-            onSelect={() => performFullSearch()}
+            onSelect={(item) => {
+              setQuery(item.file_name);
+              performFullSearch(item.file_name);
+            }}
           />
         </div>
       </div>
