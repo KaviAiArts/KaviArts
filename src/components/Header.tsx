@@ -123,7 +123,7 @@ const Header = () => {
           </div>
 
           {/* Desktop Search */}
-          <div className="hidden md:flex items-center space-x-4 flex-1 max-w-md mx-8 relative">
+          <div className="hidden md:flex items-center space-x-4 flex-1 max-w-md mx-8 relative h-[48px]">
 
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 cursor-pointer"
@@ -139,7 +139,7 @@ const Header = () => {
               onKeyDown={handleKeyDown}
               onFocus={() => query.trim() && setShowDropdown(true)}
               placeholder="Search wallpapers, ringtones..."
-              className="pl-10 bg-secondary border-border focus:ring-primary"
+              className="pl-10 bg-secondary border-border focus:ring-primary truncate"
             />
 
             {/* Autocomplete */}
