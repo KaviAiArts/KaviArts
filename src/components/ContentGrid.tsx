@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, Heart, Eye, Play, Music } from "lucide-react";
+import { Download, Play, Music } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Supabase item structure
 const ContentItem = ({ item }) => {
   const navigate = useNavigate();
 
@@ -29,20 +28,20 @@ const ContentItem = ({ item }) => {
     >
       <div className="relative aspect-[9/16] overflow-hidden">
 
-        {/* Wallpaper / Ringtone / Video Preview */}
-        {item.file_type === "ringtone" ? (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-6xl">
-            🎵
-          </div>
-        ) : (
+        {/* Wallpaper thumbnail */}
+        {item.file_type !== "ringtone" ? (
           <img
             src={item.file_url}
             alt={item.file_name}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-6xl">
+            🎵
+          </div>
         )}
 
-        {/* Play icon overlay for videos */}
+        {/* Video overlay */}
         {item.file_type === "video" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-black/50 rounded-full p-3">
@@ -51,7 +50,7 @@ const ContentItem = ({ item }) => {
           </div>
         )}
 
-        {/* Hover overlay for Download/Watch/Listen */}
+        {/* Hover button */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <Button size="sm" className="bg-gradient-primary text-primary-foreground shadow-glow">
             {getIcon()}
@@ -63,7 +62,7 @@ const ContentItem = ({ item }) => {
           </Button>
         </div>
 
-        {/* File type badge */}
+        {/* Badge */}
         <div className="absolute top-2 left-2">
           <span className="bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-full">
             {item.file_type}
@@ -71,24 +70,9 @@ const ContentItem = ({ item }) => {
         </div>
       </div>
 
-      {/* Card Content */}
+      {/* Title */}
       <div className="p-4">
         <h3 className="font-semibold text-sm mb-3 truncate">{item.file_name}</h3>
-
-        <div className="flex justify-between items-center text-xs text-muted-foreground">
-          <div className="flex items-center space-x-1">
-            <Download className="w-3 h-3" />
-            <span>{item.downloads || 0}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Heart className="w-3 h-3" />
-            <span>{item.likes || 0}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Eye className="w-3 h-3" />
-            <span>{item.views || 0}</span>
-          </div>
-        </div>
       </div>
     </Card>
   );
@@ -106,14 +90,6 @@ const ContentGrid = ({ items = [] }) => {
   return (
     <section className="py-6 md:py-10 px-3">
       <div className="container mx-auto">
-
-        {/* Heading */}
-        <h2 className="text-2xl font-bold mb-6 md:mb-8 text-center">
-          Latest Uploads
-        </h2>
-
-        {/* MOBILE → horizontal scroll (2.5 cards visible)
-            DESKTOP → normal responsive grid */}
         <div className="
           flex gap-3 overflow-x-auto scrollbar-hide px-1 
           md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 md:gap-6 md:px-0
