@@ -9,7 +9,9 @@ import NotFound from "./pages/NotFound";
 import ItemDetails from "./pages/ItemDetails";
 import CategoryView from "./pages/CategoryView";
 import Admin from "./pages/Admin";
-import SearchResults from "./pages/SearchResults";   // ⭐ ADDED
+
+// ⭐ Search Page (Make sure this file exists!)
+import SearchResults from "./pages/SearchResults";
 
 const queryClient = new QueryClient();
 
@@ -21,21 +23,25 @@ const App = () => (
 
       <BrowserRouter>
         <Routes>
+          {/* Home */}
           <Route path="/" element={<Index />} />
+
+          {/* Item Detail */}
           <Route path="/item/:id" element={<ItemDetails />} />
+
+          {/* Category View */}
           <Route path="/category/:category" element={<CategoryView />} />
 
-          {/* ⭐ SEARCH PAGE */}
+          {/* ⭐ Search Results Page */}
           <Route path="/search" element={<SearchResults />} />
 
-          {/* ADMIN */}
+          {/* Admin */}
           <Route path="/admin" element={<Admin />} />
 
-          {/* 404 */}
+          {/* 404 Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-
     </TooltipProvider>
   </QueryClientProvider>
 );
