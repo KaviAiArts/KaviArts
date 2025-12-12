@@ -1,7 +1,6 @@
-import Fuse from "fuse.js/dist/fuse";
+import Fuse from "fuse.js/dist/fuse.mjs";
 import { supabase } from "@/lib/supabaseClient";
 
-// Cache results to avoid refetching entire table repeatedly
 let cachedFiles: any[] | null = null;
 
 async function loadFiles() {
@@ -27,7 +26,7 @@ export default async function fuzzySearch(query: string) {
 
   const fuse = new Fuse(files, {
     includeScore: true,
-    threshold: 0.45, // good balance for typo tolerance
+    threshold: 0.45,
     keys: [
       { name: "file_name", weight: 0.6 },
       { name: "tags", weight: 0.25 },
@@ -36,6 +35,5 @@ export default async function fuzzySearch(query: string) {
   });
 
   const results = fuse.search(query);
-
   return results.slice(0, 20).map((r) => r.item);
 }
