@@ -15,7 +15,11 @@ import { Button } from "@/components/ui/button";
 
 const ContentSection = ({ title, items, category }) => {
   return (
-    <section className="py-6 md:py-10 px-3">
+
+
+    <section className="py-8 md:py-12 px-3">
+
+
       <div className="container mx-auto">
         <div className="flex justify-between items-center mb-6 md:mb-8">
           <h2 className="text-2xl font-bold">{title}</h2>
