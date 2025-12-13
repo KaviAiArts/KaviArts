@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Play, Music } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-const ContentItem = ({ item }) => {
+const ContentItem = ({ item }: { item: any }) => {
   const navigate = useNavigate();
 
   const handleItemClick = () => {
@@ -23,12 +23,10 @@ const ContentItem = ({ item }) => {
 
   return (
     <Card
-      className="group glass-card hover-lift overflow-hidden cursor-pointer"
       onClick={handleItemClick}
+      className="group glass-card hover-lift cursor-pointer overflow-hidden"
     >
       <div className="relative aspect-[9/16] overflow-hidden">
-
-        {/* Wallpaper thumbnail */}
         {item.file_type !== "ringtone" ? (
           <img
             src={item.file_url}
@@ -41,7 +39,6 @@ const ContentItem = ({ item }) => {
           </div>
         )}
 
-        {/* Video overlay */}
         {item.file_type === "video" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-black/50 rounded-full p-3">
@@ -50,7 +47,6 @@ const ContentItem = ({ item }) => {
           </div>
         )}
 
-        {/* Hover button */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <Button size="sm" className="bg-gradient-primary text-primary-foreground shadow-glow">
             {getIcon()}
@@ -62,7 +58,6 @@ const ContentItem = ({ item }) => {
           </Button>
         </div>
 
-        {/* Badge */}
         <div className="absolute top-2 left-2">
           <span className="bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-full">
             {item.file_type}
@@ -70,15 +65,16 @@ const ContentItem = ({ item }) => {
         </div>
       </div>
 
-      {/* Title */}
       <div className="p-4">
-        <h3 className="font-semibold text-sm mb-3 truncate">{item.file_name}</h3>
+        <h3 className="font-semibold text-sm truncate">
+          {item.file_name}
+        </h3>
       </div>
     </Card>
   );
 };
 
-const ContentGrid = ({ items = [] }) => {
+const ContentGrid = ({ items = [] }: { items?: any[] }) => {
   if (!items.length) {
     return (
       <p className="text-center text-gray-500 py-10">
@@ -87,29 +83,28 @@ const ContentGrid = ({ items = [] }) => {
     );
   }
 
-
-return (
-  <div className="px-3">
-    <div className="container mx-auto">
-      <div
-        className="
-          flex gap-3 overflow-x-auto scrollbar-hide
-          md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6
-          md:gap-6
-        "
-      >
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="min-w-[48%] sm:min-w-[45%] md:min-w-0"
-          >
-            <ContentItem item={item} />
-          </div>
-        ))}
+  return (
+    <div className="px-3">
+      <div className="container mx-auto">
+        <div
+          className="
+            flex gap-3 overflow-x-auto scrollbar-hide
+            md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6
+            md:gap-6
+          "
+        >
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="min-w-[48%] sm:min-w-[45%] md:min-w-0"
+            >
+              <ContentItem item={item} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
-
+  );
+};
 
 export default ContentGrid;
