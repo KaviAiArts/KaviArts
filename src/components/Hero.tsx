@@ -1,7 +1,11 @@
 const Hero = () => {
   return (
 
+
+
     <section className="relative py-8 md:py-12 px-4 overflow-hidden">
+
+
 
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20" />
