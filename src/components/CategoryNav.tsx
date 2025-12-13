@@ -25,7 +25,9 @@ const CategoryNav = ({ onSelect = () => {} }: Props) => {
   return (
 
 
-    <section className="py-8 md:py-12 px-4 border-b border-border">
+
+    <section className="pt-0 pb-8 md:pb-12 px-4 border-b border-border">
+
 
 
 
