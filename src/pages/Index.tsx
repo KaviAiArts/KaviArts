@@ -21,7 +21,9 @@ const ContentSection = ({ title, items, category }) => {
 
 
       <div className="container mx-auto">
-        <div className="flex justify-between items-center mb-6 md:mb-8">
+
+        <div className="flex justify-between items-center mb-4">
+
           <h2 className="text-2xl font-bold">{title}</h2>
           <Button
             variant="outline"

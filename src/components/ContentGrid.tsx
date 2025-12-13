@@ -88,7 +88,11 @@ const ContentGrid = ({ items = [] }) => {
   }
 
   return (
-    <section className="py-6 md:py-10 px-3">
+
+
+    <section className="pt-0 pb-6 md:pb-8 px-3">
+
+
       <div className="container mx-auto">
         <div className="
           flex gap-3 overflow-x-auto scrollbar-hide px-1 

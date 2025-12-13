@@ -65,8 +65,12 @@ const ContentItem = ({ item }) => {
         </div>
       </div>
 
+
       <div className="p-4">
-        <h3 className="font-semibold text-sm mb-3 truncate">{item.file_name}</h3>
+  <h3 className="font-semibold text-sm mb-1 truncate">
+
+
+{item.file_name}</h3>
       </div>
     </Card>
   );
