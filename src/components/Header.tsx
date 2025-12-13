@@ -181,14 +181,25 @@ const Header = () => {
             className="pr-12 bg-secondary border-border truncate"
           />
 
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => performFullSearch()}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 active:scale-95"
-          >
-            <Search className="w-4 h-4" />
-          </Button>
+         
+
+<Button
+  size="icon"
+  variant="outline"
+  onClick={() => performFullSearch()}
+  className="
+    absolute right-1 inset-y-0 my-auto
+    h-9 w-9
+    flex items-center justify-center
+    transition-transform
+    hover:scale-105
+    active:scale-95
+  "
+>
+  <Search className="w-4 h-4" />
+</Button>
+
+
 
           <Autocomplete
             suggestions={suggestions}
