@@ -8,7 +8,6 @@ import Autocomplete from "./Autocomplete";
 import debounce from "@/utils/debounce";
 import fuzzySearch from "@/utils/fuzzyEngine";
 import highlight from "@/utils/highlight";
-
 import { supabase } from "@/lib/supabaseClient";
 
 const Header = () => {
@@ -21,16 +20,13 @@ const Header = () => {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Navigate with typed keyword OR selected suggestion
   const performFullSearch = (value?: string) => {
     const q = (value ?? query).trim();
     if (!q) return;
-
     navigate(`/search?query=${encodeURIComponent(q)}`);
     setShowDropdown(false);
   };
 
-  // Fetch autocomplete suggestions
   const fetchSuggestions = async (text: string) => {
     if (!text.trim()) {
       setSuggestions([]);
@@ -70,11 +66,9 @@ const Header = () => {
 
   const handleKeyDown = (e: any) => {
     if (e.key === "ArrowDown") {
-      setActiveIndex((prev) =>
-        prev + 1 < suggestions.length ? prev + 1 : prev
-      );
+      setActiveIndex((p) => (p + 1 < suggestions.length ? p + 1 : p));
     } else if (e.key === "ArrowUp") {
-      setActiveIndex((prev) => (prev - 1 >= 0 ? prev - 1 : prev));
+      setActiveIndex((p) => (p - 1 >= 0 ? p - 1 : p));
     } else if (e.key === "Enter") {
       performFullSearch();
     } else if (e.key === "Escape") {
@@ -100,13 +94,13 @@ const Header = () => {
           {/* LOGO */}
           <h1
             onClick={() => navigate("/")}
-            className="text-xl font-bold gradient-text cursor-pointer hover:opacity-80 transition"
+            className="text-xl font-bold gradient-text cursor-pointer"
           >
             KaviArts
           </h1>
 
           {/* DESKTOP SEARCH */}
-          <div className="hidden md:flex items-center flex-1 max-w-md mx-8 relative h-[48px]">
+          <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
             <Input
               value={query}
               onChange={(e) => {
@@ -116,17 +110,24 @@ const Header = () => {
               onKeyDown={handleKeyDown}
               onFocus={() => query.trim() && setShowDropdown(true)}
               placeholder="Search wallpapers, ringtones..."
-              className="pr-12 bg-secondary border-border truncate"
+              className="h-12 pr-12 bg-secondary border-border"
             />
 
-            <Button
-              size="icon"
-              variant="outline"
+            {/* SEARCH ICON (NO JUMP, PERFECT CENTER) */}
+            <button
               onClick={() => performFullSearch()}
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 hover-lift"
+              className="
+                absolute right-1 top-1/2 -translate-y-1/2
+                h-9 w-9 rounded-md
+                flex items-center justify-center
+                bg-secondary border border-border
+                transition-colors transition-transform
+                hover:bg-secondary/80 hover:scale-105
+                active:scale-95
+              "
             >
               <Search className="w-4 h-4" />
-            </Button>
+            </button>
 
             <Autocomplete
               suggestions={suggestions}
@@ -140,35 +141,26 @@ const Header = () => {
           </div>
 
           {/* NAV BUTTONS */}
-          <nav className="flex items-center gap-2 ml-3 shrink-0">
-            <Button
-              variant="outline"
-              className="h-11 flex items-center gap-2 hover-lift active:scale-95"
-            >
+          <nav className="flex items-center gap-2">
+            <Button variant="outline" className="h-11 hover-lift">
               <Smartphone className="w-4 h-4" />
-              <span className="hidden md:inline">Wallpapers</span>
+              <span className="hidden md:inline ml-2">Wallpapers</span>
             </Button>
 
-            <Button
-              variant="outline"
-              className="h-11 flex items-center gap-2 hover-lift active:scale-95"
-            >
+            <Button variant="outline" className="h-11 hover-lift">
               <Music className="w-4 h-4" />
-              <span className="hidden md:inline">Ringtones</span>
+              <span className="hidden md:inline ml-2">Ringtones</span>
             </Button>
 
-            <Button
-              variant="outline"
-              className="h-11 flex items-center gap-2 hover-lift active:scale-95"
-            >
+            <Button variant="outline" className="h-11 hover-lift">
               <Video className="w-4 h-4" />
-              <span className="hidden md:inline">Videos</span>
+              <span className="hidden md:inline ml-2">Videos</span>
             </Button>
           </nav>
         </div>
 
         {/* MOBILE SEARCH */}
-        <div className="md:hidden mt-4 relative h-[48px]">
+        <div className="md:hidden mt-4 relative">
           <Input
             value={query}
             onChange={(e) => {
@@ -178,28 +170,21 @@ const Header = () => {
             onKeyDown={handleKeyDown}
             onFocus={() => query.trim() && setShowDropdown(true)}
             placeholder="Search wallpapers, ringtones..."
-            className="pr-12 bg-secondary border-border truncate"
+            className="h-12 pr-12 bg-secondary border-border"
           />
 
-         
-
-<Button
-  size="icon"
-  variant="outline"
-  onClick={() => performFullSearch()}
-  className="
-    absolute right-1 inset-y-0 my-auto
-    h-9 w-9
-    flex items-center justify-center
-    transition-transform
-    hover:scale-105
-    active:scale-95
-  "
->
-  <Search className="w-4 h-4" />
-</Button>
-
-
+          <button
+            onClick={() => performFullSearch()}
+            className="
+              absolute right-1 top-1/2 -translate-y-1/2
+              h-9 w-9 rounded-md
+              flex items-center justify-center
+              bg-secondary border border-border
+              active:scale-95
+            "
+          >
+            <Search className="w-4 h-4" />
+          </button>
 
           <Autocomplete
             suggestions={suggestions}
