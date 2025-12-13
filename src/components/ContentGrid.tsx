@@ -90,7 +90,7 @@ const ContentGrid = ({ items = [] }) => {
   return (
 
 
-    <section className="pt-0 pb-6 md:pb-8 px-3">
+    <section className="pt-0 pb-0 px-3">
 
 
       <div className="container mx-auto">
