@@ -17,7 +17,7 @@ const ContentSection = ({ title, items, category }) => {
   return (
 
 
-    <section className="py-2 md:py-2 px-2">
+    <section className="py-4 md:py-4 px-3">
 
 
       <div className="container mx-auto">

@@ -31,32 +31,30 @@ const CategoryNav = ({ onSelect = () => {} }: Props) => {
 
 
 
-      <div className="container mx-auto">
-        <div
-          className="
-            grid grid-cols-3 gap-3
-            md:flex md:flex-wrap md:justify-center md:items-center
-            max-w-5xl mx-auto
-          "
+      <div className="w-full flex justify-center">
+  <div
+    className="
+      flex flex-wrap gap-3
+      justify-center items-center
+      max-w-5xl
+    "
+  >
+    {categories.map((cat) => {
+      const Icon = cat.icon;
+      return (
+        <Button
+          key={cat.value}
+          variant="outline"
+          className="h-10 flex items-center gap-2 hover-lift"
         >
-          {categories.map((cat) => {
-            const Icon = cat.icon;
-            return (
-              <Button
-                key={cat.value}
-                onClick={() => onSelect(cat.value)}
-                variant="outline"
-                className="h-11 flex items-center justify-center gap-2 hover-lift"
-              >
-                <Icon className="w-4 h-4" />
-                <span className="text-xs sm:text-sm truncate">
-                  {cat.label}
-                </span>
-              </Button>
-            );
-          })}
-        </div>
-      </div>
+          <Icon className="w-4 h-4" />
+          <span className="text-sm">{cat.label}</span>
+        </Button>
+      );
+    })}
+  </div>
+</div>
+
     </section>
   );
 };
