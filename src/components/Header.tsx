@@ -1,4 +1,4 @@
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, Image, Music, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -146,11 +146,25 @@ const Header = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <Button variant="ghost">Wallpapers</Button>
-            <Button variant="ghost">Ringtones</Button>
-            <Button variant="ghost">Videos</Button>
-          </nav>
+         <nav className="hidden md:flex items-center space-x-4">
+
+  <Button variant="ghost" className="flex items-center gap-2">
+    <Image className="w-4 h-4" />
+    Wallpapers
+  </Button>
+
+  <Button variant="ghost" className="flex items-center gap-2">
+    <Music className="w-4 h-4" />
+    Ringtones
+  </Button>
+
+  <Button variant="ghost" className="flex items-center gap-2">
+    <Video className="w-4 h-4" />
+    Videos
+  </Button>
+
+</nav>
+
 
           {/* Mobile Menu */}
           <Button variant="ghost" size="icon" className="md:hidden">
