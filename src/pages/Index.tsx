@@ -108,7 +108,7 @@ const Index = () => {
       .select("*")
       .eq("file_type", "wallpaper")
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(6);
 
     // 2. POPULAR WALLPAPERS (FIXED: removed .order("likes"))
     const { data: popularData } = await supabase
@@ -116,7 +116,7 @@ const Index = () => {
       .select("*")
       .eq("file_type", "wallpaper")
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(6);
 
     // 3. POPULAR RINGTONES (FIXED)
     const { data: ringtoneData } = await supabase
@@ -124,7 +124,7 @@ const Index = () => {
       .select("*")
       .eq("file_type", "ringtone")
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(6);
 
     // 4. POPULAR VIDEOS (FIXED)
     const { data: videoData } = await supabase
@@ -132,7 +132,7 @@ const Index = () => {
       .select("*")
       .eq("file_type", "video")
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(6);
 
     setNewest(newestData || []);
     setPopularWallpapers(popularData || []);
