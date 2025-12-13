@@ -146,7 +146,7 @@ const Header = () => {
           </div>
 
           {/* Navigation */}
-         <nav className="hidden md:flex items-center space-x-4">
+         <nav className="flex items-center space-x-3 ml-4">
 
   <Button variant="ghost" className="flex items-center gap-2">
     <Image className="w-4 h-4" />
@@ -165,11 +165,6 @@ const Header = () => {
 
 </nav>
 
-
-          {/* Mobile Menu */}
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="w-5 h-5" />
-          </Button>
         </div>
 
         {/* MOBILE SEARCH */}
