@@ -1,4 +1,3 @@
-// src/pages/Admin.tsx
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Trash, Edit, Check, X, Music, Play } from "lucide-react";
 type FileRow = {
   id: number;
   file_name: string;
-  file_type: "wallpaper" | "ringtone" | "video";
+  file_type?: string | null;
   file_url: string;
   category?: string | null;
   tags?: string[] | null;
@@ -33,13 +32,10 @@ const Admin = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editTags, setEditTags] = useState("");
 
-  const [activeTab, setActiveTab] =
-    useState<"all" | "wallpaper" | "ringtone" | "video">("all");
-
   /* ---------------- AUTH ---------------- */
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8 max-w-md w-full">
           <h2 className="text-2xl font-bold mb-4">Admin Login</h2>
           <Input
@@ -62,42 +58,45 @@ const Admin = () => {
     );
   }
 
-  /* ---------------- FETCH ---------------- */
+  /* ---------------- FETCH (SAFE) ---------------- */
   const fetchFiles = async () => {
     setLoading(true);
 
-    let query = supabase
+    const { data, error } = await supabase
       .from("files")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(200);
 
-    if (activeTab !== "all") {
-      query = query.eq("file_type", activeTab);
+    if (error) {
+      console.error(error);
+      setFiles([]);
+    } else {
+      setFiles(data || []);
     }
 
-    const { data } = await query;
-    setFiles(data || []);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchFiles();
-  }, [activeTab]);
+  }, []);
 
-  /* ---------------- CLOUDINARY UPLOAD ---------------- */
-  const openCloudinaryWidget = (preset: string, type: FileRow["file_type"]) => {
+  /* ---------------- CLOUDINARY ---------------- */
+  const openCloudinaryWidget = (preset: string) => {
+    if (!(window as any).cloudinary) {
+      alert("Cloudinary widget missing");
+      return;
+    }
+
     const widget = (window as any).cloudinary.createUploadWidget(
       {
         cloudName: CLOUD_NAME,
         uploadPreset: preset,
         multiple: false,
       },
-      async (_: any, result: any) => {
+      (_: any, result: any) => {
         if (result?.event === "success") {
-          await supabase.from("files").update({
-            file_type: type,
-          }).eq("id", result.info?.id);
-
           setTimeout(fetchFiles, 1000);
         }
       }
@@ -132,6 +131,7 @@ const Admin = () => {
     fetchFiles();
   };
 
+  /* ---------------- PREVIEW ---------------- */
   const renderPreview = (row: FileRow) => {
     if (row.file_type === "ringtone") {
       return (
@@ -143,8 +143,12 @@ const Admin = () => {
 
     if (row.file_type === "video") {
       return (
-        <div className="relative w-24 h-36 rounded overflow-hidden">
-          <video src={row.file_url} className="w-full h-full object-cover" />
+        <div className="relative w-24 h-36 rounded overflow-hidden bg-black">
+          <video
+            src={row.file_url}
+            className="w-full h-full object-cover"
+            muted
+          />
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <Play className="w-8 h-8 text-white" />
           </div>
@@ -162,34 +166,21 @@ const Admin = () => {
 
   /* ---------------- UI ---------------- */
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 md:p-8">
+      <div className="flex justify-between mb-6">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
         <div className="flex gap-2">
-          <Button onClick={() => openCloudinaryWidget(PRESET_WALLPAPERS, "wallpaper")}>
+          <Button onClick={() => openCloudinaryWidget(PRESET_WALLPAPERS)}>
             Upload Wallpaper
           </Button>
-          <Button onClick={() => openCloudinaryWidget(PRESET_RINGTONES, "ringtone")}>
+          <Button onClick={() => openCloudinaryWidget(PRESET_RINGTONES)}>
             Upload Ringtone
           </Button>
-          <Button onClick={() => openCloudinaryWidget(PRESET_VIDEOS, "video")}>
+          <Button onClick={() => openCloudinaryWidget(PRESET_VIDEOS)}>
             Upload Video
           </Button>
         </div>
-      </div>
-
-      {/* TABS */}
-      <div className="flex gap-2 mb-4">
-        {["all", "wallpaper", "ringtone", "video"].map(tab => (
-          <Button
-            key={tab}
-            variant={activeTab === tab ? "default" : "outline"}
-            onClick={() => setActiveTab(tab as any)}
-          >
-            {tab.toUpperCase()}
-          </Button>
-        ))}
       </div>
 
       {loading ? (
@@ -197,13 +188,13 @@ const Admin = () => {
       ) : (
         <div className="grid gap-4">
           {files.map(row => (
-            <Card key={row.id} className="p-4 flex justify-between">
+            <Card key={row.id} className="p-4 flex justify-between gap-4">
               <div className="flex gap-4">
                 {renderPreview(row)}
                 <div>
                   <div className="font-semibold">{row.file_name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {row.file_type}
+                    Type: {row.file_type || "unknown"}
                   </div>
                 </div>
               </div>
