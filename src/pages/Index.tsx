@@ -15,15 +15,11 @@ import { Button } from "@/components/ui/button";
 
 const ContentSection = ({ title, items, category }) => {
   return (
-
-
-    <section className="py-4 md:py-4 px-4">
-
-
-      <div className="container mx-auto">
-
-        <div className="flex justify-between items-center mb-4">
-
+    <section className="py-4 md:py-4">
+      {/* ================= MOBILE (FULL WIDTH, ZEDGE STYLE) ================= */}
+      <div className="lg:hidden">
+        {/* Title row */}
+        <div className="px-4 flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">{title}</h2>
           <Button
             variant="outline"
@@ -34,30 +30,55 @@ const ContentSection = ({ title, items, category }) => {
           </Button>
         </div>
 
-        {/* Desktop Grid */}
-        <div className="hidden lg:grid lg:grid-cols-6 gap-6">
-          {items.length > 0
-            ? items.map((item) => <ContentItem key={item.id} item={item} />)
-            : <p className="text-muted-foreground col-span-6">No content available yet.</p>}
-        </div>
-
-        {/* Mobile Horizontal Scroll */}
-        <div className="lg:hidden overflow-x-auto scrollbar-hide">
-          <div className="flex gap-4 pb-4" style={{ width: "max-content" }}>
+        {/* Horizontal scroll */}
+        <div className="overflow-x-auto scrollbar-hide">
+          <div
+            className="flex gap-4 px-4"
+            style={{ width: "max-content" }}
+          >
             {items.length > 0 ? (
-              items.map((item, index) => (
+              items.map((item) => (
                 <div
                   key={item.id}
-                  className={`flex-shrink-0 ${index === 0 ? "ml-2" : ""} ${
-                    index === items.length - 1 ? "mr-4" : ""
-                  }`}
-                  style={{ width: "calc((100vw - 2rem) / 2.5)" }}
+                  className="flex-shrink-0"
+                  /* 2 cards + peek of 3rd */
+                  style={{ width: "42vw", maxWidth: "190px" }}
                 >
                   <ContentItem item={item} />
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground ml-2">No content available yet.</p>
+              <p className="text-muted-foreground">
+                No content available yet.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ================= DESKTOP (UNCHANGED) ================= */}
+      <div className="hidden lg:block">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">{title}</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (window.location.href = `/category/${category}`)}
+            >
+              View All
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-6 gap-6">
+            {items.length > 0 ? (
+              items.map((item) => (
+                <ContentItem key={item.id} item={item} />
+              ))
+            ) : (
+              <p className="text-muted-foreground col-span-6">
+                No content available yet.
+              </p>
             )}
           </div>
         </div>
