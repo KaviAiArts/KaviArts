@@ -3,6 +3,8 @@ import { Download, Play, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
+/* -------------------- Content Item -------------------- */
+
 const ContentItem = ({ item }: { item: any }) => {
   const navigate = useNavigate();
 
@@ -74,6 +76,8 @@ const ContentItem = ({ item }: { item: any }) => {
   );
 };
 
+/* -------------------- Content Grid -------------------- */
+
 const ContentGrid = ({ items = [] }: { items?: any[] }) => {
   if (!items.length) {
     return (
@@ -84,34 +88,34 @@ const ContentGrid = ({ items = [] }: { items?: any[] }) => {
   }
 
   return (
-  <div className="px-3">
-    {/* MOBILE: full-width, no container */}
-    <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-3">
-      <div className="flex gap-4 px-3 pb-4 w-max">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex-shrink-0"
-            style={{ width: "42vw" }}
-          >
-            <ContentItem item={item} />
-          </div>
-        ))}
-      </div>
-    </div>
-
-    {/* DESKTOP: container + grid (unchanged) */}
-    <div className="hidden lg:block">
-      <div className="container mx-auto">
-        <div className="grid grid-cols-3 xl:grid-cols-6 gap-6">
+    <div className="px-3">
+      {/* MOBILE: full-width horizontal scroll (no container) */}
+      <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-3">
+        <div className="flex gap-4 px-3 pb-4 w-max">
           {items.map((item) => (
-            <ContentItem key={item.id} item={item} />
+            <div
+              key={item.id}
+              className="flex-shrink-0"
+              style={{ width: "42vw" }} // 2 cards + peek of 3rd
+            >
+              <ContentItem item={item} />
+            </div>
           ))}
         </div>
       </div>
-    </div>
-  </div>
-);
 
+      {/* DESKTOP: container + grid */}
+      <div className="hidden lg:block">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-3 xl:grid-cols-6 gap-6">
+            {items.map((item) => (
+              <ContentItem key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default ContentGrid;
