@@ -3,7 +3,7 @@ const Hero = () => {
 
 
 
-    <section className="relative py-8 md:py-4 px-4 overflow-hidden">
+    <section className="relative py-4 md:py-4 px-4 overflow-hidden">
 
 
 

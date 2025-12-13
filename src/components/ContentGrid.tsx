@@ -86,20 +86,25 @@ const ContentGrid = ({ items = [] }: { items?: any[] }) => {
   return (
     <div className="px-3">
       <div className="container mx-auto">
-        <div
-          className="
-            flex gap-3 overflow-x-auto scrollbar-hide
-            md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6
-            md:gap-6
-          "
-        >
+        {/* MOBILE: horizontal scroll with edge-bleed */}
+        <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <div className="flex gap-4 pb-4 w-max">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="flex-shrink-0"
+                style={{ width: "calc(42vw - 0.75rem)" }}
+              >
+                <ContentItem item={item} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* DESKTOP: grid (unchanged) */}
+        <div className="hidden lg:grid grid-cols-3 xl:grid-cols-6 gap-6">
           {items.map((item) => (
-            <div
-              key={item.id}
-              className="min-w-[48%] sm:min-w-[45%] md:min-w-0"
-            >
-              <ContentItem item={item} />
-            </div>
+            <ContentItem key={item.id} item={item} />
           ))}
         </div>
       </div>
