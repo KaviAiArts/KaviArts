@@ -84,32 +84,34 @@ const ContentGrid = ({ items = [] }: { items?: any[] }) => {
   }
 
   return (
-    <div className="px-3">
-      <div className="container mx-auto">
-        {/* MOBILE: horizontal scroll with edge-bleed */}
-        <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-4 px-4">
-          <div className="flex gap-4 pb-4 w-max">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex-shrink-0"
-                style={{ width: "calc(42vw - 0.75rem)" }}
-              >
-                <ContentItem item={item} />
-              </div>
-            ))}
+  <div className="px-3">
+    {/* MOBILE: full-width, no container */}
+    <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-3">
+      <div className="flex gap-4 px-3 pb-4 w-max">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="flex-shrink-0"
+            style={{ width: "42vw" }}
+          >
+            <ContentItem item={item} />
           </div>
-        </div>
+        ))}
+      </div>
+    </div>
 
-        {/* DESKTOP: grid (unchanged) */}
-        <div className="hidden lg:grid grid-cols-3 xl:grid-cols-6 gap-6">
+    {/* DESKTOP: container + grid (unchanged) */}
+    <div className="hidden lg:block">
+      <div className="container mx-auto">
+        <div className="grid grid-cols-3 xl:grid-cols-6 gap-6">
           {items.map((item) => (
             <ContentItem key={item.id} item={item} />
           ))}
         </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
+
 
 export default ContentGrid;
