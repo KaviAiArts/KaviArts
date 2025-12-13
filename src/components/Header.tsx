@@ -21,9 +21,7 @@ const Header = () => {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // ---------------------------------------------
-  // Navigate to search page (keyword or suggestion)
-  // ---------------------------------------------
+  // Navigate with typed keyword OR selected suggestion
   const performFullSearch = (value?: string) => {
     const q = (value ?? query).trim();
     if (!q) return;
@@ -32,9 +30,7 @@ const Header = () => {
     setShowDropdown(false);
   };
 
-  // ---------------------------------------------
   // Fetch autocomplete suggestions
-  // ---------------------------------------------
   const fetchSuggestions = async (text: string) => {
     if (!text.trim()) {
       setSuggestions([]);
@@ -49,18 +45,17 @@ const Header = () => {
 
     let results = data || [];
 
-    // Fuzzy fallback
+    // fuzzy fallback
     if (results.length < 10) {
       const fuzzy = await fuzzySearch(text);
       results = [...results, ...fuzzy];
     }
 
-    // Deduplicate
+    // dedupe
     const map = new Map();
     results.forEach((i) => map.set(i.id, i));
     results = Array.from(map.values());
 
-    // Highlight text
     const highlighted = results.map((item) => ({
       ...item,
       highlightName: highlight(item.file_name, text),
@@ -75,9 +70,7 @@ const Header = () => {
 
   const debouncedFetch = debounce(fetchSuggestions, 250);
 
-  // ---------------------------------------------
-  // Keyboard Navigation — Enter searches typed text
-  // ---------------------------------------------
+  // Keyboard behavior
   const handleKeyDown = (e: any) => {
     if (e.key === "ArrowDown") {
       setActiveIndex((prev) =>
@@ -86,15 +79,13 @@ const Header = () => {
     } else if (e.key === "ArrowUp") {
       setActiveIndex((prev) => (prev - 1 >= 0 ? prev - 1 : prev));
     } else if (e.key === "Enter") {
-      performFullSearch(); // typed query, not suggestion
+      performFullSearch(); // typed keyword
     } else if (e.key === "Escape") {
       setShowDropdown(false);
     }
   };
 
-  // ---------------------------------------------
-  // Close dropdown on click outside
-  // ---------------------------------------------
+  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: any) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -106,22 +97,24 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ---------------------------------------------
-  // UI
-  // ---------------------------------------------
   return (
     <header className="sticky top-0 z-50 glass-card border-b">
       <div className="container mx-auto px-4 py-4" ref={containerRef}>
         <div className="flex items-center justify-between">
 
-          {/* Logo */}
+          {/* LOGO - HOME BUTTON */}
           <div className="flex items-center space-x-2">
-            <h1 className="text-xl font-bold gradient-text">KaviArts</h1>
+            <h1
+              onClick={() => navigate("/")}
+              className="text-xl font-bold gradient-text cursor-pointer hover:opacity-80 transition"
+            >
+              KaviArts
+            </h1>
           </div>
 
-          {/* Desktop Search */}
+          {/* DESKTOP SEARCH BAR */}
           <div className="hidden md:flex items-center space-x-4 flex-1 max-w-md mx-8 relative h-[48px]">
-            
+
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 
               text-muted-foreground w-4 h-4 cursor-pointer"
@@ -146,8 +139,8 @@ const Header = () => {
               visible={showDropdown}
               activeIndex={activeIndex}
               onSelect={(item) => {
-                setQuery(item.file_name);              // Show suggestion in input
-                performFullSearch(item.file_name);     // Search suggestion text
+                setQuery(item.file_name);
+                performFullSearch(item.file_name);
               }}
             />
           </div>
@@ -159,15 +152,14 @@ const Header = () => {
             <Button variant="ghost">Videos</Button>
           </nav>
 
-          {/* Mobile */}
+          {/* Mobile Menu */}
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Mobile Search */}
+        {/* MOBILE SEARCH */}
         <div className="md:hidden mt-4 relative h-[48px]">
-
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 
             text-muted-foreground w-4 h-4 cursor-pointer"
@@ -186,7 +178,6 @@ const Header = () => {
             className="pl-10 bg-secondary border-border truncate"
           />
 
-          {/* Autocomplete */}
           <Autocomplete
             suggestions={suggestions}
             visible={showDropdown}
