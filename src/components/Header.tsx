@@ -45,13 +45,11 @@ const Header = () => {
 
     let results = data || [];
 
-    // fuzzy fallback
     if (results.length < 10) {
       const fuzzy = await fuzzySearch(text);
       results = [...results, ...fuzzy];
     }
 
-    // dedupe
     const map = new Map();
     results.forEach((i) => map.set(i.id, i));
     results = Array.from(map.values());
@@ -70,7 +68,6 @@ const Header = () => {
 
   const debouncedFetch = debounce(fetchSuggestions, 250);
 
-  // Keyboard behavior
   const handleKeyDown = (e: any) => {
     if (e.key === "ArrowDown") {
       setActiveIndex((prev) =>
@@ -79,13 +76,12 @@ const Header = () => {
     } else if (e.key === "ArrowUp") {
       setActiveIndex((prev) => (prev - 1 >= 0 ? prev - 1 : prev));
     } else if (e.key === "Enter") {
-      performFullSearch(); // typed keyword
+      performFullSearch();
     } else if (e.key === "Escape") {
       setShowDropdown(false);
     }
   };
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: any) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -93,7 +89,6 @@ const Header = () => {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
@@ -102,25 +97,16 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4" ref={containerRef}>
         <div className="flex items-center justify-between">
 
-          {/* LOGO - HOME BUTTON */}
-          <div className="flex items-center space-x-2">
-            <h1
-              onClick={() => navigate("/")}
-              className="text-xl font-bold gradient-text cursor-pointer hover:opacity-80 transition"
-            >
-              KaviArts
-            </h1>
-          </div>
+          {/* LOGO */}
+          <h1
+            onClick={() => navigate("/")}
+            className="text-xl font-bold gradient-text cursor-pointer hover:opacity-80 transition"
+          >
+            KaviArts
+          </h1>
 
-          {/* DESKTOP SEARCH BAR */}
-          <div className="hidden md:flex items-center space-x-4 flex-1 max-w-md mx-8 relative h-[48px]">
-
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 
-              text-muted-foreground w-4 h-4 cursor-pointer"
-              onClick={() => performFullSearch()}
-            />
-
+          {/* DESKTOP SEARCH */}
+          <div className="hidden md:flex items-center flex-1 max-w-md mx-8 relative h-[48px]">
             <Input
               value={query}
               onChange={(e) => {
@@ -130,10 +116,18 @@ const Header = () => {
               onKeyDown={handleKeyDown}
               onFocus={() => query.trim() && setShowDropdown(true)}
               placeholder="Search wallpapers, ringtones..."
-              className="pl-10 bg-secondary border-border truncate"
+              className="pr-12 bg-secondary border-border truncate"
             />
 
-            {/* Autocomplete */}
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => performFullSearch()}
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 hover-lift"
+            >
+              <Search className="w-4 h-4" />
+            </Button>
+
             <Autocomplete
               suggestions={suggestions}
               visible={showDropdown}
@@ -145,54 +139,36 @@ const Header = () => {
             />
           </div>
 
-          {/* Navigation */}
+          {/* NAV BUTTONS */}
+          <nav className="flex items-center gap-2 ml-3 shrink-0">
+            <Button
+              variant="outline"
+              className="h-11 flex items-center gap-2 hover-lift active:scale-95"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden md:inline">Wallpapers</span>
+            </Button>
 
+            <Button
+              variant="outline"
+              className="h-11 flex items-center gap-2 hover-lift active:scale-95"
+            >
+              <Music className="w-4 h-4" />
+              <span className="hidden md:inline">Ringtones</span>
+            </Button>
 
-         <nav className="flex items-center gap-2 ml-3 shrink-0">
-
-  {/* Wallpapers */}
-  <Button
-    variant="ghost"
-    size="icon"
-    className="w-9 h-9 md:w-auto md:h-auto md:px-3 md:gap-2 flex items-center"
-  >
-    <Smartphone className="w-4 h-4 md:w-4 md:h-4" />
-    <span className="hidden md:inline">Wallpapers</span>
-  </Button>
-
-  {/* Ringtones */}
-  <Button
-    variant="ghost"
-    size="icon"
-    className="w-9 h-9 md:w-auto md:h-auto md:px-3 md:gap-2 flex items-center"
-  >
-    <Music className="w-4 h-4 md:w-4 md:h-4" />
-    <span className="hidden md:inline">Ringtones</span>
-  </Button>
-
-  {/* Videos */}
-  <Button
-    variant="ghost"
-    size="icon"
-    className="w-9 h-9 md:w-auto md:h-auto md:px-3 md:gap-2 flex items-center"
-  >
-    <Video className="w-4 h-4 md:w-4 md:h-4" />
-    <span className="hidden md:inline">Videos</span>
-  </Button>
-
-</nav>
-
-
+            <Button
+              variant="outline"
+              className="h-11 flex items-center gap-2 hover-lift active:scale-95"
+            >
+              <Video className="w-4 h-4" />
+              <span className="hidden md:inline">Videos</span>
+            </Button>
+          </nav>
         </div>
 
         {/* MOBILE SEARCH */}
         <div className="md:hidden mt-4 relative h-[48px]">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 
-            text-muted-foreground w-4 h-4 cursor-pointer"
-            onClick={() => performFullSearch()}
-          />
-
           <Input
             value={query}
             onChange={(e) => {
@@ -202,8 +178,17 @@ const Header = () => {
             onKeyDown={handleKeyDown}
             onFocus={() => query.trim() && setShowDropdown(true)}
             placeholder="Search wallpapers, ringtones..."
-            className="pl-10 bg-secondary border-border truncate"
+            className="pr-12 bg-secondary border-border truncate"
           />
+
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => performFullSearch()}
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 active:scale-95"
+          >
+            <Search className="w-4 h-4" />
+          </Button>
 
           <Autocomplete
             suggestions={suggestions}
