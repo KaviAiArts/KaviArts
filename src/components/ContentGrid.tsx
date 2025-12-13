@@ -87,29 +87,29 @@ const ContentGrid = ({ items = [] }) => {
     );
   }
 
-  return (
 
-
-    <section className="pt-0 pb-0 px-3">
-
-
-      <div className="container mx-auto">
-        <div className="
-          flex gap-3 overflow-x-auto scrollbar-hide px-1 
-          md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 md:gap-6 md:px-0
-        ">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="min-w-[48%] sm:min-w-[45%] md:min-w-0 md:w-full"
-            >
-              <ContentItem item={item} />
-            </div>
-          ))}
-        </div>
+return (
+  <div className="px-3">
+    <div className="container mx-auto">
+      <div
+        className="
+          flex gap-3 overflow-x-auto scrollbar-hide
+          md:grid md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6
+          md:gap-6
+        "
+      >
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="min-w-[48%] sm:min-w-[45%] md:min-w-0"
+          >
+            <ContentItem item={item} />
+          </div>
+        ))}
       </div>
-    </section>
-  );
-};
+    </div>
+  </div>
+);
+
 
 export default ContentGrid;
