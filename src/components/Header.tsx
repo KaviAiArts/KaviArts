@@ -1,4 +1,4 @@
-import { Search, Menu, Image, Music, Video } from "lucide-react";
+import { Search, Smartphone, Music, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useRef } from "react";
@@ -146,24 +146,42 @@ const Header = () => {
           </div>
 
           {/* Navigation */}
-         <nav className="flex items-center space-x-3 ml-4">
 
-  <Button variant="ghost" className="flex items-center gap-2">
-    <Image className="w-4 h-4" />
-    Wallpapers
+
+         <nav className="flex items-center gap-2 ml-3 shrink-0">
+
+  {/* Wallpapers */}
+  <Button
+    variant="ghost"
+    size="icon"
+    className="w-9 h-9 md:w-auto md:h-auto md:px-3 md:gap-2 flex items-center"
+  >
+    <Smartphone className="w-4 h-4 md:w-4 md:h-4" />
+    <span className="hidden md:inline">Wallpapers</span>
   </Button>
 
-  <Button variant="ghost" className="flex items-center gap-2">
-    <Music className="w-4 h-4" />
-    Ringtones
+  {/* Ringtones */}
+  <Button
+    variant="ghost"
+    size="icon"
+    className="w-9 h-9 md:w-auto md:h-auto md:px-3 md:gap-2 flex items-center"
+  >
+    <Music className="w-4 h-4 md:w-4 md:h-4" />
+    <span className="hidden md:inline">Ringtones</span>
   </Button>
 
-  <Button variant="ghost" className="flex items-center gap-2">
-    <Video className="w-4 h-4" />
-    Videos
+  {/* Videos */}
+  <Button
+    variant="ghost"
+    size="icon"
+    className="w-9 h-9 md:w-auto md:h-auto md:px-3 md:gap-2 flex items-center"
+  >
+    <Video className="w-4 h-4 md:w-4 md:h-4" />
+    <span className="hidden md:inline">Videos</span>
   </Button>
 
 </nav>
+
 
         </div>
 
