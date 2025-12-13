@@ -26,7 +26,7 @@ const CategoryNav = ({ onSelect = () => {} }: Props) => {
 
 
 
-    <section className="pt-0 pb-4 md:pb-4 px-4 border-b border-border">
+    <section className="pt-4 pb-4 md:pb-4 px-4 border-b border-border">
   <div className="container mx-auto">
     <div className="w-full flex justify-center">
       <div
