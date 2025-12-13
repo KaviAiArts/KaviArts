@@ -17,11 +17,21 @@ const categories = [
   { label: "Technology", value: "technology", icon: Bot },
 ];
 
-const CategoryNav = ({ onSelect = () => {} }) => {
+type Props = {
+  onSelect?: (value: string) => void;
+};
+
+const CategoryNav = ({ onSelect = () => {} }: Props) => {
   return (
     <section className="py-8 px-4 border-b border-border">
       <div className="container mx-auto">
-        <div className="flex flex-wrap gap-3 justify-center items-center max-w-5xl mx-auto">
+        <div
+          className="
+            grid grid-cols-3 gap-3
+            md:flex md:flex-wrap md:justify-center md:items-center
+            max-w-5xl mx-auto
+          "
+        >
           {categories.map((cat) => {
             const Icon = cat.icon;
             return (
@@ -29,10 +39,12 @@ const CategoryNav = ({ onSelect = () => {} }) => {
                 key={cat.value}
                 onClick={() => onSelect(cat.value)}
                 variant="outline"
-                className="flex items-center gap-2 hover-lift"
+                className="h-11 flex items-center justify-center gap-2 hover-lift"
               >
                 <Icon className="w-4 h-4" />
-                <span>{cat.label}</span>
+                <span className="text-xs sm:text-sm truncate">
+                  {cat.label}
+                </span>
               </Button>
             );
           })}
