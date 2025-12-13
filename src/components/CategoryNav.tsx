@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Video, Image, Sparkles, Music } from "lucide-react";
+import {
+  Sparkles,
+  Flower2,
+  PawPrint,
+  UserRound,
+  Wand2,
+  Bot,
+} from "lucide-react";
 
 const categories = [
   { label: "Aesthetic", value: "aesthetic", icon: Sparkles },
@@ -10,30 +17,19 @@ const categories = [
   { label: "Technology", value: "technology", icon: Bot },
 ];
 
-const CategoryNav = ({ onSelect }) => {
+const CategoryNav = ({ onSelect = () => {} }) => {
   return (
     <section className="py-8 px-4 border-b border-border">
       <div className="container mx-auto">
-
-
         <div className="flex flex-wrap gap-3 justify-center items-center max-w-5xl mx-auto">
-
-
-
           {categories.map((cat) => {
             const Icon = cat.icon;
             return (
               <Button
                 key={cat.value}
                 onClick={() => onSelect(cat.value)}
-                variant={cat.active ? "default" : "outline"}
-                className={`
-                  flex items-center space-x-2 hover-lift
-                  ${cat.active 
-                    ? 'bg-gradient-primary text-primary-foreground shadow-glow' 
-                    : 'border-border hover:bg-secondary'
-                  }
-                `}
+                variant="outline"
+                className="flex items-center gap-2 hover-lift"
               >
                 <Icon className="w-4 h-4" />
                 <span>{cat.label}</span>
