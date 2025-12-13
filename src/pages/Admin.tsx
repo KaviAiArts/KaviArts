@@ -1,3 +1,5 @@
+// src/pages/Admin.tsx
+
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -8,35 +10,90 @@ import { Trash, Edit, Check, X, Music, Play } from "lucide-react";
 type FileRow = {
   id: number;
   file_name: string;
-  file_type?: string | null;
+  file_type: "wallpaper" | "ringtone" | "video";
   file_url: string;
-  category?: string | null;
   tags?: string[] | null;
+  category?: string | null;
   created_at?: string;
 };
 
-// ENV
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const PRESET_WALLPAPERS = import.meta.env.VITE_CLOUDINARY_PRESET_WALLPAPERS;
-const PRESET_RINGTONES = import.meta.env.VITE_CLOUDINARY_PRESET_RINGTONES;
-const PRESET_VIDEOS = import.meta.env.VITE_CLOUDINARY_PRESET_VIDEOS;
 
 const Admin = () => {
+  // 🔒 AUTH
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
+
+  // 📦 DATA
   const [files, setFiles] = useState<FileRow[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // ✏️ EDIT
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editTags, setEditTags] = useState("");
 
-  /* ---------------- AUTH ---------------- */
+  // ✅ HOOKS MUST ALWAYS RUN
+  useEffect(() => {
+    if (isAuthorized) fetchFiles();
+  }, [isAuthorized]);
+
+  // ------------------------
+  // FETCH FILES
+  // ------------------------
+  const fetchFiles = async () => {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("files")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      setFiles([]);
+    } else {
+      setFiles(data || []);
+    }
+
+    setLoading(false);
+  };
+
+  // ------------------------
+  // EDIT
+  // ------------------------
+  const startEdit = (row: FileRow) => {
+    setEditingId(row.id);
+    setEditTitle(row.file_name);
+    setEditTags((row.tags || []).join(","));
+  };
+
+  const saveEdit = async (id: number) => {
+    await supabase
+      .from("files")
+      .update({
+        file_name: editTitle,
+        tags: editTags.split(",").map(t => t.trim()),
+      })
+      .eq("id", id);
+
+    setEditingId(null);
+    fetchFiles();
+  };
+
+  const deleteRow = async (id: number) => {
+    if (!confirm("Delete this item?")) return;
+    await supabase.from("files").delete().eq("id", id);
+    fetchFiles();
+  };
+
+  // ------------------------
+  // LOGIN UI
+  // ------------------------
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="p-8 max-w-md w-full">
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="p-8 w-full max-w-md">
           <h2 className="text-2xl font-bold mb-4">Admin Login</h2>
           <Input
             type="password"
@@ -58,143 +115,32 @@ const Admin = () => {
     );
   }
 
-  /* ---------------- FETCH (SAFE) ---------------- */
-  const fetchFiles = async () => {
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("files")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(200);
-
-    if (error) {
-      console.error(error);
-      setFiles([]);
-    } else {
-      setFiles(data || []);
-    }
-
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchFiles();
-  }, []);
-
-  /* ---------------- CLOUDINARY ---------------- */
-  const openCloudinaryWidget = (preset: string) => {
-    if (!(window as any).cloudinary) {
-      alert("Cloudinary widget missing");
-      return;
-    }
-
-    const widget = (window as any).cloudinary.createUploadWidget(
-      {
-        cloudName: CLOUD_NAME,
-        uploadPreset: preset,
-        multiple: false,
-      },
-      (_: any, result: any) => {
-        if (result?.event === "success") {
-          setTimeout(fetchFiles, 1000);
-        }
-      }
-    );
-
-    widget.open();
-  };
-
-  /* ---------------- EDIT ---------------- */
-  const startEdit = (row: FileRow) => {
-    setEditingId(row.id);
-    setEditTitle(row.file_name);
-    setEditTags((row.tags || []).join(", "));
-  };
-
-  const saveEdit = async (id: number) => {
-    await supabase
-      .from("files")
-      .update({
-        file_name: editTitle,
-        tags: editTags.split(",").map(t => t.trim()).filter(Boolean),
-      })
-      .eq("id", id);
-
-    setEditingId(null);
-    fetchFiles();
-  };
-
-  const deleteRow = async (id: number) => {
-    if (!confirm("Delete this item?")) return;
-    await supabase.from("files").delete().eq("id", id);
-    fetchFiles();
-  };
-
-  /* ---------------- PREVIEW ---------------- */
-  const renderPreview = (row: FileRow) => {
-    if (row.file_type === "ringtone") {
-      return (
-        <div className="w-24 h-36 flex items-center justify-center bg-muted rounded">
-          <Music className="w-10 h-10 text-primary" />
-        </div>
-      );
-    }
-
-    if (row.file_type === "video") {
-      return (
-        <div className="relative w-24 h-36 rounded overflow-hidden bg-black">
-          <video
-            src={row.file_url}
-            className="w-full h-full object-cover"
-            muted
-          />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <Play className="w-8 h-8 text-white" />
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <img
-        src={row.file_url}
-        className="w-24 h-36 object-cover rounded"
-      />
-    );
-  };
-
-  /* ---------------- UI ---------------- */
+  // ------------------------
+  // ADMIN DASHBOARD
+  // ------------------------
   return (
-    <div className="p-4 md:p-8">
-      <div className="flex justify-between mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-
-        <div className="flex gap-2">
-          <Button onClick={() => openCloudinaryWidget(PRESET_WALLPAPERS)}>
-            Upload Wallpaper
-          </Button>
-          <Button onClick={() => openCloudinaryWidget(PRESET_RINGTONES)}>
-            Upload Ringtone
-          </Button>
-          <Button onClick={() => openCloudinaryWidget(PRESET_VIDEOS)}>
-            Upload Video
-          </Button>
-        </div>
-      </div>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
       {loading ? (
         <p>Loading...</p>
       ) : (
         <div className="grid gap-4">
-          {files.map(row => (
-            <Card key={row.id} className="p-4 flex justify-between gap-4">
+          {files.map((row) => (
+            <Card key={row.id} className="p-4 flex justify-between">
               <div className="flex gap-4">
-                {renderPreview(row)}
+                <div className="w-24 h-36 bg-muted rounded flex items-center justify-center">
+                  {row.file_type === "ringtone" && <Music />}
+                  {row.file_type === "video" && <Play />}
+                  {row.file_type === "wallpaper" && (
+                    <img src={row.file_url} className="w-full h-full object-cover rounded" />
+                  )}
+                </div>
+
                 <div>
                   <div className="font-semibold">{row.file_name}</div>
                   <div className="text-xs text-muted-foreground">
-                    Type: {row.file_type || "unknown"}
+                    Type: {row.file_type}
                   </div>
                 </div>
               </div>
