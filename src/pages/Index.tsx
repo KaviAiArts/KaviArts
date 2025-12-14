@@ -17,7 +17,9 @@ const ContentSection = ({ title, items, category }) => {
   return (
     <section className="py-4 md:py-4">
       {/* ================= MOBILE (FULL WIDTH, ZEDGE STYLE) ================= */}
-      <div className="lg:hidden">
+
+
+      <div className="md:hidden">
         {/* Title row */}
         <div className="px-4 flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">{title}</h2>
@@ -57,7 +59,7 @@ const ContentSection = ({ title, items, category }) => {
       </div>
 
       {/* ================= DESKTOP (UNCHANGED) ================= */}
-      <div className="hidden lg:block">
+      <div className="hidden md:block">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold">{title}</h2>
