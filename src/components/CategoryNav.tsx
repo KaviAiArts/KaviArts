@@ -48,10 +48,18 @@ const CategoryNav = ({ onSelect = () => {} }: Props) => {
   flex items-center justify-center gap-2
   rounded-full
   px-3 text-xs font-medium
-  bg-secondary text-foreground
-  hover:bg-secondary/80
+
+  border border-border
+  bg-card text-foreground
+
+  hover:bg-primary/15
+  hover:border-primary
+  hover:text-primary
+  transition-colors
+
   md:h-10 md:w-auto md:px-4 md:text-sm md:rounded-lg
 "
+
 
 
 
