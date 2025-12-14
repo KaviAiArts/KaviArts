@@ -19,7 +19,7 @@ const ContentSection = ({ title, items, category }) => {
   return (
     <>
       {/* ================= MOBILE ================= */}
-      <section className="md:hidden py-6">
+      <section className="md:hidden py-4">
         <div className="px-4 flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold">{title}</h2>
           <Button
@@ -47,7 +47,7 @@ const ContentSection = ({ title, items, category }) => {
       </section>
 
       {/* ================= DESKTOP ================= */}
-      <section className="hidden md:block py-6">
+      <section className="hidden md:block py-4">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">{title}</h2>
