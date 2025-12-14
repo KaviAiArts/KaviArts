@@ -45,10 +45,13 @@ const CategoryNav = ({ onSelect = () => {} }: Props) => {
                 className="
   h-9
   w-full
-  flex items-center justify-center gap-2
-  rounded-full
-  px-3 text-xs font-medium
+  flex items-center justify-center gap-1.5
 
+  px-2
+  text-[11px] font-medium
+  whitespace-nowrap
+
+  rounded-lg
   border border-border
   bg-card text-foreground
 
@@ -59,6 +62,7 @@ const CategoryNav = ({ onSelect = () => {} }: Props) => {
 
   md:h-10 md:w-auto md:px-4 md:text-sm md:rounded-lg
 "
+
 
 
 
