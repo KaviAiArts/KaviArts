@@ -67,14 +67,31 @@ const ItemDetails = () => {
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* PREVIEW AREA */}
-          <Card className="overflow-hidden flex items-center justify-center bg-muted/40 min-h-[300px]">
+
+
+          <Card
+  className="
+    overflow-hidden
+    flex items-center justify-center
+    bg-muted/40
+    max-h-[70vh]
+    min-h-[260px]
+  "
+>
+
+
             {/* WALLPAPER */}
             {item.file_type === "wallpaper" && (
+
+
               <img
-                src={item.file_url}
-                alt={item.file_name}
-                className="w-full h-full object-contain"
-              />
+  src={item.file_url}
+  alt={item.file_name}
+  className="max-h-[70vh] w-auto object-contain"
+/>
+
+
+
             )}
 
             {/* RINGTONE */}
