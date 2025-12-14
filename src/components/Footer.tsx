@@ -34,28 +34,34 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold mb-4">Browse</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Wallpapers</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Ringtones</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Videos</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Get Our App</a></li>
-            </ul>
-          </div>
 
-          {/* Support */}
-          <div>
-            <h4 className="font-semibold mb-4">Support</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Terms & Conditions</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Contact Us</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Extras</a></li>
-            </ul>
-          </div>
+
+          {/* Quick Links */}
+       {/* Browse */}
+<div className="col-span-1">
+  <h4 className="font-semibold mb-4">Browse</h4>
+  <ul className="space-y-2 text-sm text-muted-foreground">
+    <li><a href="#" className="hover:text-primary">Wallpapers</a></li>
+    <li><a href="#" className="hover:text-primary">Ringtones</a></li>
+    <li><a href="#" className="hover:text-primary">Videos</a></li>
+    <li><a href="#" className="hover:text-primary">Get Our App</a></li>
+  </ul>
+</div>
+
+{/* Support */}
+<div className="col-span-1">
+  <h4 className="font-semibold mb-4">Support</h4>
+  <ul className="space-y-2 text-sm text-muted-foreground">
+    <li><a href="#" className="hover:text-primary">About Us</a></li>
+    <li><a href="#" className="hover:text-primary">Terms & Conditions</a></li>
+    <li><a href="#" className="hover:text-primary">Privacy Policy</a></li>
+    <li><a href="#" className="hover:text-primary">Contact Us</a></li>
+    <li><a href="#" className="hover:text-primary">Extras</a></li>
+  </ul>
+</div>
+
+
+    
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
