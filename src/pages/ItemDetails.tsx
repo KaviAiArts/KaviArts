@@ -146,23 +146,60 @@ const ItemDetails = () => {
 
 
             {/* ZEDGE-STYLE DOWNLOAD BUTTON */}
-            <div className="mt-8 flex justify-end">
-  <Button
-    onClick={handleDownload}
-    className="
-      h-11
-      px-8
-      rounded-full
-      bg-primary
-      text-primary-foreground
-      hover:bg-primary/90
-      font-medium
-    "
-  >
-    <Download className="w-4 h-4 mr-2" />
-    Download
-  </Button>
+          {/* ZEDGE-STYLE ACTION BUTTONS */}
+<div className="mt-8 flex justify-end">
+  <div className="flex items-center gap-3">
+    {/* SHARE BUTTON */}
+    <Button
+      variant="secondary"
+      size="icon"
+      onClick={() => {
+        if (navigator.share) {
+          navigator.share({
+            title: item.file_name,
+            url: window.location.href,
+          });
+        } else {
+          navigator.clipboard.writeText(window.location.href);
+        }
+      }}
+      className="h-11 w-11 rounded-full"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-5 h-5"
+      >
+        <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+        <path d="M12 3v14" />
+        <path d="m7 8 5-5 5 5" />
+      </svg>
+    </Button>
+
+    {/* DOWNLOAD BUTTON */}
+    <Button
+      onClick={handleDownload}
+      className="
+        h-11
+        px-10
+        rounded-full
+        bg-primary
+        text-primary-foreground
+        hover:bg-primary/90
+        font-medium
+      "
+    >
+      <Download className="w-4 h-4 mr-2" />
+      Download
+    </Button>
+  </div>
 </div>
+
 
 
 
