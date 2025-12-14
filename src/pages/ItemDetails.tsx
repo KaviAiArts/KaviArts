@@ -165,7 +165,7 @@ const ItemDetails = () => {
         }
       }}
     >
-      ⤴
+      <Share2 className="w-5 h-5" />
     </Button>
 
     {/* DOWNLOAD */}
