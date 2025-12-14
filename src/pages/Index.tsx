@@ -9,18 +9,17 @@ import Footer from "@/components/Footer";
 import ContentItem from "@/components/ContentItem";  // ✅ correct
 import { Button } from "@/components/ui/button";
 
+
+
 // ------------------------------
-// REUSABLE CONTENT SECTION
+// REUSABLE CONTENT SECTION (FIXED)
 // ------------------------------
 
 const ContentSection = ({ title, items, category }) => {
   return (
-    <section className="py-4 md:py-4">
-      {/* ================= MOBILE (FULL WIDTH, ZEDGE STYLE) ================= */}
-
-
-      <div className="md:hidden">
-        {/* Title row */}
+    <>
+      {/* ================= MOBILE (SCROLL) ================= */}
+      <section className="md:hidden py-4">
         <div className="px-4 flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">{title}</h2>
           <Button
@@ -32,34 +31,23 @@ const ContentSection = ({ title, items, category }) => {
           </Button>
         </div>
 
-        {/* Horizontal scroll */}
         <div className="overflow-x-auto scrollbar-hide">
-          <div
-            className="flex gap-4 px-4"
-            style={{ width: "max-content" }}
-          >
-            {items.length > 0 ? (
-              items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex-shrink-0"
-                  /* 2 cards + peek of 3rd */
-                  style={{ width: "42vw", maxWidth: "190px" }}
-                >
-                  <ContentItem item={item} />
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground">
-                No content available yet.
-              </p>
-            )}
+          <div className="flex gap-4 px-4 w-max">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="flex-shrink-0"
+                style={{ width: "42vw", maxWidth: "190px" }}
+              >
+                <ContentItem item={item} />
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ================= DESKTOP (UNCHANGED) ================= */}
-      <div className="hidden md:block">
+      {/* ================= DESKTOP (GRID 6 × 2) ================= */}
+      <section className="hidden md:block py-6">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold">{title}</h2>
@@ -72,22 +60,19 @@ const ContentSection = ({ title, items, category }) => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-6 gap-6">
-            {items.length > 0 ? (
-              items.map((item) => (
-                <ContentItem key={item.id} item={item} />
-              ))
-            ) : (
-              <p className="text-muted-foreground col-span-6">
-                No content available yet.
-              </p>
-            )}
+          {/* ✅ 12 ITEMS → 6 PER ROW → 2 ROWS */}
+          <div className="grid grid-cols-6 gap-6 auto-rows-fr">
+            {items.map((item) => (
+              <ContentItem key={item.id} item={item} />
+            ))}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 };
+
+
 
 // ------------------------------
 // MAIN HOMEPAGE
