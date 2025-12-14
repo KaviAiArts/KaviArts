@@ -111,7 +111,7 @@ const Index = () => {
       .select("*")
       .eq("file_type", "ringtone")
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(12);
 
     // 4. POPULAR VIDEOS (FIXED)
     const { data: videoData } = await supabase
