@@ -65,7 +65,7 @@ const ItemDetails = () => {
 
 
         {/* Back */}
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
@@ -143,21 +143,29 @@ const ItemDetails = () => {
               Downloads
             </p>
 
+
+
             {/* ZEDGE-STYLE DOWNLOAD BUTTON */}
-            <Button
-              size="lg"
-              onClick={handleDownload}
-              className="
-                w-full h-12
-                rounded-full
-                bg-primary text-primary-foreground
-                hover:bg-primary/90
-                text-base font-semibold
-              "
-            >
-              <Download className="w-5 h-5 mr-2" />
-              Download
-            </Button>
+            <div className="mt-8 flex justify-end">
+  <Button
+    onClick={handleDownload}
+    className="
+      h-11
+      px-8
+      rounded-full
+      bg-primary
+      text-primary-foreground
+      hover:bg-primary/90
+      font-medium
+    "
+  >
+    <Download className="w-4 h-4 mr-2" />
+    Download
+  </Button>
+</div>
+
+
+
 
             {/* TAGS */}
             {item.tags?.length > 0 && (
