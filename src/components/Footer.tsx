@@ -7,7 +7,13 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {/* Brand */}
-          <div className="md:col-span-2">
+
+
+
+          <div className="col-span-2 md:col-span-2">
+
+
+
             <div className="flex items-center space-x-2 mb-4">
               <h3 className="text-xl font-bold gradient-text">KaviArts</h3>
             </div>

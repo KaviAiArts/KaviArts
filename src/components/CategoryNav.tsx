@@ -39,13 +39,23 @@ const CategoryNav = ({ onSelect = () => {} }: Props) => {
                 key={cat.value}
                 variant="outline"
                 onClick={() => onSelect(cat.value)}
+
+
+
                 className="
-                  h-10
-                  w-full
-                  flex items-center justify-center gap-2
-                  px-3 text-xs
-                  md:w-auto md:px-4 md:text-sm
-                "
+  h-9
+  w-full
+  flex items-center justify-center gap-2
+  rounded-full
+  px-3 text-xs font-medium
+  bg-secondary text-foreground
+  hover:bg-secondary/80
+  md:h-10 md:w-auto md:px-4 md:text-sm md:rounded-lg
+"
+
+
+
+
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span className="whitespace-nowrap">{cat.label}</span>
