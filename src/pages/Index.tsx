@@ -12,16 +12,16 @@ import { Button } from "@/components/ui/button";
 
 
 // ------------------------------
-// REUSABLE CONTENT SECTION (FIXED)
+// REUSABLE CONTENT SECTION (UNIFIED SPACING)
 // ------------------------------
 
 const ContentSection = ({ title, items, category }) => {
   return (
     <>
-      {/* ================= MOBILE (SCROLL) ================= */}
-      <section className="md:hidden py-4">
-        <div className="px-4 flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">{title}</h2>
+      {/* ================= MOBILE ================= */}
+      <section className="md:hidden py-6">
+        <div className="px-4 flex justify-between items-center mb-3">
+          <h2 className="text-xl font-semibold">{title}</h2>
           <Button
             variant="outline"
             size="sm"
@@ -32,7 +32,7 @@ const ContentSection = ({ title, items, category }) => {
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-4 px-4 w-max">
+          <div className="flex gap-3 px-4 w-max">
             {items.map((item) => (
               <div
                 key={item.id}
@@ -46,11 +46,11 @@ const ContentSection = ({ title, items, category }) => {
         </div>
       </section>
 
-      {/* ================= DESKTOP (GRID 6 × 2) ================= */}
+      {/* ================= DESKTOP ================= */}
       <section className="hidden md:block py-6">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">{title}</h2>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-xl font-semibold">{title}</h2>
             <Button
               variant="outline"
               size="sm"
@@ -60,8 +60,8 @@ const ContentSection = ({ title, items, category }) => {
             </Button>
           </div>
 
-          {/* ✅ 12 ITEMS → 6 PER ROW → 2 ROWS */}
-          <div className="grid grid-cols-6 gap-6 auto-rows-fr">
+          {/* ⭐ SAME SPACING AS NEWEST WALLPAPERS */}
+          <div className="grid grid-cols-6 gap-3">
             {items.map((item) => (
               <ContentItem key={item.id} item={item} />
             ))}
@@ -71,6 +71,7 @@ const ContentSection = ({ title, items, category }) => {
     </>
   );
 };
+
 
 
 

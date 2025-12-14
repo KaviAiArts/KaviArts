@@ -57,11 +57,16 @@ const ContentItem = ({ item }: { item: any }) => {
         )}
 
         {/* RINGTONE */}
+
+
+
         {item.file_type === "ringtone" && (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-            <Music className="w-16 h-16 text-primary/80" />
-          </div>
-        )}
+  <div className="aspect-square w-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+    <Music className="w-14 h-14 text-primary/80" />
+  </div>
+)}
+
+
 
         {/* LABEL */}
         <span className="absolute top-2 left-2 bg-primary/90 text-xs px-2 py-1 rounded-full text-white">
