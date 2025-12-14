@@ -26,28 +26,37 @@ const ItemDetails = () => {
         document.title = `${data.file_name} - KaviArts`;
       }
     };
-
     fetchItem();
   }, [id]);
 
-  // 🔥 ZEDGE-STYLE DIRECT DOWNLOAD
+  // 🔥 FORCE DOWNLOAD (WORKS FOR IMAGE / AUDIO / VIDEO)
   const handleDownload = async () => {
-    await supabase
-      .from("files")
-      .update({ downloads: (item.downloads || 0) + 1 })
-      .eq("id", item.id);
+    try {
+      const response = await fetch(item.file_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
 
-    setItem((prev: any) => ({
-      ...prev,
-      downloads: (prev.downloads || 0) + 1,
-    }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = item.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
 
-    const link = document.createElement("a");
-    link.href = item.file_url;
-    link.download = item.file_name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // persist counter
+      await supabase
+        .from("files")
+        .update({ downloads: (item.downloads || 0) + 1 })
+        .eq("id", item.id);
+
+      setItem((prev: any) => ({
+        ...prev,
+        downloads: (prev.downloads || 0) + 1,
+      }));
+    } catch (e) {
+      console.error("Download failed", e);
+    }
   };
 
   if (!item) return null;
@@ -56,78 +65,41 @@ const ItemDetails = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-4 md:py-8 overflow-x-hidden">
-
-        {/* Back */}
+      <main className="container mx-auto px-4 py-4 overflow-x-hidden">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
-        {/* GRID */}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-
-          {/* LEFT: PREVIEW */}
-
-         <Card
-  className="
-    overflow-hidden
-    flex items-center justify-center
-    bg-muted/40
-    w-full
-    max-w-full
-    max-h-[70vh]
-    min-h-[260px]
-  "
->
-
-
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* PREVIEW */}
+          <Card className="flex items-center justify-center bg-muted/40 min-h-[260px]">
             {item.file_type === "wallpaper" && (
               <img
-  src={item.file_url}
-  alt={item.file_name}
-  className="
-    w-full
-    max-w-full
-    h-auto
-    max-h-[70vh]
-    object-contain
-  "
-/>
-
-
+                src={item.file_url}
+                alt={item.file_name}
+                className="max-w-full max-h-[70vh] object-contain"
+              />
             )}
 
             {item.file_type === "ringtone" && (
-              <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                <Music className="w-16 h-16 text-primary" />
-                <span className="text-sm">Audio Preview</span>
-              </div>
+              <Music className="w-16 h-16 text-primary" />
             )}
 
             {item.file_type === "video" && (
               <video
                 controls
-                poster={item.thumbnail_url || undefined}
-                className="w-full h-full object-contain"
-              >
-                <source src={item.file_url} />
-              </video>
+                className="max-w-full max-h-[70vh]"
+                src={item.file_url}
+              />
             )}
           </Card>
 
-          {/* RIGHT: DETAILS (FULL HEIGHT COLUMN) */}
+          {/* DETAILS */}
           <div className="flex flex-col w-full">
-            {/* TOP CONTENT */}
             <div className="space-y-4">
               <div className="flex gap-2">
-                <Badge variant="secondary">{item.file_type}</Badge>
-                {item.width && item.height && (
-                  <Badge variant="outline">
-                    {item.width} × {item.height}
-                  </Badge>
-                )}
+                <Badge>{item.file_type}</Badge>
               </div>
 
               <h1 className="text-2xl font-bold">{item.file_name}</h1>
@@ -137,72 +109,35 @@ const ItemDetails = () => {
               )}
 
               <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">
-                  {(item.downloads || 0).toLocaleString()}
-                </span>{" "}
-                Downloads
+                {(item.downloads || 0).toLocaleString()} Downloads
               </p>
             </div>
 
+            {/* ACTION BAR */}
+            <div className="mt-6 lg:mt-auto flex justify-center gap-3">
+              <Button
+                onClick={() =>
+                  navigator.share
+                    ? navigator.share({
+                        title: item.file_name,
+                        url: window.location.href,
+                      })
+                    : navigator.clipboard.writeText(window.location.href)
+                }
+                className="h-11 px-6 rounded-full border hover:bg-primary hover:text-white"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
 
-
-           {/* ACTION BAR */}
-<div className="mt-6 lg:mt-auto flex justify-center">
-  <div className="flex items-center gap-3">
-    {/* SHARE */}
-
-
-    <Button
-  onClick={() => {
-    if (navigator.share) {
-      navigator.share({
-        title: item.file_name,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-    }
-  }}
-  className="
-    h-11
-    px-6
-    rounded-full
-    flex items-center gap-2
-    text-sm font-medium
-    border border-border
-    bg-card
-    text-muted-foreground
-    transition-all
-    hover:bg-primary
-    hover:text-primary-foreground
-    hover:shadow-[0_0_0_2px_rgba(139,92,246,0.35)]
-  "
->
-  <Share2 className="w-4 h-4" />
-  Share
-</Button>
-
-
-    {/* DOWNLOAD */}
-    <Button
-      onClick={handleDownload}
-      className="
-        h-11
-        px-10
-        rounded-full
-        bg-primary
-        text-primary-foreground
-        hover:bg-primary/90
-        font-medium
-      "
-    >
-      <Download className="w-4 h-4 mr-2" />
-      Download
-    </Button>
-  </div>
-</div>
-
-
+              <Button
+                onClick={handleDownload}
+                className="h-11 px-10 rounded-full bg-primary text-white"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </div>
 
             {/* TAGS */}
             {item.tags?.length > 0 && (
