@@ -58,7 +58,12 @@ const ItemDetails = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
+
+
+      <main className="container mx-auto px-4 py-4 md:py-4">
+
+
+
         {/* Back */}
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
