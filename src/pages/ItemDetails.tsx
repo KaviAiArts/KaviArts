@@ -145,9 +145,11 @@ const ItemDetails = () => {
 
 
 
-            {/* ZEDGE-STYLE DOWNLOAD BUTTON */}
+            
           {/* ZEDGE-STYLE ACTION BUTTONS */}
-<div className="mt-8 flex justify-end">
+
+  {/* ACTION BAR – CENTERED & LOWER */}
+<div className="mt-10 flex justify-center">
   <div className="flex items-center gap-3">
     {/* SHARE BUTTON */}
     <Button
@@ -199,6 +201,8 @@ const ItemDetails = () => {
     </Button>
   </div>
 </div>
+
+
 
 
 
