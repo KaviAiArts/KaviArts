@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Download, Music } from "lucide-react";
+import { ArrowLeft, Download, Music, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -150,23 +150,38 @@ const ItemDetails = () => {
 <div className="mt-6 lg:mt-auto flex justify-center">
   <div className="flex items-center gap-3">
     {/* SHARE */}
+
+
     <Button
-      variant="secondary"
-      size="icon"
-      className="h-11 w-11 rounded-full"
-      onClick={() => {
-        if (navigator.share) {
-          navigator.share({
-            title: item.file_name,
-            url: window.location.href,
-          });
-        } else {
-          navigator.clipboard.writeText(window.location.href);
-        }
-      }}
-    >
-      <Share2 className="w-5 h-5" />
-    </Button>
+  onClick={() => {
+    if (navigator.share) {
+      navigator.share({
+        title: item.file_name,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+    }
+  }}
+  className="
+    h-11
+    px-6
+    rounded-full
+    flex items-center gap-2
+    text-sm font-medium
+    border border-border
+    bg-card
+    text-muted-foreground
+    transition-all
+    hover:bg-primary
+    hover:text-primary-foreground
+    hover:shadow-[0_0_0_2px_rgba(139,92,246,0.35)]
+  "
+>
+  <Share2 className="w-4 h-4" />
+  Share
+</Button>
+
 
     {/* DOWNLOAD */}
     <Button
