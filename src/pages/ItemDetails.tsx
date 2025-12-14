@@ -56,7 +56,8 @@ const ItemDetails = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-4">
+      <main className="container mx-auto px-4 py-4 md:py-8 overflow-x-hidden">
+
         {/* Back */}
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -64,7 +65,9 @@ const ItemDetails = () => {
         </Button>
 
         {/* GRID */}
-        <div className="grid lg:grid-cols-2 gap-8">
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+
           {/* LEFT: PREVIEW */}
 
          <Card
@@ -73,23 +76,26 @@ const ItemDetails = () => {
     flex items-center justify-center
     bg-muted/40
     w-full
+    max-w-full
     max-h-[70vh]
     min-h-[260px]
   "
 >
+
 
             {item.file_type === "wallpaper" && (
               <img
   src={item.file_url}
   alt={item.file_name}
   className="
-    max-h-[70vh]
+    w-full
     max-w-full
-    w-auto
     h-auto
+    max-h-[70vh]
     object-contain
   "
 />
+
 
             )}
 
@@ -112,7 +118,7 @@ const ItemDetails = () => {
           </Card>
 
           {/* RIGHT: DETAILS (FULL HEIGHT COLUMN) */}
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col w-full">
             {/* TOP CONTENT */}
             <div className="space-y-4">
               <div className="flex gap-2">
@@ -140,64 +146,47 @@ const ItemDetails = () => {
 
 
 
-            {/* ACTION BAR — PUSHED TO BOTTOM */}
-            {/* ACTION BAR */}
-<div className="mt-8 lg:mt-auto">
-  <div className="flex justify-center lg:justify-start">
-    <div className="flex items-center gap-3">
-      
-      {/* SHARE */}
-      <Button
-        variant="secondary"
-        size="icon"
-        onClick={() => {
-          if (navigator.share) {
-            navigator.share({
-              title: item.file_name,
-              url: window.location.href,
-            });
-          } else {
-            navigator.clipboard.writeText(window.location.href);
-          }
-        }}
-        className="h-11 w-11 rounded-full"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="w-5 h-5"
-        >
-          <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
-          <path d="M12 3v14" />
-          <path d="m7 8 5-5 5 5" />
-        </svg>
-      </Button>
+           {/* ACTION BAR */}
+<div className="mt-6 lg:mt-auto flex justify-center">
+  <div className="flex items-center gap-3">
+    {/* SHARE */}
+    <Button
+      variant="secondary"
+      size="icon"
+      className="h-11 w-11 rounded-full"
+      onClick={() => {
+        if (navigator.share) {
+          navigator.share({
+            title: item.file_name,
+            url: window.location.href,
+          });
+        } else {
+          navigator.clipboard.writeText(window.location.href);
+        }
+      }}
+    >
+      ⤴
+    </Button>
 
-      {/* DOWNLOAD */}
-      <Button
-        onClick={handleDownload}
-        className="
-          h-11
-          px-10
-          rounded-full
-          bg-primary
-          text-primary-foreground
-          hover:bg-primary/90
-          font-medium
-        "
-      >
-        <Download className="w-4 h-4 mr-2" />
-        Download
-      </Button>
-
-    </div>
+    {/* DOWNLOAD */}
+    <Button
+      onClick={handleDownload}
+      className="
+        h-11
+        px-10
+        rounded-full
+        bg-primary
+        text-primary-foreground
+        hover:bg-primary/90
+        font-medium
+      "
+    >
+      <Download className="w-4 h-4 mr-2" />
+      Download
+    </Button>
   </div>
 </div>
+
 
 
             {/* TAGS */}
