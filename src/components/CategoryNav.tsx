@@ -23,37 +23,41 @@ type Props = {
 
 const CategoryNav = ({ onSelect = () => {} }: Props) => {
   return (
-
-
-
-    <section className="pt-4 pb-4 md:pb-4 px-4 border-b border-border">
-  <div className="container mx-auto">
-    <div className="w-full flex justify-center">
-      <div
-        className="
-          flex flex-wrap gap-3
-          justify-center items-center
-          max-w-5xl
-        "
-      >
-        {categories.map((cat) => {
-          const Icon = cat.icon;
-          return (
-            <Button
-              key={cat.value}
-              variant="outline"
-              className="h-10 flex items-center gap-2 hover-lift"
-            >
-              <Icon className="w-4 h-4" />
-              <span className="text-sm">{cat.label}</span>
-            </Button>
-          );
-        })}
+    <section className="pt-4 pb-4 px-4 border-b border-border">
+      <div className="container mx-auto">
+        <div className="w-full flex justify-center">
+          {/* MOBILE: 2 rows × 3 cols | DESKTOP: original flex */}
+          <div
+            className="
+              grid grid-cols-3 gap-3
+              md:flex md:flex-wrap md:gap-3 md:justify-center
+              max-w-5xl w-full
+            "
+          >
+            {categories.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Button
+                  key={cat.value}
+                  variant="outline"
+                  onClick={() => onSelect(cat.value)}
+                  className="
+                    h-10
+                    flex items-center justify-center gap-2
+                    text-xs px-2
+                    hover-lift
+                    w-full
+                  "
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="truncate">{cat.label}</span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
-
+    </section>
   );
 };
 
