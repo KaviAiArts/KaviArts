@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Download, Tag } from "lucide-react";
+import { ArrowLeft, Download, Music, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -8,34 +8,31 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 
-
 const ItemDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  // 🔹 Fetch item
   useEffect(() => {
     const fetchItem = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("files")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (!error) {
+      if (data) {
         setItem(data);
         document.title = `${data.file_name} - KaviArts`;
       }
-      setLoading(false);
     };
 
     fetchItem();
   }, [id]);
 
-  // 🔹 Handle download (Zedge-style)
+  // 🔥 ZEDGE-STYLE DIRECT DOWNLOAD
   const handleDownload = async () => {
+    // increment count
     await supabase
       .from("files")
       .update({ downloads: (item.downloads || 0) + 1 })
@@ -46,33 +43,16 @@ const ItemDetails = () => {
       downloads: (prev.downloads || 0) + 1,
     }));
 
-    window.open(item.file_url, "_blank");
+    // force browser download
+    const link = document.createElement("a");
+    link.href = item.file_url;
+    link.download = item.file_name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8 text-center">
-          Loading...
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!item) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold mb-4">Item not found</h1>
-          <Button onClick={() => navigate("/")}>Go Back Home</Button>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  if (!item) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,20 +66,39 @@ const ItemDetails = () => {
         </Button>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Preview */}
-          <Card className="overflow-hidden">
+          {/* PREVIEW AREA */}
+          <Card className="overflow-hidden flex items-center justify-center bg-muted/40 min-h-[300px]">
+            {/* WALLPAPER */}
             {item.file_type === "wallpaper" && (
               <img
                 src={item.file_url}
                 alt={item.file_name}
-                className="w-full h-auto object-cover"
+                className="w-full h-full object-contain"
               />
+            )}
+
+            {/* RINGTONE */}
+            {item.file_type === "ringtone" && (
+              <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                <Music className="w-16 h-16 text-primary" />
+                <span className="text-sm">Audio Preview</span>
+              </div>
+            )}
+
+            {/* VIDEO */}
+            {item.file_type === "video" && (
+              <video
+                controls
+                poster={item.thumbnail_url || undefined}
+                className="w-full h-full object-contain"
+              >
+                <source src={item.file_url} />
+              </video>
             )}
           </Card>
 
           {/* DETAILS */}
           <div className="space-y-6">
-            {/* Type + Resolution */}
             <div className="flex gap-2">
               <Badge variant="secondary">{item.file_type}</Badge>
               {item.width && item.height && (
@@ -109,15 +108,12 @@ const ItemDetails = () => {
               )}
             </div>
 
-            {/* TITLE */}
             <h1 className="text-2xl font-bold">{item.file_name}</h1>
 
-            {/* DESCRIPTION */}
             {item.description && (
               <p className="text-muted-foreground">{item.description}</p>
             )}
 
-            {/* DOWNLOAD COUNT */}
             <p className="text-sm text-muted-foreground">
               <span className="font-semibold text-foreground">
                 {(item.downloads || 0).toLocaleString()}
@@ -125,7 +121,7 @@ const ItemDetails = () => {
               Downloads
             </p>
 
-            {/* DOWNLOAD BUTTON (ZEDGE STYLE) */}
+            {/* ZEDGE-STYLE DOWNLOAD BUTTON */}
             <Button
               size="lg"
               onClick={handleDownload}
@@ -143,25 +139,19 @@ const ItemDetails = () => {
 
             {/* TAGS */}
             {item.tags?.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
-                  <Tag className="w-4 h-4" />
-                  Tags
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {item.tags.map((tag: string) => (
-                    <span
-                      key={tag}
-                      className="
-                        px-3 py-1
-                        text-xs rounded-full
-                        bg-secondary text-foreground
-                      "
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {item.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="
+                      px-3 py-1
+                      text-xs rounded-full
+                      bg-secondary text-foreground
+                    "
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
             )}
           </div>
