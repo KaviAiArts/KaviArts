@@ -26,7 +26,18 @@ const ContentItem = ({ item }) => {
       className="group glass-card hover-lift overflow-hidden cursor-pointer"
       onClick={handleItemClick}
     >
-      <div className="relative aspect-[9/16] overflow-hidden">
+      
+
+<div
+  className={`relative overflow-hidden ${
+    item.file_type === "ringtone"
+      ? "aspect-square"
+      : "aspect-[9/16]"
+  }`}
+>
+
+
+
         {item.file_type !== "ringtone" ? (
           <img
             src={item.file_url}
