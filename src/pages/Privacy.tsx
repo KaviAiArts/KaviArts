@@ -1,44 +1,69 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Helmet } from "react-helmet-async";
 
 const Privacy = () => (
   <>
+    <Helmet>
+      <title>Privacy Policy | Kavi Arts</title>
+      <meta
+        name="description"
+        content="Privacy Policy for Kavi Arts. Learn how we collect and protect your data."
+      />
+      <meta name="robots" content="noindex, follow" />
+    </Helmet>
+
     <Header />
     <main className="container mx-auto px-4 py-10 max-w-3xl">
-      <h1 className="text-3xl font-bold mb-4">Privacy Policy</h1>
-      <p className="text-muted-foreground leading-relaxed">
+      <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
 
-🔷 Privacy Policy
+      <section className="space-y-6 text-muted-foreground">
+        <p className="leading-relaxed">
+          Your privacy matters to us. Kavi Arts collects limited, non-personal
+          data to improve website performance, analyze downloads, and ensure
+          site security.
+        </p>
 
-Your privacy matters to us.
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold text-foreground">
+            Information We May Collect
+          </h2>
+          <ul className="list-disc list-inside space-y-2 ml-2">
+            <li>Anonymous usage data (pages visited, downloads)</li>
+            <li>Device and browser type (non-identifiable)</li>
+          </ul>
+        </div>
 
-Kavi Arts collects limited, non-personal data to:
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold text-foreground">
+            Information We Do NOT Collect
+          </h2>
+          <ul className="list-disc list-inside space-y-2 ml-2">
+            <li>Personal identification details</li>
+            <li>Payment information</li>
+            <li>User accounts or passwords</li>
+          </ul>
+        </div>
 
-Improve website performance
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold text-foreground">
+            Third-Party Services
+          </h2>
+          <p className="leading-relaxed">
+            Third-party services (such as analytics tools or advertising
+            partners) may use cookies in accordance with their own privacy
+            policies.
+          </p>
+        </div>
 
-Analyze downloads and popular content
-
-Ensure site security and functionality
-
-Information We May Collect:
-
-Anonymous usage data (pages visited, downloads)
-
-Device and browser type (non-identifiable)
-
-Information We Do NOT Collect:
-
-Personal identification details
-
-Payment information
-
-User accounts or passwords
-
-Third-party services (such as Google AdSense or analytics tools) may use cookies or similar technologies in accordance with their own privacy policies.
-
-By using this website, you consent to this privacy policy.
-
-      </p>
+        <p className="text-sm border-t pt-4 mt-8">
+          By using this website, you consent to this privacy policy.
+          <br />
+          <span className="opacity-70">
+            Last Updated: December 2025
+          </span>
+        </p>
+      </section>
     </main>
     <Footer />
   </>
