@@ -29,7 +29,6 @@ const ItemDetails = () => {
     fetchItem();
   }, [id]);
 
-  // 🔥 FORCE DOWNLOAD
   const handleDownload = async () => {
     try {
       const response = await fetch(item.file_url);
@@ -96,7 +95,6 @@ const ItemDetails = () => {
 
           {/* DETAILS */}
           <div className="flex flex-col w-full h-full">
-            {/* META */}
             <div className="space-y-4">
               <div className="flex gap-2">
                 <Badge>{item.file_type}</Badge>
@@ -112,7 +110,6 @@ const ItemDetails = () => {
                 <p className="text-muted-foreground">{item.description}</p>
               )}
 
-              {/* TAGS */}
               {item.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
                   {item.tags.map((tag: string) => (
@@ -127,7 +124,7 @@ const ItemDetails = () => {
               )}
             </div>
 
-            {/* ACTION BAR – BOTTOM */}
+            {/* ACTION BAR – ORIGINAL SIZE RESTORED */}
             <div className="mt-auto pt-6 flex gap-3">
               <Button
                 onClick={() =>
@@ -138,7 +135,7 @@ const ItemDetails = () => {
                       })
                     : navigator.clipboard.writeText(window.location.href)
                 }
-                className="h-11 flex-1 rounded-full border hover:bg-primary hover:text-white"
+                className="h-11 px-6 rounded-full border hover:bg-primary hover:text-white"
               >
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
@@ -146,7 +143,7 @@ const ItemDetails = () => {
 
               <Button
                 onClick={handleDownload}
-                className="h-11 flex-1 rounded-full bg-primary text-white"
+                className="h-11 px-10 rounded-full bg-primary text-white"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download
