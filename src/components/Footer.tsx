@@ -46,27 +46,27 @@ const Footer = () => {
 
             {/* SOCIAL ICONS */}
             <div className="flex flex-wrap gap-6">
-              <a href="https://instagram.com/" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
+              <a href="https://www.instagram.com/kavi_tunez/" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
                 <Instagram className="w-6 h-6 mb-1" />
                 <span className="text-xs">Instagram</span>
               </a>
 
-              <a href="https://youtube.com/" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
+              <a href="https://youtube.com/@kavitunez?si=QrbqS0Y9ibD7Cm43" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
                 <Youtube className="w-6 h-6 mb-1" />
                 <span className="text-xs">YouTube</span>
               </a>
 
-              <a href="https://pinterest.com/" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
+              <a href="https://in.pinterest.com/Kavi_Pics/" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
                 <PinterestIcon />
                 <span className="text-xs">Pinterest</span>
               </a>
 
-              <a href="https://open.spotify.com/" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
+              <a href="https://open.spotify.com/artist/2Yn6quG4CSQl01LcLPU4yu" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
                 <Music className="w-6 h-6 mb-1" />
                 <span className="text-xs">Spotify</span>
               </a>
 
-              <a href="https://music.apple.com/" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
+              <a href="https://music.apple.com/us/artist/kavi-tunez/1826128201" target="_blank" className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition">
                 <Music2 className="w-6 h-6 mb-1" />
                 <span className="text-xs">Apple Music</span>
               </a>
