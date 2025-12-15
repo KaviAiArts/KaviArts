@@ -26,13 +26,12 @@ const CategoryView = () => {
       .select("*")
       .eq("file_type", category);
 
-    // 🔥 SORT LOGIC
     if (sort === "popular") {
       query = query.order("downloads", { ascending: false });
     } else if (sort === "newest") {
       query = query.order("created_at", { ascending: false });
     } else {
-      // 🎲 RANDOM (header click)
+      // header click = discovery
       query = query.order("created_at", { ascending: false });
     }
 
@@ -45,13 +44,19 @@ const CategoryView = () => {
       <Header />
 
       <main className="container mx-auto px-4 py-6">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold capitalize">{category}</h1>
+          <h1 className="text-3xl font-bold capitalize">
+            {category}
+          </h1>
 
           <div className="flex gap-2">
             {category === "wallpaper" && (
@@ -76,6 +81,7 @@ const CategoryView = () => {
           </div>
         </div>
 
+        {/* 🔑 THIS IS THE KEY FIX */}
         <ContentGrid items={items} />
       </main>
 
