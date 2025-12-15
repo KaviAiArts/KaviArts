@@ -9,9 +9,14 @@ import NotFound from "./pages/NotFound";
 import ItemDetails from "./pages/ItemDetails";
 import CategoryView from "./pages/CategoryView";
 import Admin from "./pages/Admin";
-
-// ⭐ Search Page (Make sure this file exists!)
 import SearchResults from "./pages/SearchResults";
+
+/* ✅ SUPPORT PAGES */
+import About from "./pages/About";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Contact from "./pages/Contact";
+import GetApp from "./pages/GetApp";
 
 const queryClient = new QueryClient();
 
@@ -32,13 +37,20 @@ const App = () => (
           {/* Category View */}
           <Route path="/category/:category" element={<CategoryView />} />
 
-          {/* ⭐ Search Results Page */}
+          {/* Search */}
           <Route path="/search" element={<SearchResults />} />
+
+          {/* Support Pages */}
+          <Route path="/about" element={<About />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/app" element={<GetApp />} />
 
           {/* Admin */}
           <Route path="/admin" element={<Admin />} />
 
-          {/* 404 Fallback */}
+          {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
