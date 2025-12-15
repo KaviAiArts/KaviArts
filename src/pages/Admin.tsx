@@ -56,50 +56,61 @@ const Admin = () => {
     widget.open();
   };
 
+
+
+
   /* ---------------- SAVE (INSERT / UPDATE) ---------------- */
 
-  const saveItem = async ({
-    file_name,
-    description,
-    tags,
-  }: {
-    file_name: string;
-    description: string;
-    tags: string[];
-  }) => {
-    if (editItem) {
-      await supabase
-        .from("files")
-        .update({ file_name, description, tags })
-        .eq("id", editItem.id);
-    } else if (pendingUpload && pendingType) {
-      await supabase.from("files").insert({
+const saveItem = async ({ file_name, description, tags }: any) => {
+  if (!pendingUpload || !pendingType) return;
+
+  const isMp3 = pendingUpload.format === "mp3";
+
+  // if same cloudinary file exists, update it
+  const { data: existing } = await supabase
+    .from("files")
+    .select("id")
+    .eq("public_id", pendingUpload.public_id)
+    .single();
+
+  const forcedType =
+    pendingType === "ringtone" || isMp3 ? "ringtone" : pendingType;
+
+  if (existing) {
+    await supabase
+      .from("files")
+      .update({
         file_name,
         description,
         tags,
-        file_url: pendingUpload.secure_url,
-        public_id: pendingUpload.public_id,
-        file_type: pendingType,
-        category: pendingType,
-        downloads: 0,
-        width: pendingUpload.width ?? null,
-        height: pendingUpload.height ?? null,
-        format: pendingUpload.format ?? null,
-        duration: pendingUpload.duration ?? null,
-      });
-    }
+        file_type: forcedType,
+        category: forcedType,
+      })
+      .eq("id", existing.id);
+  } else {
+    await supabase.from("files").insert({
+      file_name,
+      description,
+      tags,
+      file_url: pendingUpload.secure_url,
+      public_id: pendingUpload.public_id,
+      file_type: forcedType,
+      category: forcedType,
+      downloads: 0,
+      width: pendingUpload.width ?? null,
+      height: pendingUpload.height ?? null,
+      format: pendingUpload.format ?? null,
+      duration: pendingUpload.duration ?? null,
+    });
+  }
 
-    setModalOpen(false);
-    setEditItem(null);
-    setPendingUpload(null);
-    setPendingType(null);
-    fetchFiles();
-  };
+  setModalOpen(false);
+  setEditItem(null);
+  setPendingUpload(null);
+  setPendingType(null);
+  fetchFiles();
+};
 
-  const deleteItem = async (id: number) => {
-    await supabase.from("files").delete().eq("id", id);
-    fetchFiles();
-  };
 
   /* ---------------- AUTH ---------------- */
 
