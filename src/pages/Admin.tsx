@@ -175,38 +175,50 @@ const Admin = () => {
   return (
     <div className="p-6">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchFiles}>
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setAuthorized(false);
-              setPassword("");
-            }}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </div>
+
+
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+  <h1 className="text-2xl font-bold text-center sm:text-left">
+    Admin Dashboard
+  </h1>
+
+  <div className="flex gap-2 justify-center sm:justify-end">
+    <Button variant="outline" onClick={fetchFiles}>
+      <RefreshCcw className="w-4 h-4 mr-2" />
+      Refresh
+    </Button>
+
+    <Button
+      variant="outline"
+      onClick={() => {
+        setAuthorized(false);
+        setPassword("");
+      }}
+    >
+      <LogOut className="w-4 h-4 mr-2" />
+      Logout
+    </Button>
+  </div>
+</div>
+
+
+
 
       {/* UPLOAD */}
-      <div className="flex gap-3 mb-8">
-        <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
-          Upload Wallpaper
-        </Button>
-        <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
-          Upload Ringtone
-        </Button>
-        <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
-          Upload Video
-        </Button>
-      </div>
+     <div className="flex flex-wrap gap-3 mb-8 justify-center sm:justify-start">
+  <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
+    Upload Wallpaper
+  </Button>
+
+  <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
+    Upload Ringtone
+  </Button>
+
+  <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
+    Upload Video
+  </Button>
+</div>
+
 
       {/* GRID
           mobile: 3 cols
