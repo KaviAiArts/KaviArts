@@ -16,12 +16,10 @@ const Admin = () => {
   const [password, setPassword] = useState("");
   const [files, setFiles] = useState<any[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [pendingFile, setPendingFile] = useState<any>(null);
-  const [pendingType, setPendingType] = useState<
-    "wallpaper" | "ringtone" | "video" | null
-  >(null);
-
-  /* ---------------- FETCH FILES ---------------- */
+  const [editItem, setEditItem] = useState<any>(null);
+  const [pendingUpload, setPendingUpload] = useState<any>(null);
+  const [pendingType, setPendingType] =
+    useState<"wallpaper" | "ringtone" | "video" | null>(null);
 
   const fetchFiles = async () => {
     const { data } = await supabase
@@ -38,10 +36,7 @@ const Admin = () => {
 
   /* ---------------- UPLOAD ---------------- */
 
-  const upload = (
-    preset: string,
-    type: "wallpaper" | "ringtone" | "video"
-  ) => {
+  const upload = (preset: string, type: any) => {
     const widget = (window as any).cloudinary.createUploadWidget(
       {
         cloudName: CLOUD_NAME,
@@ -50,8 +45,9 @@ const Admin = () => {
       },
       (_: any, result: any) => {
         if (result?.event === "success") {
-          setPendingFile(result.info);
+          setPendingUpload(result.info);
           setPendingType(type);
+          setEditItem(null);
           setModalOpen(true);
         }
       }
@@ -60,9 +56,9 @@ const Admin = () => {
     widget.open();
   };
 
-  /* ---------------- SAVE METADATA ---------------- */
+  /* ---------------- SAVE (INSERT / UPDATE) ---------------- */
 
-  const saveDetails = async ({
+  const saveItem = async ({
     file_name,
     description,
     tags,
@@ -71,32 +67,36 @@ const Admin = () => {
     description: string;
     tags: string[];
   }) => {
-    if (!pendingFile || !pendingType) return;
-
-    await supabase.from("files").insert({
-      file_name,
-      description,
-      tags,
-      file_url: pendingFile.secure_url,
-      public_id: pendingFile.public_id,
-      file_type: pendingType,
-      category: pendingType,
-      downloads: 0,
-      width: pendingFile.width ?? null,
-      height: pendingFile.height ?? null,
-      format: pendingFile.format ?? null,
-      duration: pendingFile.duration ?? null,
-    });
+    if (editItem) {
+      await supabase
+        .from("files")
+        .update({ file_name, description, tags })
+        .eq("id", editItem.id);
+    } else if (pendingUpload && pendingType) {
+      await supabase.from("files").insert({
+        file_name,
+        description,
+        tags,
+        file_url: pendingUpload.secure_url,
+        public_id: pendingUpload.public_id,
+        file_type: pendingType,
+        category: pendingType,
+        downloads: 0,
+        width: pendingUpload.width ?? null,
+        height: pendingUpload.height ?? null,
+        format: pendingUpload.format ?? null,
+        duration: pendingUpload.duration ?? null,
+      });
+    }
 
     setModalOpen(false);
-    setPendingFile(null);
+    setEditItem(null);
+    setPendingUpload(null);
     setPendingType(null);
     fetchFiles();
   };
 
-  /* ---------------- DELETE ---------------- */
-
-  const deleteFile = async (id: number) => {
+  const deleteItem = async (id: number) => {
     await supabase.from("files").delete().eq("id", id);
     fetchFiles();
   };
@@ -130,20 +130,15 @@ const Admin = () => {
     );
   }
 
-  /* ---------------- UI ---------------- */
-
   return (
     <div className="p-6">
       {/* HEADER */}
-      <div className="flex flex-wrap gap-3 mb-6 items-center justify-between">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-
         <div className="flex gap-2">
           <Button variant="outline" onClick={fetchFiles}>
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Refresh
+            <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
           </Button>
-
           <Button
             variant="outline"
             onClick={() => {
@@ -151,13 +146,12 @@ const Admin = () => {
               setPassword("");
             }}
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
+            <LogOut className="w-4 h-4 mr-2" /> Logout
           </Button>
         </div>
       </div>
 
-      {/* UPLOAD BUTTONS */}
+      {/* UPLOAD */}
       <div className="flex gap-3 mb-8">
         <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
           Upload Wallpaper
@@ -170,24 +164,34 @@ const Admin = () => {
         </Button>
       </div>
 
-      {/* FILE GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* GRID – 6 ITEMS PER ROW */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {files.map((file) => (
-          <Card key={file.id} className="p-4 space-y-2">
-            <div className="font-semibold truncate">{file.file_name}</div>
+          <Card key={file.id} className="p-3 space-y-2">
+            <div className="font-semibold text-sm truncate">
+              {file.file_name}
+            </div>
+
             <div className="text-xs text-muted-foreground">
-              {file.file_type} • {file.downloads || 0} downloads
+              {file.file_type} • {file.downloads || 0}
             </div>
 
             <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="outline">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setEditItem(file);
+                  setModalOpen(true);
+                }}
+              >
                 <Edit className="w-4 h-4" />
               </Button>
 
               <Button
                 size="sm"
                 variant="destructive"
-                onClick={() => deleteFile(file.id)}
+                onClick={() => deleteItem(file.id)}
               >
                 <Trash className="w-4 h-4" />
               </Button>
@@ -196,13 +200,14 @@ const Admin = () => {
         ))}
       </div>
 
-      {/* MODAL */}
       <AdminUploadModal
         open={modalOpen}
-        fileUrl={pendingFile?.secure_url}
-        fileType={pendingType as any}
-        onSave={saveDetails}
-        onClose={() => setModalOpen(false)}
+        initialData={editItem}
+        onSave={saveItem}
+        onClose={() => {
+          setModalOpen(false);
+          setEditItem(null);
+        }}
       />
     </div>
   );
