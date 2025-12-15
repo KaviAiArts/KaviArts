@@ -15,11 +15,14 @@ const Admin = () => {
   const [authorized, setAuthorized] = useState(false);
   const [password, setPassword] = useState("");
   const [files, setFiles] = useState<any[]>([]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [pendingUpload, setPendingUpload] = useState<any>(null);
   const [pendingType, setPendingType] =
     useState<"wallpaper" | "ringtone" | "video" | null>(null);
+
+  /* ---------------- FETCH ---------------- */
 
   const fetchFiles = async () => {
     const { data } = await supabase
@@ -56,60 +59,87 @@ const Admin = () => {
     widget.open();
   };
 
+  /* ---------------- SAVE (EDIT / INSERT) ---------------- */
 
+  const saveItem = async ({ file_name, description, tags }: any) => {
+    /* ===== CASE 1: EDIT EXISTING ITEM ===== */
+    if (editItem) {
+      const { error } = await supabase
+        .from("files")
+        .update({ file_name, description, tags })
+        .eq("id", editItem.id);
 
+      if (error) {
+        console.error("EDIT ERROR:", error);
+        alert("Edit failed");
+        return;
+      }
 
-  /* ---------------- SAVE (INSERT / UPDATE) ---------------- */
+      setModalOpen(false);
+      setEditItem(null);
+      fetchFiles();
+      return;
+    }
 
-const saveItem = async ({ file_name, description, tags }: any) => {
-  if (!pendingUpload || !pendingType) return;
+    /* ===== CASE 2: NEW UPLOAD ===== */
+    if (!pendingUpload || !pendingType) return;
 
-  const isMp3 = pendingUpload.format === "mp3";
+    const isMp3 = pendingUpload.format === "mp3";
+    const finalType = isMp3 ? "ringtone" : pendingType;
 
-  // 🚫 FORCE mp3 to always be ringtone
-  const finalType = isMp3 ? "ringtone" : pendingType;
-
-  const { data: existing } = await supabase
-    .from("files")
-    .select("id")
-    .eq("public_id", pendingUpload.public_id)
-    .single();
-
-  if (existing) {
-    await supabase
+    const { data: existing } = await supabase
       .from("files")
-      .update({
+      .select("id")
+      .eq("public_id", pendingUpload.public_id)
+      .single();
+
+    if (existing) {
+      await supabase
+        .from("files")
+        .update({
+          file_name,
+          description,
+          tags,
+          file_type: finalType,
+          category: finalType,
+        })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("files").insert({
         file_name,
         description,
         tags,
+        file_url: pendingUpload.secure_url,
+        public_id: pendingUpload.public_id,
         file_type: finalType,
         category: finalType,
-      })
-      .eq("id", existing.id);
-  } else {
-    await supabase.from("files").insert({
-      file_name,
-      description,
-      tags,
-      file_url: pendingUpload.secure_url,
-      public_id: pendingUpload.public_id,
-      file_type: finalType,
-      category: finalType,
-      downloads: 0,
-      width: pendingUpload.width ?? null,
-      height: pendingUpload.height ?? null,
-      format: pendingUpload.format ?? null,
-      duration: pendingUpload.duration ?? null,
-    });
-  }
+        downloads: 0,
+        width: pendingUpload.width ?? null,
+        height: pendingUpload.height ?? null,
+        format: pendingUpload.format ?? null,
+        duration: pendingUpload.duration ?? null,
+      });
+    }
 
-  setModalOpen(false);
-  setEditItem(null);
-  setPendingUpload(null);
-  setPendingType(null);
-  fetchFiles();
-};
+    setModalOpen(false);
+    setPendingUpload(null);
+    setPendingType(null);
+    fetchFiles();
+  };
 
+  /* ---------------- DELETE ---------------- */
+
+  const deleteItem = async (id: number) => {
+    const { error } = await supabase.from("files").delete().eq("id", id);
+
+    if (error) {
+      console.error("DELETE ERROR:", error);
+      alert("Delete failed");
+      return;
+    }
+
+    fetchFiles();
+  };
 
   /* ---------------- AUTH ---------------- */
 
@@ -140,6 +170,8 @@ const saveItem = async ({ file_name, description, tags }: any) => {
     );
   }
 
+  /* ---------------- UI ---------------- */
+
   return (
     <div className="p-6">
       {/* HEADER */}
@@ -147,7 +179,8 @@ const saveItem = async ({ file_name, description, tags }: any) => {
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={fetchFiles}>
-            <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
+            <RefreshCcw className="w-4 h-4 mr-2" />
+            Refresh
           </Button>
           <Button
             variant="outline"
@@ -156,7 +189,8 @@ const saveItem = async ({ file_name, description, tags }: any) => {
               setPassword("");
             }}
           >
-            <LogOut className="w-4 h-4 mr-2" /> Logout
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
           </Button>
         </div>
       </div>
@@ -174,8 +208,12 @@ const saveItem = async ({ file_name, description, tags }: any) => {
         </Button>
       </div>
 
-      {/* GRID – 6 ITEMS PER ROW */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {/* GRID
+          mobile: 3 cols
+          tablet: 4 cols
+          desktop: 6 cols
+      */}
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
           <Card key={file.id} className="p-3 space-y-2">
             <div className="font-semibold text-sm truncate">
