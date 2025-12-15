@@ -1,12 +1,17 @@
 import {
   Instagram,
   Youtube,
-  MapPin,
   Music,
   Music2,
+  ArrowUp,
 } from "lucide-react";
+import { FaPinterest } from "react-icons/fa";
 
 const Footer = () => {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <footer className="bg-card border-t border-border mt-6">
       <div className="container mx-auto px-4 py-8">
@@ -18,10 +23,14 @@ const Footer = () => {
               KaviArts
             </h3>
 
-            <p className="text-muted-foreground mb-6 max-w-md">
-              Your ultimate destination for wallpapers, ringtones, and digital
-              customization content. Personalize your devices with high-quality
-              assets.
+            <p className="text-muted-foreground mb-6 max-w-md leading-relaxed">
+              <strong className="block mb-1 text-foreground">
+                Aesthetic Digital Worlds
+              </strong>
+              Your ultimate source for immersive creative content. We specialize
+              in high-quality AI Art, 4K Wallpapers, and custom Music. Explore our
+              library of Live Loops, Ringtones, and Video Edits designed to
+              inspire.
             </p>
 
             {/* SOCIAL ICONS */}
@@ -51,13 +60,15 @@ const Footer = () => {
               </a>
 
               <a
-                href="/contact"
-                title="Contact"
-                aria-label="Contact"
+                href="https://pinterest.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Pinterest"
+                aria-label="Pinterest"
                 className="flex flex-col items-center text-muted-foreground hover:text-primary transition"
               >
-                <MapPin className="w-6 h-6 mb-1" />
-                <span className="text-xs">Contact</span>
+                <FaPinterest className="w-6 h-6 mb-1" />
+                <span className="text-xs">Pinterest</span>
               </a>
 
               <a
@@ -91,7 +102,8 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">
               Popular Categories
             </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+
+            <ul className="space-y-2 text-sm text-muted-foreground mb-4">
               <li>
                 <a
                   href="/search?query=nature&from=footer"
@@ -125,6 +137,16 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
+
+            {/* BACK TO TOP */}
+            <button
+              onClick={scrollToTop}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition"
+              aria-label="Back to top"
+            >
+              <ArrowUp className="w-4 h-4" />
+              Back to top
+            </button>
           </div>
 
           {/* SUPPORT */}
