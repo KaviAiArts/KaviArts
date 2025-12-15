@@ -7,7 +7,6 @@ import ContentGrid from "@/components/ContentGrid";
 
 import { supabase } from "@/lib/supabaseClient";
 import fuzzySearch from "@/utils/fuzzyEngine";
-import highlight from "@/utils/highlight";
 
 import { Button } from "@/components/ui/button";
 
@@ -27,17 +26,20 @@ const SearchResults = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Perform search
   const performSearch = async () => {
     if (!searchText.trim()) return;
     setLoading(true);
 
     let combined: any[] = [];
 
-    // 1️⃣ Search by readable short name (file_name)
+    // 🔑 ALLOWED TYPES FOR CATEGORY CHIPS
+    const allowedTypes = ["wallpaper", "video"];
+
+    // 1️⃣ Search by title
     const { data: titleMatches } = await supabase
       .from("files")
-      .select("*") // ⭐ GET FULL DATA including file_url
+      .select("*")
+      .in("file_type", allowedTypes)
       .ilike("file_name", `%${searchText}%`)
       .limit(200);
 
@@ -45,13 +47,15 @@ const SearchResults = () => {
     const { data: tagMatches } = await supabase
       .from("files")
       .select("*")
+      .in("file_type", allowedTypes)
       .contains("tags", [searchText.toLowerCase()])
       .limit(200);
 
-    // 3️⃣ Search by category
+    // 3️⃣ Search by category text
     const { data: categoryMatches } = await supabase
       .from("files")
       .select("*")
+      .in("file_type", allowedTypes)
       .ilike("category", `%${searchText}%`)
       .limit(100);
 
@@ -66,12 +70,20 @@ const SearchResults = () => {
     combined.forEach((item) => map.set(item.id, item));
     combined = Array.from(map.values());
 
-    // 4️⃣ Fuzzy fallback using readable names
+    // 4️⃣ Fuzzy fallback
     if (combined.length < 12) {
       const fuzzy = await fuzzySearch(searchText);
-      fuzzy.forEach((item) => map.set(item.id, item));
+      fuzzy
+        .filter((item: any) =>
+          allowedTypes.includes(item.file_type)
+        )
+        .forEach((item: any) => map.set(item.id, item));
+
       combined = Array.from(map.values());
     }
+
+    // 🔥 SORT BY DOWNLOADS (POPULAR FIRST)
+    combined.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
 
     setResults(combined);
     setVisibleResults(combined.slice(0, ITEMS_PER_PAGE));
@@ -79,12 +91,10 @@ const SearchResults = () => {
     setLoading(false);
   };
 
-  // Trigger search
   useEffect(() => {
     performSearch();
   }, [searchText]);
 
-  // Pagination
   const loadMore = () => {
     const nextPage = page + 1;
     const end = nextPage * ITEMS_PER_PAGE;
@@ -99,7 +109,6 @@ const SearchResults = () => {
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold">Search results for:</h1>
 
-        {/* Short readable title */}
         <p className="text-xl text-primary font-semibold truncate max-w-[80%] mt-1">
           {searchText}
         </p>
@@ -124,7 +133,6 @@ const SearchResults = () => {
           </div>
         ) : (
           <>
-            {/* ⭐ FIXED: Full card data passed */}
             <ContentGrid items={visibleResults} />
 
             {visibleResults.length < results.length && (

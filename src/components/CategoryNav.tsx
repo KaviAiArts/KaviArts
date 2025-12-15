@@ -7,6 +7,7 @@ import {
   Wand2,
   Bot,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
   { label: "Aesthetic", value: "aesthetic", icon: Sparkles },
@@ -17,15 +18,12 @@ const categories = [
   { label: "Technology", value: "technology", icon: Bot },
 ];
 
-type Props = {
-  onSelect?: (value: string) => void;
-};
+const CategoryNav = () => {
+  const navigate = useNavigate();
 
-const CategoryNav = ({ onSelect = () => {} }: Props) => {
   return (
     <section className="pt-4 pb-4 px-4 border-b border-border">
       <div className="container mx-auto">
-        {/* MOBILE: grid | DESKTOP: original flex */}
         <div
           className="
             grid grid-cols-3 gap-3
@@ -38,36 +36,25 @@ const CategoryNav = ({ onSelect = () => {} }: Props) => {
               <Button
                 key={cat.value}
                 variant="outline"
-                onClick={() => onSelect(cat.value)}
-
-
-
+                onClick={() =>
+                  navigate(`/search?query=${encodeURIComponent(cat.value)}`)
+                }
                 className="
-  h-9
-  w-full
-  flex items-center justify-center gap-1.5
-
-  px-2
-  text-[11px] font-medium
-  whitespace-nowrap
-
-  rounded-lg
-  border border-border
-  bg-card text-foreground
-
-  hover:bg-primary/15
-  hover:border-primary
-  hover:text-primary
-  transition-colors
-
-  md:h-10 md:w-auto md:px-4 md:text-sm md:rounded-lg
-"
-
-
-
-
-
-
+                  h-9
+                  w-full
+                  flex items-center justify-center gap-1.5
+                  px-2
+                  text-[11px] font-medium
+                  whitespace-nowrap
+                  rounded-lg
+                  border border-border
+                  bg-card text-foreground
+                  hover:bg-primary/15
+                  hover:border-primary
+                  hover:text-primary
+                  transition-colors
+                  md:h-10 md:w-auto md:px-4 md:text-sm
+                "
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span className="whitespace-nowrap">{cat.label}</span>
