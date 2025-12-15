@@ -79,7 +79,7 @@ const Contact = () => (
 
           <p className="mt-2 text-md">
             <a
-              href="https://instagram.com/"
+              href="https://www.instagram.com/kavi_tunez/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline mr-4"
@@ -88,7 +88,7 @@ const Contact = () => (
             </a>
 
             <a
-              href="https://youtube.com/"
+              href="https://youtube.com/@kavitunez?si=jA1hrHFJsU0WhPf3"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
