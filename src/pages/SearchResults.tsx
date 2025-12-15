@@ -10,7 +10,6 @@ import fuzzySearch from "@/utils/fuzzyEngine";
 
 import { Button } from "@/components/ui/button";
 
-// Read query param
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
@@ -20,6 +19,7 @@ const ITEMS_PER_PAGE = 12;
 const SearchResults = () => {
   const queryParams = useQuery();
   const searchText = queryParams.get("query") || "";
+  const fromChip = queryParams.get("from") === "chip";
 
   const [results, setResults] = useState<any[]>([]);
   const [visibleResults, setVisibleResults] = useState<any[]>([]);
@@ -31,11 +31,8 @@ const SearchResults = () => {
     setLoading(true);
 
     let combined: any[] = [];
-
-    // 🔑 ALLOWED TYPES FOR CATEGORY CHIPS
     const allowedTypes = ["wallpaper", "video"];
 
-    // 1️⃣ Search by title
     const { data: titleMatches } = await supabase
       .from("files")
       .select("*")
@@ -43,7 +40,6 @@ const SearchResults = () => {
       .ilike("file_name", `%${searchText}%`)
       .limit(200);
 
-    // 2️⃣ Search by tags
     const { data: tagMatches } = await supabase
       .from("files")
       .select("*")
@@ -51,7 +47,6 @@ const SearchResults = () => {
       .contains("tags", [searchText.toLowerCase()])
       .limit(200);
 
-    // 3️⃣ Search by category text
     const { data: categoryMatches } = await supabase
       .from("files")
       .select("*")
@@ -65,12 +60,10 @@ const SearchResults = () => {
       ...(categoryMatches || []),
     ];
 
-    // Deduplicate
     const map = new Map();
     combined.forEach((item) => map.set(item.id, item));
     combined = Array.from(map.values());
 
-    // 4️⃣ Fuzzy fallback
     if (combined.length < 12) {
       const fuzzy = await fuzzySearch(searchText);
       fuzzy
@@ -82,7 +75,6 @@ const SearchResults = () => {
       combined = Array.from(map.values());
     }
 
-    // 🔥 SORT BY DOWNLOADS (POPULAR FIRST)
     combined.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
 
     setResults(combined);
@@ -107,11 +99,17 @@ const SearchResults = () => {
       <Header />
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold">Search results for:</h1>
-
-        <p className="text-xl text-primary font-semibold truncate max-w-[80%] mt-1">
-          {searchText}
-        </p>
+        {/* ✅ SHOW ONLY FOR MANUAL SEARCH */}
+        {!fromChip && (
+          <>
+            <h1 className="text-3xl font-bold">
+              Search results for:
+            </h1>
+            <p className="text-xl text-primary font-semibold truncate max-w-[80%] mt-1">
+              {searchText}
+            </p>
+          </>
+        )}
 
         <Button
           variant="outline"

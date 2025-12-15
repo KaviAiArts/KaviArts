@@ -37,8 +37,11 @@ const CategoryNav = () => {
                 key={cat.value}
                 variant="outline"
                 onClick={() =>
-                  navigate(`/search?query=${encodeURIComponent(cat.value)}`)
-                }
+  navigate(
+    `/search?query=${encodeURIComponent(cat.value)}&from=chip`
+  )
+}
+
                 className="
                   h-9
                   w-full
