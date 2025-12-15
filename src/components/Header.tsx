@@ -113,18 +113,9 @@ const Header = () => {
               className="h-12 pr-12 bg-secondary border-border"
             />
 
-            {/* SEARCH ICON (NO JUMP, PERFECT CENTER) */}
             <button
               onClick={() => performFullSearch()}
-              className="
-                absolute right-1 top-1/2 -translate-y-1/2
-                h-9 w-9 rounded-md
-                flex items-center justify-center
-                bg-secondary border border-border
-                transition-colors transition-transform
-                hover:bg-secondary/80 hover:scale-105
-                active:scale-95
-              "
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
             >
               <Search className="w-4 h-4" />
             </button>
@@ -142,17 +133,29 @@ const Header = () => {
 
           {/* NAV BUTTONS */}
           <nav className="flex items-center gap-2">
-            <Button variant="outline" className="h-11 hover-lift">
+            <Button
+              variant="outline"
+              className="h-11 hover-lift"
+              onClick={() => navigate("/category/wallpaper")}
+            >
               <Smartphone className="w-4 h-4" />
               <span className="hidden md:inline ml-2">Wallpapers</span>
             </Button>
 
-            <Button variant="outline" className="h-11 hover-lift">
+            <Button
+              variant="outline"
+              className="h-11 hover-lift"
+              onClick={() => navigate("/category/ringtone")}
+            >
               <Music className="w-4 h-4" />
               <span className="hidden md:inline ml-2">Ringtones</span>
             </Button>
 
-            <Button variant="outline" className="h-11 hover-lift">
+            <Button
+              variant="outline"
+              className="h-11 hover-lift"
+              onClick={() => navigate("/category/video")}
+            >
               <Video className="w-4 h-4" />
               <span className="hidden md:inline ml-2">Videos</span>
             </Button>
@@ -169,19 +172,13 @@ const Header = () => {
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => query.trim() && setShowDropdown(true)}
-            placeholder="Search wallpapers, ringtones..."
+            placeholder="Search found here..."
             className="h-12 pr-12 bg-secondary border-border"
           />
 
           <button
             onClick={() => performFullSearch()}
-            className="
-              absolute right-1 top-1/2 -translate-y-1/2
-              h-9 w-9 rounded-md
-              flex items-center justify-center
-              bg-secondary border border-border
-              active:scale-95
-            "
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
           >
             <Search className="w-4 h-4" />
           </button>
