@@ -66,15 +66,14 @@ const saveItem = async ({ file_name, description, tags }: any) => {
 
   const isMp3 = pendingUpload.format === "mp3";
 
-  // if same cloudinary file exists, update it
+  // 🚫 FORCE mp3 to always be ringtone
+  const finalType = isMp3 ? "ringtone" : pendingType;
+
   const { data: existing } = await supabase
     .from("files")
     .select("id")
     .eq("public_id", pendingUpload.public_id)
     .single();
-
-  const forcedType =
-    pendingType === "ringtone" || isMp3 ? "ringtone" : pendingType;
 
   if (existing) {
     await supabase
@@ -83,8 +82,8 @@ const saveItem = async ({ file_name, description, tags }: any) => {
         file_name,
         description,
         tags,
-        file_type: forcedType,
-        category: forcedType,
+        file_type: finalType,
+        category: finalType,
       })
       .eq("id", existing.id);
   } else {
@@ -94,8 +93,8 @@ const saveItem = async ({ file_name, description, tags }: any) => {
       tags,
       file_url: pendingUpload.secure_url,
       public_id: pendingUpload.public_id,
-      file_type: forcedType,
-      category: forcedType,
+      file_type: finalType,
+      category: finalType,
       downloads: 0,
       width: pendingUpload.width ?? null,
       height: pendingUpload.height ?? null,
