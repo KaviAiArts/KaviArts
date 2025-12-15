@@ -29,7 +29,7 @@ const ItemDetails = () => {
     fetchItem();
   }, [id]);
 
-  // 🔥 FORCE DOWNLOAD (WORKS FOR IMAGE / AUDIO / VIDEO)
+  // 🔥 FORCE DOWNLOAD
   const handleDownload = async () => {
     try {
       const response = await fetch(item.file_url);
@@ -44,7 +44,6 @@ const ItemDetails = () => {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      // persist counter
       await supabase
         .from("files")
         .update({ downloads: (item.downloads || 0) + 1 })
@@ -96,11 +95,16 @@ const ItemDetails = () => {
           </Card>
 
           {/* DETAILS */}
-          <div className="flex flex-col w-full">
+          <div className="flex flex-col w-full h-full">
+            {/* META */}
             <div className="space-y-4">
               <div className="flex gap-2">
                 <Badge>{item.file_type}</Badge>
               </div>
+
+              <p className="text-sm text-muted-foreground">
+                {(item.downloads || 0).toLocaleString()} Downloads
+              </p>
 
               <h1 className="text-2xl font-bold">{item.file_name}</h1>
 
@@ -108,13 +112,23 @@ const ItemDetails = () => {
                 <p className="text-muted-foreground">{item.description}</p>
               )}
 
-              <p className="text-sm text-muted-foreground">
-                {(item.downloads || 0).toLocaleString()} Downloads
-              </p>
+              {/* TAGS */}
+              {item.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {item.tags.map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 text-xs rounded-full bg-secondary"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* ACTION BAR */}
-            <div className="mt-6 lg:mt-auto flex justify-center gap-3">
+            {/* ACTION BAR – BOTTOM */}
+            <div className="mt-auto pt-6 flex gap-3">
               <Button
                 onClick={() =>
                   navigator.share
@@ -124,7 +138,7 @@ const ItemDetails = () => {
                       })
                     : navigator.clipboard.writeText(window.location.href)
                 }
-                className="h-11 px-6 rounded-full border hover:bg-primary hover:text-white"
+                className="h-11 flex-1 rounded-full border hover:bg-primary hover:text-white"
               >
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
@@ -132,26 +146,12 @@ const ItemDetails = () => {
 
               <Button
                 onClick={handleDownload}
-                className="h-11 px-10 rounded-full bg-primary text-white"
+                className="h-11 flex-1 rounded-full bg-primary text-white"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </Button>
             </div>
-
-            {/* TAGS */}
-            {item.tags?.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {item.tags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-xs rounded-full bg-secondary"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </main>

@@ -1,24 +1,21 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-// Components
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
-import ContentItem from "@/components/ContentItem";  // ✅ correct
+import ContentItem from "@/components/ContentItem";
 import { Button } from "@/components/ui/button";
 
-
-
 // ------------------------------
-// REUSABLE CONTENT SECTION (UNIFIED SPACING)
+// CONTENT SECTION
 // ------------------------------
 
 const ContentSection = ({ title, items, category }) => {
   return (
     <>
-      {/* ================= MOBILE ================= */}
+      {/* MOBILE */}
       <section className="md:hidden py-4">
         <div className="px-4 flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold">{title}</h2>
@@ -46,7 +43,7 @@ const ContentSection = ({ title, items, category }) => {
         </div>
       </section>
 
-      {/* ================= DESKTOP ================= */}
+      {/* DESKTOP */}
       <section className="hidden md:block py-4">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-3">
@@ -60,7 +57,6 @@ const ContentSection = ({ title, items, category }) => {
             </Button>
           </div>
 
-          {/* ⭐ SAME SPACING AS NEWEST WALLPAPERS */}
           <div className="grid grid-cols-6 gap-3">
             {items.map((item) => (
               <ContentItem key={item.id} item={item} />
@@ -71,9 +67,6 @@ const ContentSection = ({ title, items, category }) => {
     </>
   );
 };
-
-
-
 
 // ------------------------------
 // MAIN HOMEPAGE
@@ -90,7 +83,6 @@ const Index = () => {
   }, []);
 
   const loadAllData = async () => {
-    // 1. NEWEST WALLPAPERS (OK)
     const { data: newestData } = await supabase
       .from("files")
       .select("*")
@@ -98,7 +90,6 @@ const Index = () => {
       .order("created_at", { ascending: false })
       .limit(6);
 
-    // 2. POPULAR WALLPAPERS (FIXED: removed .order("likes"))
     const { data: popularData } = await supabase
       .from("files")
       .select("*")
@@ -106,7 +97,6 @@ const Index = () => {
       .order("created_at", { ascending: false })
       .limit(6);
 
-    // 3. POPULAR RINGTONES (FIXED)
     const { data: ringtoneData } = await supabase
       .from("files")
       .select("*")
@@ -114,7 +104,6 @@ const Index = () => {
       .order("created_at", { ascending: false })
       .limit(12);
 
-    // 4. POPULAR VIDEOS (FIXED)
     const { data: videoData } = await supabase
       .from("files")
       .select("*")
@@ -134,29 +123,10 @@ const Index = () => {
       <Hero />
       <CategoryNav />
 
-      <ContentSection 
-        title="Newest Wallpapers" 
-        items={newest} 
-        category="wallpaper" 
-      />
-
-      <ContentSection 
-        title="Popular Wallpapers" 
-        items={popularWallpapers} 
-        category="wallpaper" 
-      />
-
-      <ContentSection 
-        title="Popular Ringtones" 
-        items={ringtones} 
-        category="ringtone" 
-      />
-
-      <ContentSection 
-        title="Popular Videos" 
-        items={videos} 
-        category="video" 
-      />
+      <ContentSection title="Newest Wallpapers" items={newest} category="wallpaper" />
+      <ContentSection title="Popular Wallpapers" items={popularWallpapers} category="wallpaper" />
+      <ContentSection title="Popular Ringtones" items={ringtones} category="ringtone" />
+      <ContentSection title="Popular Videos" items={videos} category="video" />
 
       <Footer />
     </div>
