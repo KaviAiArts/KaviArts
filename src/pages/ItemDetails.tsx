@@ -70,12 +70,16 @@ const ItemDetails = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* PREVIEW (UNCHANGED) */}
+          {/* PREVIEW (UNCHANGED LAYOUT) */}
           <Card className="flex items-center justify-center bg-muted/40 min-h-[260px]">
             {item.file_type === "wallpaper" && (
               <img
                 src={item.file_url}
-                alt={item.file_name}
+                alt={
+                  item.description
+                    ? item.description.split(".")[0]
+                    : item.file_name
+                }
                 className="max-w-full max-h-[70vh] object-contain"
               />
             )}
@@ -93,7 +97,7 @@ const ItemDetails = () => {
             )}
           </Card>
 
-          {/* DETAILS (LAYOUT PRESERVED) */}
+          {/* DETAILS (UNCHANGED) */}
           <div className="flex flex-col w-full h-full">
             <div className="space-y-4">
               <div className="flex gap-2">
@@ -104,22 +108,18 @@ const ItemDetails = () => {
                 {(item.downloads || 0).toLocaleString()} Downloads
               </p>
 
-              {/* H1 — already correct */}
               <h1 className="text-2xl font-bold">{item.file_name}</h1>
 
-              {/* ✅ ADSENSE TEXT BLOCK (SAFE) */}
               <div className="space-y-2">
                 <h2 className="text-sm font-semibold text-foreground">
                   Description
                 </h2>
-
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {item.description ||
                     "This is a high-quality digital asset designed for personal device customization. The content is optimized for modern screens and offers a clean, aesthetic visual or audio experience suitable for everyday use."}
                 </p>
               </div>
 
-              {/* TAGS (UNCHANGED) */}
               {item.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
                   {item.tags.map((tag: string) => (
@@ -160,7 +160,6 @@ const ItemDetails = () => {
               </Button>
             </div>
 
-            {/* ✅ USAGE NOTICE — TEXT ONLY */}
             <p className="mt-6 text-xs text-muted-foreground">
               This content is provided for personal use only. Redistribution or
               commercial use without permission is prohibited.
