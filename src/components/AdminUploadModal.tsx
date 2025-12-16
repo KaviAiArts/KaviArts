@@ -41,7 +41,7 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
         </h2>
 
         <Input
-          placeholder="Title"
+          placeholder="Title (50–60 characters recommended)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
@@ -55,7 +55,7 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
 
         <Input
           className="mt-3"
-          placeholder="Description"
+          placeholder="Description (150–160 characters recommended)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
