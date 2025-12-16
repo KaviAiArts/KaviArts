@@ -1,17 +1,17 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Download, Music, Share2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Download, Share2 } from "lucide-react";
 
 const ItemDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [item, setItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -21,140 +21,122 @@ const ItemDetails = () => {
         .eq("id", id)
         .single();
 
-      if (data) {
-        setItem(data);
-        document.title = `${data.file_name} - KaviArts`;
-      }
+      setItem(data);
+      setLoading(false);
     };
+
     fetchItem();
   }, [id]);
 
-  const handleDownload = async () => {
-    try {
-      const response = await fetch(item.file_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+  if (loading) {
+    return <p className="text-center py-20">Loading...</p>;
+  }
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = item.file_name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      await supabase
-        .from("files")
-        .update({ downloads: (item.downloads || 0) + 1 })
-        .eq("id", item.id);
-
-      setItem((prev: any) => ({
-        ...prev,
-        downloads: (prev.downloads || 0) + 1,
-      }));
-    } catch (e) {
-      console.error("Download failed", e);
-    }
-  };
-
-  if (!item) return null;
+  if (!item) {
+    return <p className="text-center py-20">Item not found.</p>;
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <Header />
 
-      <main className="container mx-auto px-4 py-4 overflow-x-hidden">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
+      <main className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* BACK */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* PREVIEW */}
-          <Card className="flex items-center justify-center bg-muted/40 min-h-[260px]">
-            {item.file_type === "wallpaper" && (
-              <img
-                src={item.file_url}
-                alt={item.file_name}
-                className="max-w-full max-h-[70vh] object-contain"
-              />
-            )}
-
-            {item.file_type === "ringtone" && (
-              <Music className="w-16 h-16 text-primary" />
-            )}
-
-            {item.file_type === "video" && (
-              <video
-                controls
-                className="max-w-full max-h-[70vh]"
-                src={item.file_url}
-              />
-            )}
-          </Card>
-
-          {/* DETAILS */}
-          <div className="flex flex-col w-full h-full">
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Badge>{item.file_type}</Badge>
-              </div>
-
-              <p className="text-sm text-muted-foreground">
-                {(item.downloads || 0).toLocaleString()} Downloads
-              </p>
-
-              <h1 className="text-2xl font-bold">{item.file_name}</h1>
-
-              {item.description && (
-                <p className="text-muted-foreground">{item.description}</p>
-              )}
-
-              {item.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {item.tags.map((tag: string) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 text-xs rounded-full bg-secondary"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* ACTION BAR – ORIGINAL SIZE RESTORED */}
-            <div className="mt-auto pt-6 flex gap-3">
-              <Button
-                onClick={() =>
-                  navigator.share
-                    ? navigator.share({
-                        title: item.file_name,
-                        url: window.location.href,
-                      })
-                    : navigator.clipboard.writeText(window.location.href)
-                }
-                className="h-11 px-6 rounded-full border hover:bg-primary hover:text-white"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
-
-              <Button
-                onClick={handleDownload}
-                className="h-11 px-10 rounded-full bg-primary text-white"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-            </div>
-          </div>
+        {/* PREVIEW */}
+        <div className="rounded-xl overflow-hidden border mb-6">
+          {item.file_type === "video" ? (
+            <video
+              src={item.file_url}
+              controls
+              className="w-full aspect-video bg-black"
+            />
+          ) : item.file_type === "ringtone" ? (
+            <audio controls className="w-full p-4">
+              <source src={item.file_url} type="audio/mpeg" />
+            </audio>
+          ) : (
+            <img
+              src={item.file_url}
+              alt={item.title}
+              className="w-full object-cover"
+            />
+          )}
         </div>
+
+        {/* TITLE (H1) */}
+        <h1 className="text-3xl font-bold mb-3">
+          {item.title}
+        </h1>
+
+        {/* DOWNLOAD COUNT */}
+        <p className="text-sm text-muted-foreground mb-4">
+          {item.downloads || 0} downloads
+        </p>
+
+        {/* ACTION BUTTONS */}
+        <div className="flex gap-3 mb-8">
+          <Button className="gap-2">
+            <Download className="w-4 h-4" />
+            Download
+          </Button>
+
+          <Button variant="outline" className="gap-2">
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
+        </div>
+
+        {/* DESCRIPTION (CRITICAL FOR ADSENSE) */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-2">
+            Description
+          </h2>
+          <p className="text-muted-foreground leading-relaxed">
+            {item.description ||
+              "This is a high-quality digital asset available for personal customization use. Download and enjoy this aesthetic content optimized for modern devices."}
+          </p>
+        </section>
+
+        {/* TAGS */}
+        {Array.isArray(item.tags) && item.tags.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-3">
+              Tags
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {item.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 text-sm rounded-full bg-secondary text-secondary-foreground"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* USAGE NOTICE (ADSENSE SAFE) */}
+        <section className="border-t pt-6 text-sm text-muted-foreground">
+          <p>
+            This content is provided for <strong>personal use only</strong>.
+            Redistribution or commercial use without permission is prohibited.
+          </p>
+        </section>
       </main>
 
       <Footer />
-    </div>
+    </>
   );
 };
 
