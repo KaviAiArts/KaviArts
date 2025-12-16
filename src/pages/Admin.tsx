@@ -2,12 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Trash,
-  Edit,
-  RefreshCcw,
-  LogOut
-} from "lucide-react";
+import { Trash, Edit, RefreshCcw, LogOut } from "lucide-react";
 import AdminUploadModal from "@/components/AdminUploadModal";
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
@@ -20,6 +15,7 @@ const Admin = () => {
   const [authorized, setAuthorized] = useState(false);
   const [password, setPassword] = useState("");
   const [files, setFiles] = useState<any[]>([]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [pendingUpload, setPendingUpload] = useState<any>(null);
@@ -41,7 +37,7 @@ const Admin = () => {
     if (authorized) fetchFiles();
   }, [authorized]);
 
-  /* ---------------- CLOUDINARY UPLOAD ---------------- */
+  /* ---------------- UPLOAD ---------------- */
 
   const upload = (preset: string, type: any) => {
     const widget = (window as any).cloudinary.createUploadWidget(
@@ -66,12 +62,18 @@ const Admin = () => {
   /* ---------------- SAVE (EDIT / INSERT) ---------------- */
 
   const saveItem = async ({ file_name, description, tags }: any) => {
-    /* EDIT EXISTING */
+    /* ===== CASE 1: EDIT EXISTING ITEM ===== */
     if (editItem) {
-      await supabase
+      const { error } = await supabase
         .from("files")
         .update({ file_name, description, tags })
         .eq("id", editItem.id);
+
+      if (error) {
+        console.error("EDIT ERROR:", error);
+        alert("Edit failed");
+        return;
+      }
 
       setModalOpen(false);
       setEditItem(null);
@@ -79,30 +81,63 @@ const Admin = () => {
       return;
     }
 
-    /* NEW UPLOAD */
+    /* ===== CASE 2: NEW UPLOAD ===== */
     if (!pendingUpload || !pendingType) return;
 
     const isMp3 = pendingUpload.format === "mp3";
     const finalType = isMp3 ? "ringtone" : pendingType;
 
-    await supabase.from("files").insert({
-      file_name,
-      description,
-      tags,
-      file_url: pendingUpload.secure_url,
-      public_id: pendingUpload.public_id,
-      file_type: finalType,
-      category: finalType,
-      downloads: 0,
-      width: pendingUpload.width ?? null,
-      height: pendingUpload.height ?? null,
-      format: pendingUpload.format ?? null,
-      duration: pendingUpload.duration ?? null,
-    });
+    const { data: existing } = await supabase
+      .from("files")
+      .select("id")
+      .eq("public_id", pendingUpload.public_id)
+      .single();
+
+    if (existing) {
+      await supabase
+        .from("files")
+        .update({
+          file_name,
+          description,
+          tags,
+          file_type: finalType,
+          category: finalType,
+        })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("files").insert({
+        file_name,
+        description,
+        tags,
+        file_url: pendingUpload.secure_url,
+        public_id: pendingUpload.public_id,
+        file_type: finalType,
+        category: finalType,
+        downloads: 0,
+        width: pendingUpload.width ?? null,
+        height: pendingUpload.height ?? null,
+        format: pendingUpload.format ?? null,
+        duration: pendingUpload.duration ?? null,
+      });
+    }
 
     setModalOpen(false);
     setPendingUpload(null);
     setPendingType(null);
+    fetchFiles();
+  };
+
+  /* ---------------- DELETE ---------------- */
+
+  const deleteItem = async (id: number) => {
+    const { error } = await supabase.from("files").delete().eq("id", id);
+
+    if (error) {
+      console.error("DELETE ERROR:", error);
+      alert("Delete failed");
+      return;
+    }
+
     fetchFiles();
   };
 
@@ -140,44 +175,56 @@ const Admin = () => {
   return (
     <div className="p-6">
       {/* HEADER */}
-      <div className="flex flex-wrap gap-3 mb-6 items-center justify-between">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchFiles}>
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => {
-              setAuthorized(false);
-              setPassword("");
-            }}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </div>
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+  <h1 className="text-2xl font-bold text-center sm:text-left">
+    Admin Dashboard
+  </h1>
 
-      {/* UPLOAD BUTTONS */}
-      <div className="flex flex-wrap gap-3 mb-8">
-        <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
-          Upload Wallpaper
-        </Button>
+  <div className="flex gap-2 justify-center sm:justify-end">
+    <Button variant="outline" onClick={fetchFiles}>
+      <RefreshCcw className="w-4 h-4 mr-2" />
+      Refresh
+    </Button>
 
-        <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
-          Upload Ringtone
-        </Button>
+    <Button
+      variant="outline"
+      onClick={() => {
+        setAuthorized(false);
+        setPassword("");
+      }}
+    >
+      <LogOut className="w-4 h-4 mr-2" />
+      Logout
+    </Button>
+  </div>
+</div>
 
-        <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
-          Upload Video
-        </Button>
-      </div>
 
-      {/* GRID */}
+
+
+      {/* UPLOAD */}
+     <div className="flex flex-wrap gap-3 mb-8 justify-center sm:justify-start">
+  <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
+    Upload Wallpaper
+  </Button>
+
+  <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
+    Upload Ringtone
+  </Button>
+
+  <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
+    Upload Video
+  </Button>
+</div>
+
+
+      {/* GRID
+          mobile: 3 cols
+          tablet: 4 cols
+          desktop: 6 cols
+      */}
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
           <Card key={file.id} className="p-3 space-y-2">
@@ -204,10 +251,7 @@ const Admin = () => {
               <Button
                 size="sm"
                 variant="destructive"
-                onClick={async () => {
-                  await supabase.from("files").delete().eq("id", file.id);
-                  fetchFiles();
-                }}
+                onClick={() => deleteItem(file.id)}
               >
                 <Trash className="w-4 h-4" />
               </Button>
