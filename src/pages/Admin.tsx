@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trash, Edit, RefreshCcw, LogOut, Upload } from "lucide-react";
+import {
+  Trash,
+  Edit,
+  RefreshCcw,
+  LogOut,
+  Upload
+} from "lucide-react";
 import AdminUploadModal from "@/components/AdminUploadModal";
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
@@ -58,30 +64,38 @@ const Admin = () => {
     widget.open();
   };
 
-  /* ---------------- CSV UPLOAD ---------------- */
+  /* ---------------- CSV METADATA UPDATE ---------------- */
 
   const handleCSVUpload = async (file: File) => {
     const text = await file.text();
-    const rows = text.split("\n").slice(1);
+    const lines = text.split("\n").slice(1);
 
-    for (const row of rows) {
-      if (!row.trim()) continue;
-      const [file_name, tags, description, category] = row.split(",");
+    for (const line of lines) {
+      if (!line.trim()) continue;
 
-      await supabase.from("files").insert({
-        file_name: file_name?.trim(),
-        tags: tags
-          ?.split("|")
-          .map((t) => t.trim().toLowerCase()),
-        description: description?.trim(),
-        category: category?.trim(),
-        file_type: category?.trim(),
-        downloads: 0,
-      });
+      const [
+        public_id,
+        file_name,
+        tags,
+        description,
+        category
+      ] = line.split(",");
+
+      await supabase
+        .from("files")
+        .update({
+          file_name: file_name?.trim(),
+          tags: tags
+            ?.split("|")
+            .map((t) => t.trim().toLowerCase()),
+          description: description?.trim(),
+          category: category?.trim(),
+        })
+        .eq("public_id", public_id?.trim());
     }
 
+    alert("CSV metadata updated successfully");
     fetchFiles();
-    alert("CSV upload completed");
   };
 
   /* ---------------- SAVE ---------------- */
@@ -158,13 +172,39 @@ const Admin = () => {
 
   return (
     <div className="p-6">
-      <div className="flex flex-wrap gap-3 mb-6">
+      {/* HEADER */}
+      <div className="flex flex-wrap gap-3 mb-6 items-center justify-between">
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={fetchFiles}>
+            <RefreshCcw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => {
+              setAuthorized(false);
+              setPassword("");
+            }}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </div>
+
+      {/* UPLOAD */}
+      <div className="flex flex-wrap gap-3 mb-8">
         <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
           Upload Wallpaper
         </Button>
+
         <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
           Upload Ringtone
         </Button>
+
         <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
           Upload Video
         </Button>
@@ -185,15 +225,18 @@ const Admin = () => {
         </label>
       </div>
 
+      {/* GRID */}
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
           <Card key={file.id} className="p-3 space-y-2">
             <div className="font-semibold text-sm truncate">
               {file.file_name}
             </div>
+
             <div className="text-xs text-muted-foreground">
               {file.file_type} • {file.downloads || 0}
             </div>
+
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
@@ -205,6 +248,7 @@ const Admin = () => {
               >
                 <Edit className="w-4 h-4" />
               </Button>
+
               <Button
                 size="sm"
                 variant="destructive"
