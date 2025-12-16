@@ -6,8 +6,7 @@ import {
   Trash,
   Edit,
   RefreshCcw,
-  LogOut,
-  Upload
+  LogOut
 } from "lucide-react";
 import AdminUploadModal from "@/components/AdminUploadModal";
 
@@ -42,7 +41,7 @@ const Admin = () => {
     if (authorized) fetchFiles();
   }, [authorized]);
 
-  /* ---------------- CLOUDINARY ---------------- */
+  /* ---------------- CLOUDINARY UPLOAD ---------------- */
 
   const upload = (preset: string, type: any) => {
     const widget = (window as any).cloudinary.createUploadWidget(
@@ -64,43 +63,10 @@ const Admin = () => {
     widget.open();
   };
 
-  /* ---------------- CSV METADATA UPDATE ---------------- */
-
-  const handleCSVUpload = async (file: File) => {
-    const text = await file.text();
-    const lines = text.split("\n").slice(1);
-
-    for (const line of lines) {
-      if (!line.trim()) continue;
-
-      const [
-        public_id,
-        file_name,
-        tags,
-        description,
-        category
-      ] = line.split(",");
-
-      await supabase
-        .from("files")
-        .update({
-          file_name: file_name?.trim(),
-          tags: tags
-            ?.split("|")
-            .map((t) => t.trim().toLowerCase()),
-          description: description?.trim(),
-          category: category?.trim(),
-        })
-        .eq("public_id", public_id?.trim());
-    }
-
-    alert("CSV metadata updated successfully");
-    fetchFiles();
-  };
-
-  /* ---------------- SAVE ---------------- */
+  /* ---------------- SAVE (EDIT / INSERT) ---------------- */
 
   const saveItem = async ({ file_name, description, tags }: any) => {
+    /* EDIT EXISTING */
     if (editItem) {
       await supabase
         .from("files")
@@ -113,6 +79,7 @@ const Admin = () => {
       return;
     }
 
+    /* NEW UPLOAD */
     if (!pendingUpload || !pendingType) return;
 
     const isMp3 = pendingUpload.format === "mp3";
@@ -195,7 +162,7 @@ const Admin = () => {
         </div>
       </div>
 
-      {/* UPLOAD */}
+      {/* UPLOAD BUTTONS */}
       <div className="flex flex-wrap gap-3 mb-8">
         <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
           Upload Wallpaper
@@ -208,21 +175,6 @@ const Admin = () => {
         <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
           Upload Video
         </Button>
-
-        <label className="cursor-pointer">
-          <input
-            type="file"
-            accept=".csv"
-            hidden
-            onChange={(e) =>
-              e.target.files && handleCSVUpload(e.target.files[0])
-            }
-          />
-          <Button variant="outline">
-            <Upload className="w-4 h-4 mr-2" />
-            Upload CSV
-          </Button>
-        </label>
       </div>
 
       {/* GRID */}
