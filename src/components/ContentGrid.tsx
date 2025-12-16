@@ -12,6 +12,13 @@ const getVideoThumbnail = (url: string) => {
     .replace(/\.(mp4|webm|mov)$/i, ".jpg");
 };
 
+const getAltText = (item: any) => {
+  if (item.description) {
+    return item.description.split(".")[0];
+  }
+  return `${item.file_name} ${item.file_type}`;
+};
+
 /* -------------------- Content Item -------------------- */
 
 const ContentItem = ({ item }: { item: any }) => {
@@ -47,7 +54,7 @@ const ContentItem = ({ item }: { item: any }) => {
         {item.file_type === "wallpaper" && (
           <img
             src={item.file_url}
-            alt={item.file_name}
+            alt={getAltText(item)}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           />
         )}
@@ -57,7 +64,7 @@ const ContentItem = ({ item }: { item: any }) => {
           <>
             <img
               src={getVideoThumbnail(item.file_url)}
-              alt={item.file_name}
+              alt={getAltText(item)}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 flex items-center justify-center">
@@ -77,7 +84,10 @@ const ContentItem = ({ item }: { item: any }) => {
 
         {/* HOVER ACTION */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <Button size="sm" className="bg-gradient-primary text-primary-foreground shadow-glow">
+          <Button
+            size="sm"
+            className="bg-gradient-primary text-primary-foreground shadow-glow"
+          >
             {getIcon()}
             {item.file_type === "video"
               ? "Watch"
