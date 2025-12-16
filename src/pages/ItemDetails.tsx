@@ -8,8 +8,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 
+const makeSlug = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
 const ItemDetails = () => {
-  const { id } = useParams();
+  const { id, slug } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState<any>(null);
 
@@ -21,40 +27,42 @@ const ItemDetails = () => {
         .eq("id", id)
         .single();
 
-      if (data) {
-        setItem(data);
-        document.title = `${data.file_name} - KaviArts`;
+      if (!data) return;
+
+      const correctSlug = makeSlug(data.file_name);
+
+      if (!slug || slug !== correctSlug) {
+        navigate(`/item/${data.id}/${correctSlug}`, { replace: true });
+        return;
       }
+
+      setItem(data);
+      document.title = `${data.file_name} - KaviArts`;
     };
+
     fetchItem();
-  }, [id]);
+  }, [id, slug, navigate]);
 
   const handleDownload = async () => {
-    try {
-      const response = await fetch(item.file_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+    const res = await fetch(item.file_url);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = item.file_name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = item.file_name;
+    a.click();
+    URL.revokeObjectURL(url);
 
-      await supabase
-        .from("files")
-        .update({ downloads: (item.downloads || 0) + 1 })
-        .eq("id", item.id);
+    await supabase
+      .from("files")
+      .update({ downloads: (item.downloads || 0) + 1 })
+      .eq("id", item.id);
 
-      setItem((prev: any) => ({
-        ...prev,
-        downloads: (prev.downloads || 0) + 1,
-      }));
-    } catch (e) {
-      console.error("Download failed", e);
-    }
+    setItem((prev: any) => ({
+      ...prev,
+      downloads: (prev.downloads || 0) + 1,
+    }));
   };
 
   if (!item) return null;
@@ -63,14 +71,13 @@ const ItemDetails = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-4 overflow-x-hidden">
+      <main className="container mx-auto px-4 py-4">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* PREVIEW (UNCHANGED LAYOUT) */}
           <Card className="flex items-center justify-center bg-muted/40 min-h-[260px]">
             {item.file_type === "wallpaper" && (
               <img
@@ -89,52 +96,36 @@ const ItemDetails = () => {
             )}
 
             {item.file_type === "video" && (
-              <video
-                controls
-                className="max-w-full max-h-[70vh]"
-                src={item.file_url}
-              />
+              <video controls src={item.file_url} className="max-h-[70vh]" />
             )}
           </Card>
 
-          {/* DETAILS (UNCHANGED) */}
-          <div className="flex flex-col w-full h-full">
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Badge>{item.file_type}</Badge>
+          <div className="flex flex-col h-full">
+            <Badge className="w-fit">{item.file_type}</Badge>
+
+            <p className="text-sm text-muted-foreground mt-2">
+              {(item.downloads || 0).toLocaleString()} Downloads
+            </p>
+
+            <h1 className="text-2xl font-bold mt-2">{item.file_name}</h1>
+
+            <p className="text-muted-foreground mt-2">
+              {item.description}
+            </p>
+
+            {item.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {item.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="px-3 py-1 text-xs rounded-full bg-secondary"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
+            )}
 
-              <p className="text-sm text-muted-foreground">
-                {(item.downloads || 0).toLocaleString()} Downloads
-              </p>
-
-              <h1 className="text-2xl font-bold">{item.file_name}</h1>
-
-              <div className="space-y-2">
-                <h2 className="text-sm font-semibold text-foreground">
-                  Description
-                </h2>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {item.description ||
-                    "This is a high-quality digital asset designed for personal device customization. The content is optimized for modern screens and offers a clean, aesthetic visual or audio experience suitable for everyday use."}
-                </p>
-              </div>
-
-              {item.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {item.tags.map((tag: string) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 text-xs rounded-full bg-secondary"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* ACTION BAR — EXACTLY SAME */}
             <div className="mt-auto pt-6 flex gap-3">
               <Button
                 onClick={() =>
@@ -145,7 +136,7 @@ const ItemDetails = () => {
                       })
                     : navigator.clipboard.writeText(window.location.href)
                 }
-                className="h-11 px-6 rounded-full border hover:bg-primary hover:text-white"
+                className="h-11 px-6 rounded-full border"
               >
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
@@ -159,11 +150,6 @@ const ItemDetails = () => {
                 Download
               </Button>
             </div>
-
-            <p className="mt-6 text-xs text-muted-foreground">
-              This content is provided for personal use only. Redistribution or
-              commercial use without permission is prohibited.
-            </p>
           </div>
         </div>
       </main>

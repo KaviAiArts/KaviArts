@@ -3,54 +3,43 @@ import { Download, Play, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-/* -------------------- Helpers -------------------- */
+/* ---------- Helpers ---------- */
 
-const getVideoThumbnail = (url: string) => {
-  // Cloudinary video → thumbnail at first frame
-  return url
+const getVideoThumbnail = (url: string) =>
+  url
     .replace("/video/upload/", "/video/upload/so_0/")
     .replace(/\.(mp4|webm|mov)$/i, ".jpg");
-};
 
-const getAltText = (item: any) => {
-  if (item.description) {
-    return item.description.split(".")[0];
-  }
-  return `${item.file_name} ${item.file_type}`;
-};
+const makeSlug = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 
-/* -------------------- Content Item -------------------- */
+const getAltText = (item: any) =>
+  item.description
+    ? item.description.split(".")[0]
+    : `${item.file_name} ${item.file_type}`;
+
+/* ---------- Item ---------- */
 
 const ContentItem = ({ item }: { item: any }) => {
   const navigate = useNavigate();
 
   const handleItemClick = () => {
-    navigate(`/item/${item.id}`);
+    const slug = makeSlug(item.file_name);
+    navigate(`/item/${item.id}/${slug}`);
   };
 
-  const getAspectClass = () => {
-    if (item.file_type === "ringtone") return "aspect-square"; // 1:1
-    return "aspect-[9/16]"; // wallpapers & videos
-  };
-
-  const getIcon = () => {
-    switch (item.file_type) {
-      case "ringtone":
-        return <Music className="w-4 h-4 mr-2" />;
-      case "video":
-        return <Play className="w-4 h-4 mr-2" />;
-      default:
-        return <Download className="w-4 h-4 mr-2" />;
-    }
-  };
+  const aspect =
+    item.file_type === "ringtone" ? "aspect-square" : "aspect-[9/16]";
 
   return (
     <Card
       onClick={handleItemClick}
       className="group glass-card hover-lift cursor-pointer overflow-hidden"
     >
-      <div className={`relative ${getAspectClass()} overflow-hidden`}>
-        {/* WALLPAPER */}
+      <div className={`relative ${aspect} overflow-hidden`}>
         {item.file_type === "wallpaper" && (
           <img
             src={item.file_url}
@@ -59,7 +48,6 @@ const ContentItem = ({ item }: { item: any }) => {
           />
         )}
 
-        {/* VIDEO */}
         {item.file_type === "video" && (
           <>
             <img
@@ -75,66 +63,45 @@ const ContentItem = ({ item }: { item: any }) => {
           </>
         )}
 
-        {/* RINGTONE */}
         {item.file_type === "ringtone" && (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
             <Music className="w-12 h-12 text-primary/80" />
           </div>
         )}
 
-        {/* HOVER ACTION */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <Button
-            size="sm"
-            className="bg-gradient-primary text-primary-foreground shadow-glow"
-          >
-            {getIcon()}
-            {item.file_type === "video"
-              ? "Watch"
-              : item.file_type === "ringtone"
-              ? "Listen"
-              : "Download"}
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <Button size="sm" className="bg-gradient-primary text-white">
+            {item.file_type === "video" ? "Watch" : "Download"}
           </Button>
         </div>
 
-        {/* TYPE BADGE */}
         <div className="absolute top-2 left-2">
-          <span className="bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-full">
+          <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
             {item.file_type}
           </span>
         </div>
       </div>
 
       <div className="p-3">
-        <h3 className="font-semibold text-sm truncate">
-          {item.file_name}
-        </h3>
+        <h3 className="text-sm font-semibold truncate">{item.file_name}</h3>
       </div>
     </Card>
   );
 };
 
-/* -------------------- Content Grid -------------------- */
+/* ---------- Grid ---------- */
 
 const ContentGrid = ({ items = [] }: { items?: any[] }) => {
   if (!items.length) {
     return (
-      <p className="text-center text-gray-500 py-10">
-        No content available yet.
+      <p className="text-center text-muted-foreground py-10">
+        No content available.
       </p>
     );
   }
 
   return (
-    <div
-      className="
-        grid
-        grid-cols-3
-        md:grid-cols-4
-        lg:grid-cols-6
-        gap-3
-      "
-    >
+    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
       {items.map((item) => (
         <ContentItem key={item.id} item={item} />
       ))}
