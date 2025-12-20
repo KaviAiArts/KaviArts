@@ -50,11 +50,18 @@ const ContentItem = ({ item }: { item: any }) => {
 
         {item.file_type === "video" && (
           <>
+
+
             <img
-              src={getVideoThumbnail(item.file_url)}
-              alt={getAltText(item)}
-              className="w-full h-full object-cover"
-            />
+  src={getVideoThumbnail(item.file_url)}
+  loading="lazy"
+  decoding="async"
+  width={300}
+  height={500}
+/>
+
+
+
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="bg-black/50 rounded-full p-3">
                 <Play className="w-8 h-8 text-white fill-white" />

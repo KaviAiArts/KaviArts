@@ -1,4 +1,22 @@
 User-agent: *
 Allow: /
 
+# Block non-SEO internal pages
+Disallow: /admin
+Disallow: /search
+
+# Explicitly allow assets
+Allow: /assets/
+Allow: /_vercel/
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+Allow: /*.svg$
+Allow: /*.mp4$
+Allow: /*.mp3$
+
+# Sitemap
 Sitemap: https://kavi-arts.vercel.app/sitemap.xml

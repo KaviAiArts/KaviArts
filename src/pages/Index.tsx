@@ -94,7 +94,9 @@ const Index = () => {
       .from("files")
       .select("*")
       .eq("file_type", "wallpaper")
-      .order("created_at", { ascending: false })
+
+      .order("downloads", { ascending: false })
+
       .limit(6);
 
     const { data: ringtoneData } = await supabase

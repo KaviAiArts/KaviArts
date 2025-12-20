@@ -12,7 +12,9 @@ const Hero = () => {
 
       <div className="container mx-auto text-center relative z-10">
         {/* Title with float but visually centered */}
-        <div className="animate-float translate-y-1">
+
+        <div className="animate-float translate-y-1 will-change-transform">
+
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
             <span className="gradient-text">Kavi</span>{" "}
             <span className="gradient-text">Arts</span>

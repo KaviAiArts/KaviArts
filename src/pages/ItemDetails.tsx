@@ -8,11 +8,46 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 
+/* ---------------- HELPERS ---------------- */
+
 const makeSlug = (name: string) =>
   name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+const optimizeCloudinary = (url: string, width = 1080) => {
+  if (!url || !url.includes("res.cloudinary.com")) return url;
+  return url.replace(
+    "/upload/",
+    `/upload/f_auto,q_auto,w_${width}/`
+  );
+};
+
+const generateSchema = (item: any) => {
+  const base = {
+    "@context": "https://schema.org",
+    name: item.file_name,
+    description: item.description || item.file_name,
+    contentUrl: item.file_url
+  };
+
+  if (item.file_type === "wallpaper") {
+    return { ...base, "@type": "ImageObject" };
+  }
+
+  if (item.file_type === "ringtone") {
+    return { ...base, "@type": "AudioObject" };
+  }
+
+  if (item.file_type === "video") {
+    return { ...base, "@type": "VideoObject" };
+  }
+
+  return null;
+};
+
+/* ---------------- COMPONENT ---------------- */
 
 const ItemDetails = () => {
   const { id, slug } = useParams();
@@ -30,14 +65,49 @@ const ItemDetails = () => {
       if (!data) return;
 
       const correctSlug = makeSlug(data.file_name);
-
       if (!slug || slug !== correctSlug) {
         navigate(`/item/${data.id}/${correctSlug}`, { replace: true });
         return;
       }
 
       setItem(data);
+
+      /* ---------- SEO META ---------- */
       document.title = `${data.file_name} - KaviArts`;
+
+      const metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      metaDesc.content =
+        data.description ||
+        `${data.file_name} high-quality wallpaper, ringtone, or video from KaviArts.`;
+
+      const ogImage = document.createElement("meta");
+      ogImage.setAttribute("property", "og:image");
+      ogImage.content = data.file_url;
+
+      const ogTitle = document.createElement("meta");
+      ogTitle.setAttribute("property", "og:title");
+      ogTitle.content = data.file_name;
+
+      document.head.append(metaDesc, ogImage, ogTitle);
+
+      /* ---------- SCHEMA ---------- */
+      const schema = generateSchema(data);
+      let schemaScript: HTMLScriptElement | null = null;
+
+      if (schema) {
+        schemaScript = document.createElement("script");
+        schemaScript.type = "application/ld+json";
+        schemaScript.text = JSON.stringify(schema);
+        document.head.appendChild(schemaScript);
+      }
+
+      return () => {
+        document.head.removeChild(metaDesc);
+        document.head.removeChild(ogImage);
+        document.head.removeChild(ogTitle);
+        if (schemaScript) document.head.removeChild(schemaScript);
+      };
     };
 
     fetchItem();
@@ -59,9 +129,9 @@ const ItemDetails = () => {
       .update({ downloads: (item.downloads || 0) + 1 })
       .eq("id", item.id);
 
-    setItem((prev: any) => ({
-      ...prev,
-      downloads: (prev.downloads || 0) + 1,
+    setItem((p: any) => ({
+      ...p,
+      downloads: (p.downloads || 0) + 1
     }));
   };
 
@@ -81,12 +151,11 @@ const ItemDetails = () => {
           <Card className="flex items-center justify-center bg-muted/40 min-h-[260px]">
             {item.file_type === "wallpaper" && (
               <img
-                src={item.file_url}
-                alt={
-                  item.description
-                    ? item.description.split(".")[0]
-                    : item.file_name
-                }
+                src={optimizeCloudinary(item.file_url, 1080)}
+                alt={item.file_name}
+                width={800}
+                height={1200}
+                decoding="async"
                 className="max-w-full max-h-[70vh] object-contain"
               />
             )}
@@ -96,7 +165,11 @@ const ItemDetails = () => {
             )}
 
             {item.file_type === "video" && (
-              <video controls src={item.file_url} className="max-h-[70vh]" />
+              <video
+                controls
+                src={item.file_url}
+                className="max-h-[70vh]"
+              />
             )}
           </Card>
 
@@ -107,7 +180,9 @@ const ItemDetails = () => {
               {(item.downloads || 0).toLocaleString()} Downloads
             </p>
 
-            <h1 className="text-2xl font-bold mt-2">{item.file_name}</h1>
+            <h1 className="text-2xl font-bold mt-2">
+              {item.file_name}
+            </h1>
 
             <p className="text-muted-foreground mt-2">
               {item.description}
@@ -132,7 +207,7 @@ const ItemDetails = () => {
                   navigator.share
                     ? navigator.share({
                         title: item.file_name,
-                        url: window.location.href,
+                        url: window.location.href
                       })
                     : navigator.clipboard.writeText(window.location.href)
                 }
