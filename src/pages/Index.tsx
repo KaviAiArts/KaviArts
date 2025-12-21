@@ -1,18 +1,28 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
-import ContentItem from "@/components/ContentItem";
 import { Button } from "@/components/ui/button";
 
-// ------------------------------
-// CONTENT SECTION
-// ------------------------------
+/* ✅ Lazy load heavy card component */
+const ContentItem = lazy(() => import("@/components/ContentItem"));
 
-const ContentSection = ({ title, items, category }) => {
+/* ------------------------------ */
+/* CONTENT SECTION COMPONENT      */
+/* ------------------------------ */
+
+const ContentSection = ({
+  title,
+  items,
+  category,
+}: {
+  title: string;
+  items: any[];
+  category: string;
+}) => {
   return (
     <>
       {/* MOBILE */}
@@ -36,7 +46,9 @@ const ContentSection = ({ title, items, category }) => {
                 className="flex-shrink-0"
                 style={{ width: "42vw", maxWidth: "190px" }}
               >
-                <ContentItem item={item} />
+                <Suspense fallback={null}>
+                  <ContentItem item={item} />
+                </Suspense>
               </div>
             ))}
           </div>
@@ -59,7 +71,9 @@ const ContentSection = ({ title, items, category }) => {
 
           <div className="grid grid-cols-6 gap-3">
             {items.map((item) => (
-              <ContentItem key={item.id} item={item} />
+              <Suspense key={item.id} fallback={null}>
+                <ContentItem item={item} />
+              </Suspense>
             ))}
           </div>
         </div>
@@ -68,15 +82,15 @@ const ContentSection = ({ title, items, category }) => {
   );
 };
 
-// ------------------------------
-// MAIN HOMEPAGE
-// ------------------------------
+/* ------------------------------ */
+/* MAIN HOMEPAGE                  */
+/* ------------------------------ */
 
 const Index = () => {
-  const [newest, setNewest] = useState([]);
-  const [popularWallpapers, setPopularWallpapers] = useState([]);
-  const [ringtones, setRingtones] = useState([]);
-  const [videos, setVideos] = useState([]);
+  const [newest, setNewest] = useState<any[]>([]);
+  const [popularWallpapers, setPopularWallpapers] = useState<any[]>([]);
+  const [ringtones, setRingtones] = useState<any[]>([]);
+  const [videos, setVideos] = useState<any[]>([]);
 
   useEffect(() => {
     loadAllData();
@@ -94,7 +108,7 @@ const Index = () => {
       .from("files")
       .select("*")
       .eq("file_type", "wallpaper")
-      .order("created_at", { ascending: false })
+      .order("downloads", { ascending: false })
       .limit(6);
 
     const { data: ringtoneData } = await supabase
@@ -123,10 +137,26 @@ const Index = () => {
       <Hero />
       <CategoryNav />
 
-      <ContentSection title="Newest Wallpapers" items={newest} category="wallpaper" />
-      <ContentSection title="Popular Wallpapers" items={popularWallpapers} category="wallpaper" />
-      <ContentSection title="Popular Ringtones" items={ringtones} category="ringtone" />
-      <ContentSection title="Popular Videos" items={videos} category="video" />
+      <ContentSection
+        title="Newest Wallpapers"
+        items={newest}
+        category="wallpaper"
+      />
+      <ContentSection
+        title="Popular Wallpapers"
+        items={popularWallpapers}
+        category="wallpaper"
+      />
+      <ContentSection
+        title="Popular Ringtones"
+        items={ringtones}
+        category="ringtone"
+      />
+      <ContentSection
+        title="Popular Videos"
+        items={videos}
+        category="video"
+      />
 
       <Footer />
     </div>

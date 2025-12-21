@@ -23,6 +23,9 @@ export default defineConfig(({ mode }) => ({
   },
 
   build: {
+    cssCodeSplit: true,
+    sourcemap: false,
+
     rollupOptions: {
       // ensure fuse.js is bundled and not treated as external
       external: [],

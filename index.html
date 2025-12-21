@@ -2,20 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kavi Arts - Free Wallpapers & Ringtones | Download HD Mobile Content</title>
-    <meta name="description" content="Download millions of free HD wallpapers, ringtones, and customization content for your mobile devices. Personalize your phone with beautiful backgrounds and sounds." />
-    <meta name="author" content="kaviarts" />
-    <meta name="keywords" content="wallpapers, ringtones, mobile wallpapers, phone backgrounds, free download, HD wallpapers, customization" />
 
-    <!-- ✅ Add Cloudinary Upload Widget Script Here -->
-    <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO -->
+    <title>Kavi Arts - Free Wallpapers & Ringtones | Download HD Mobile Content</title>
+    <meta
+      name="description"
+      content="Download free HD wallpapers, ringtones, and customization content for your mobile devices. Personalize your phone with beautiful backgrounds and sounds."
+    />
+    <meta name="author" content="kaviarts" />
+    <meta
+      name="keywords"
+      content="wallpapers, ringtones, mobile wallpapers, phone backgrounds, free download, HD wallpapers, customization"
+    />
+
+    <!-- ✅ Performance: Cloudinary -->
+    <link rel="preconnect" href="https://res.cloudinary.com" />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
+    <!-- ✅ Performance: Fonts -->
+    <meta http-equiv="x-dns-prefetch-control" content="on" />
+
+    <!-- Cloudinary Upload Widget -->
+    <script
+      src="https://widget.cloudinary.com/v2.0/global/all.js"
+      defer
+    ></script>
   </head>
 
   <body>
     <div id="root"></div>
 
-    <!-- Your React App -->
+    <!-- React App -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
