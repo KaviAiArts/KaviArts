@@ -16,9 +16,6 @@ const makeSlug = (name: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-/**
- * Used ONLY for display (preview, SEO, OG image)
- */
 const optimizeCloudinary = (url: string, width = 1080) => {
   if (!url || !url.includes("res.cloudinary.com")) return url;
   return url.replace(
@@ -27,20 +24,12 @@ const optimizeCloudinary = (url: string, width = 1080) => {
   );
 };
 
-/**
- * Used ONLY for downloads (ORIGINAL QUALITY)
- */
-const getOriginalCloudinary = (url: string) => {
-  if (!url || !url.includes("res.cloudinary.com")) return url;
-  return url.replace(/\/upload\/[^/]+\//, "/upload/");
-};
-
 const generateSchema = (item: any) => {
   const base = {
     "@context": "https://schema.org",
     name: item.file_name,
     description: item.description || item.file_name,
-    contentUrl: item.file_url
+    contentUrl: item.file_url,
   };
 
   if (item.file_type === "wallpaper") {
@@ -83,7 +72,7 @@ const ItemDetails = () => {
 
       setItem(data);
 
-      /* ---------- SEO META ---------- */
+      /* ---------- SEO ---------- */
       document.title = `${data.file_name} - KaviArts`;
 
       const metaDesc = document.createElement("meta");
@@ -96,11 +85,7 @@ const ItemDetails = () => {
       ogImage.setAttribute("property", "og:image");
       ogImage.content = optimizeCloudinary(data.file_url, 1200);
 
-      const ogTitle = document.createElement("meta");
-      ogTitle.setAttribute("property", "og:title");
-      ogTitle.content = data.file_name;
-
-      document.head.append(metaDesc, ogImage, ogTitle);
+      document.head.append(metaDesc, ogImage);
 
       /* ---------- SCHEMA ---------- */
       const schema = generateSchema(data);
@@ -116,7 +101,6 @@ const ItemDetails = () => {
       return () => {
         document.head.removeChild(metaDesc);
         document.head.removeChild(ogImage);
-        document.head.removeChild(ogTitle);
         if (schemaScript) document.head.removeChild(schemaScript);
       };
     };
@@ -124,21 +108,24 @@ const ItemDetails = () => {
     fetchItem();
   }, [id, slug, navigate]);
 
-  /* ---------------- DOWNLOAD ORIGINAL ---------------- */
+  /* ---------------- DOWNLOAD (FIXED) ---------------- */
 
   const handleDownload = async () => {
-    const originalUrl = getOriginalCloudinary(item.file_url);
+    if (!item?.file_url) return;
 
-    const res = await fetch(originalUrl);
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
+    // 🔒 Force ORIGINAL Cloudinary asset (no compression)
+    const originalUrl = item.file_url.replace(
+      "/upload/",
+      "/upload/fl_attachment/"
+    );
 
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `${item.file_name}.${item.format || "jpg"}`;
+    a.href = originalUrl;
+    a.setAttribute("download", item.file_name);
+    a.setAttribute("target", "_blank");
+    document.body.appendChild(a);
     a.click();
-
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
 
     await supabase
       .from("files")
@@ -147,7 +134,7 @@ const ItemDetails = () => {
 
     setItem((prev: any) => ({
       ...prev,
-      downloads: (prev.downloads || 0) + 1
+      downloads: (prev.downloads || 0) + 1,
     }));
   };
 
@@ -204,26 +191,13 @@ const ItemDetails = () => {
               {item.description}
             </p>
 
-            {item.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {item.tags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-xs rounded-full bg-secondary"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
             <div className="mt-auto pt-6 flex gap-3">
               <Button
                 onClick={() =>
                   navigator.share
                     ? navigator.share({
                         title: item.file_name,
-                        url: window.location.href
+                        url: window.location.href,
                       })
                     : navigator.clipboard.writeText(window.location.href)
                 }
@@ -238,7 +212,7 @@ const ItemDetails = () => {
                 className="h-11 px-10 rounded-full bg-primary text-white"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download Original
+                Download
               </Button>
             </div>
           </div>
