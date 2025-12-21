@@ -1,68 +1,42 @@
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Download, Play, Music } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-/* ---------------- HELPERS ---------------- */
-
-const makeSlug = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-
-const getAltText = (item: any) =>
-  item.description
-    ? item.description.split(".")[0]
-    : `${item.file_name} ${item.file_type}`;
-
-const optimizeCloudinary = (url: string, width = 600) => {
-  if (!url || !url.includes("res.cloudinary.com")) return url;
+const getVideoThumbnail = (url: string) => {
+  // Cloudinary video → thumbnail
   return url.replace(
-    "/upload/",
-    `/upload/f_auto,q_auto,w_${width}/`
-  );
+    "/video/upload/",
+    "/video/upload/so_0/"
+  ).replace(/\.(mp4|webm|mov)$/, ".jpg");
 };
-
-const getVideoThumbnail = (url: string) =>
-  optimizeCloudinary(
-    url
-      .replace("/video/upload/", "/video/upload/so_0/")
-      .replace(/\.(mp4|webm|mov)$/i, ".jpg"),
-    600
-  );
-
-/* ---------------- COMPONENT ---------------- */
 
 const ContentItem = ({ item }: { item: any }) => {
   const navigate = useNavigate();
 
-  const handleClick = () => {
-    const slug = makeSlug(item.file_name);
-    navigate(`/item/${item.id}/${slug}`);
+  const handleCardClick = () => {
+    navigate(`/item/${item.id}`);
   };
-
-  const aspect =
-    item.file_type === "ringtone"
-      ? "aspect-square"
-      : "aspect-[9/16]";
 
   return (
     <Card
-      onClick={handleClick}
+      onClick={handleCardClick}
       className="group glass-card hover-lift cursor-pointer overflow-hidden"
     >
-      <div className={`relative ${aspect} overflow-hidden`}>
+      {/* IMAGE / VIDEO / RINGTONE PREVIEW */}
+      <div
+        className={`relative overflow-hidden ${
+          item.file_type === "ringtone"
+            ? "aspect-square"
+            : "aspect-[9/16]"
+        }`}
+      >
         {/* WALLPAPER */}
         {item.file_type === "wallpaper" && (
           <img
-            src={optimizeCloudinary(item.file_url, 600)}
-            alt={getAltText(item)}
-            width={300}
-            height={500}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            src={item.file_url}
+            alt={item.file_name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
           />
         )}
 
@@ -71,15 +45,11 @@ const ContentItem = ({ item }: { item: any }) => {
           <>
             <img
               src={getVideoThumbnail(item.file_url)}
-              alt={getAltText(item)}
-              width={300}
-              height={500}
-              loading="lazy"
-              decoding="async"
+              alt={item.file_name}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-black/50 rounded-full p-3">
+              <div className="bg-black/50 p-3 rounded-full">
                 <Play className="w-8 h-8 text-white fill-white" />
               </div>
             </div>
@@ -87,21 +57,33 @@ const ContentItem = ({ item }: { item: any }) => {
         )}
 
         {/* RINGTONE */}
+
+
+
         {item.file_type === "ringtone" && (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-            <Music className="w-14 h-14 text-primary/80" />
-          </div>
-        )}
+  <div className="aspect-square w-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+    <Music className="w-14 h-14 text-primary/80" />
+  </div>
+)}
+
+
 
         {/* LABEL */}
-        <span className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded-full">
+        <span className="absolute top-2 left-2 bg-primary/90 text-xs px-2 py-1 rounded-full text-white">
           {item.file_type}
         </span>
 
         {/* HOVER ACTION */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-          <Button size="sm" className="bg-gradient-primary text-white">
-            {item.file_type === "video" ? "Watch" : "Download"}
+          <Button size="sm">
+            {item.file_type === "ringtone" && <Music className="w-4 h-4 mr-2" />}
+            {item.file_type === "video" && <Play className="w-4 h-4 mr-2" />}
+            {item.file_type === "wallpaper" && <Download className="w-4 h-4 mr-2" />}
+            {item.file_type === "ringtone"
+              ? "Listen"
+              : item.file_type === "video"
+              ? "Watch"
+              : "Download"}
           </Button>
         </div>
       </div>
