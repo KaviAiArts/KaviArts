@@ -18,10 +18,7 @@ const makeSlug = (name: string) =>
 
 const optimizeCloudinary = (url: string, width = 1080) => {
   if (!url || !url.includes("res.cloudinary.com")) return url;
-  return url.replace(
-    "/upload/",
-    `/upload/f_auto,q_auto,w_${width}/`
-  );
+  return url.replace("/upload/", `/upload/f_auto,q_auto,w_${width}/`);
 };
 
 const generateSchema = (item: any) => {
@@ -32,17 +29,9 @@ const generateSchema = (item: any) => {
     contentUrl: item.file_url,
   };
 
-  if (item.file_type === "wallpaper") {
-    return { ...base, "@type": "ImageObject" };
-  }
-
-  if (item.file_type === "ringtone") {
-    return { ...base, "@type": "AudioObject" };
-  }
-
-  if (item.file_type === "video") {
-    return { ...base, "@type": "VideoObject" };
-  }
+  if (item.file_type === "wallpaper") return { ...base, "@type": "ImageObject" };
+  if (item.file_type === "ringtone") return { ...base, "@type": "AudioObject" };
+  if (item.file_type === "video") return { ...base, "@type": "VideoObject" };
 
   return null;
 };
@@ -65,7 +54,7 @@ const ItemDetails = () => {
       if (!data) return;
 
       const correctSlug = makeSlug(data.file_name);
-      if (!slug || slug !== correctSlug) {
+      if (slug !== correctSlug) {
         navigate(`/item/${data.id}/${correctSlug}`, { replace: true });
         return;
       }
@@ -79,7 +68,7 @@ const ItemDetails = () => {
       metaDesc.name = "description";
       metaDesc.content =
         data.description ||
-        `${data.file_name} high-quality wallpaper, ringtone, or video from KaviArts.`;
+        `${data.file_name} high-quality wallpaper, ringtone, or video`;
 
       const ogImage = document.createElement("meta");
       ogImage.setAttribute("property", "og:image");
@@ -108,12 +97,12 @@ const ItemDetails = () => {
     fetchItem();
   }, [id, slug, navigate]);
 
-  /* ---------------- DOWNLOAD (FIXED) ---------------- */
+  /* ---------------- DOWNLOAD (CORRECT & SAFE) ---------------- */
 
   const handleDownload = async () => {
     if (!item?.file_url) return;
 
-    // 🔒 Force ORIGINAL Cloudinary asset (no compression)
+    // ✅ Force ORIGINAL file (no compression)
     const originalUrl = item.file_url.replace(
       "/upload/",
       "/upload/fl_attachment/"
@@ -156,9 +145,6 @@ const ItemDetails = () => {
               <img
                 src={optimizeCloudinary(item.file_url, 1080)}
                 alt={item.file_name}
-                width={800}
-                height={1200}
-                decoding="async"
                 className="max-w-full max-h-[70vh] object-contain"
               />
             )}
@@ -168,28 +154,20 @@ const ItemDetails = () => {
             )}
 
             {item.file_type === "video" && (
-              <video
-                controls
-                src={item.file_url}
-                className="max-h-[70vh]"
-              />
+              <video controls src={item.file_url} className="max-h-[70vh]" />
             )}
           </Card>
 
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col">
             <Badge className="w-fit">{item.file_type}</Badge>
 
             <p className="text-sm text-muted-foreground mt-2">
               {(item.downloads || 0).toLocaleString()} Downloads
             </p>
 
-            <h1 className="text-2xl font-bold mt-2">
-              {item.file_name}
-            </h1>
+            <h1 className="text-2xl font-bold mt-2">{item.file_name}</h1>
 
-            <p className="text-muted-foreground mt-2">
-              {item.description}
-            </p>
+            <p className="text-muted-foreground mt-2">{item.description}</p>
 
             <div className="mt-auto pt-6 flex gap-3">
               <Button
@@ -201,16 +179,13 @@ const ItemDetails = () => {
                       })
                     : navigator.clipboard.writeText(window.location.href)
                 }
-                className="h-11 px-6 rounded-full border"
+                variant="outline"
               >
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
               </Button>
 
-              <Button
-                onClick={handleDownload}
-                className="h-11 px-10 rounded-full bg-primary text-white"
-              >
+              <Button onClick={handleDownload}>
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </Button>
