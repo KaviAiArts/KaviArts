@@ -69,20 +69,26 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-sans;
-    background-image:
-      radial-gradient(
-        circle at 20% 80%,
-        hsl(var(--primary) / 0.15) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        circle at 80% 20%,
-        hsl(var(--primary-glow) / 0.15) 0%,
-        transparent 50%
-      );
-  }
+
+
+body {
+  @apply bg-background text-foreground font-sans;
+  min-height: 100vh;
+
+  background-image:
+    radial-gradient(
+      circle at 20% 80%,
+      hsl(var(--primary) / 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      hsl(var(--primary-glow) / 0.15) 0%,
+      transparent 50%
+    );
+}
+
+
 
   /* Animations */
   @keyframes float {
