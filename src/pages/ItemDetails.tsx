@@ -16,12 +16,23 @@ const makeSlug = (name: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+/**
+ * Used ONLY for display (preview, SEO, OG image)
+ */
 const optimizeCloudinary = (url: string, width = 1080) => {
   if (!url || !url.includes("res.cloudinary.com")) return url;
   return url.replace(
     "/upload/",
     `/upload/f_auto,q_auto,w_${width}/`
   );
+};
+
+/**
+ * Used ONLY for downloads (ORIGINAL QUALITY)
+ */
+const getOriginalCloudinary = (url: string) => {
+  if (!url || !url.includes("res.cloudinary.com")) return url;
+  return url.replace(/\/upload\/[^/]+\//, "/upload/");
 };
 
 const generateSchema = (item: any) => {
@@ -83,7 +94,7 @@ const ItemDetails = () => {
 
       const ogImage = document.createElement("meta");
       ogImage.setAttribute("property", "og:image");
-      ogImage.content = data.file_url;
+      ogImage.content = optimizeCloudinary(data.file_url, 1200);
 
       const ogTitle = document.createElement("meta");
       ogTitle.setAttribute("property", "og:title");
@@ -113,15 +124,20 @@ const ItemDetails = () => {
     fetchItem();
   }, [id, slug, navigate]);
 
+  /* ---------------- DOWNLOAD ORIGINAL ---------------- */
+
   const handleDownload = async () => {
-    const res = await fetch(item.file_url);
+    const originalUrl = getOriginalCloudinary(item.file_url);
+
+    const res = await fetch(originalUrl);
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = item.file_name;
+    a.download = `${item.file_name}.${item.format || "jpg"}`;
     a.click();
+
     URL.revokeObjectURL(url);
 
     await supabase
@@ -129,9 +145,9 @@ const ItemDetails = () => {
       .update({ downloads: (item.downloads || 0) + 1 })
       .eq("id", item.id);
 
-    setItem((p: any) => ({
-      ...p,
-      downloads: (p.downloads || 0) + 1
+    setItem((prev: any) => ({
+      ...prev,
+      downloads: (prev.downloads || 0) + 1
     }));
   };
 
@@ -222,7 +238,7 @@ const ItemDetails = () => {
                 className="h-11 px-10 rounded-full bg-primary text-white"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download
+                Download Original
               </Button>
             </div>
           </div>
