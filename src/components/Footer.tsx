@@ -3,8 +3,8 @@ import {
   Youtube,
   Music,
   Music2,
-  Pinterest,
-  ArrowUp as ArrowUpIcon
+  Pin,
+  ArrowUp
 } from "lucide-react";
 
 const Footer = () => {
@@ -42,7 +42,7 @@ const Footer = () => {
             rel="noopener noreferrer"
             aria-label="Kavi Arts Pinterest"
           >
-            <Pinterest aria-hidden="true" />
+            <Pin aria-hidden="true" />
           </a>
 
           <a
@@ -70,7 +70,7 @@ const Footer = () => {
           aria-label="Scroll back to top"
           className="flex items-center gap-2 text-sm"
         >
-          <ArrowUpIcon className="h-4 w-4" aria-hidden="true" />
+          <ArrowUp className="h-4 w-4" aria-hidden="true" />
           Back to top
         </button>
 
