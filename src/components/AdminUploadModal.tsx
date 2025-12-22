@@ -9,6 +9,8 @@ type Props = {
     file_name: string;
     description?: string;
     tags?: string[];
+    file_url?: string;
+    file_type?: "wallpaper" | "ringtone" | "video";
   };
   onSave: (data: {
     file_name: string;
@@ -25,9 +27,15 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
 
   useEffect(() => {
     if (initialData) {
+      // EDIT MODE
       setTitle(initialData.file_name || "");
       setDescription(initialData.description || "");
       setTags(initialData.tags?.join(", ") || "");
+    } else {
+      // NEW UPLOAD → ALWAYS BLANK
+      setTitle("");
+      setDescription("");
+      setTags("");
     }
   }, [initialData]);
 
@@ -35,11 +43,39 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <Card className="p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">
-          {initialData ? "Edit Item" : "Add Details"}
+      <Card className="p-6 w-full max-w-md space-y-4">
+        <h2 className="text-xl font-bold">
+          {initialData?.file_name ? "Edit Item" : "Add Details"}
         </h2>
 
+        {/* 🔍 PREVIEW (NEW UPLOAD ONLY) */}
+        {initialData?.file_url && (
+          <div className="rounded-md border bg-muted/30 p-3 flex justify-center">
+            {initialData.file_type === "wallpaper" && (
+              <img
+                src={initialData.file_url}
+                alt="Preview"
+                className="max-h-48 object-contain rounded"
+              />
+            )}
+
+            {initialData.file_type === "ringtone" && (
+              <audio controls className="w-full">
+                <source src={initialData.file_url} />
+              </audio>
+            )}
+
+            {initialData.file_type === "video" && (
+              <video
+                controls
+                className="max-h-48 rounded"
+                src={initialData.file_url}
+              />
+            )}
+          </div>
+        )}
+
+        {/* METADATA */}
         <Input
           placeholder="Title (50–60 characters recommended)"
           value={title}
@@ -47,23 +83,32 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
         />
 
         <Input
-          className="mt-3"
           placeholder="Tags (comma separated)"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
         />
 
         <Input
-          className="mt-3"
           placeholder="Description (150–160 characters recommended)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <div className="flex justify-between mt-4">
-          <Button variant="ghost" onClick={onClose}>
+        {/* ACTIONS */}
+        <div className="flex justify-between pt-2">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              // 🔒 Cancel = discard everything visually
+              setTitle("");
+              setDescription("");
+              setTags("");
+              onClose();
+            }}
+          >
             Cancel
           </Button>
+
           <Button
             onClick={() =>
               onSave({
@@ -75,6 +120,7 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
                   .filter(Boolean),
               })
             }
+            disabled={!title.trim()}
           >
             Save
           </Button>
