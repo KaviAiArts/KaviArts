@@ -14,16 +14,9 @@ function useQuery() {
 
 const ITEMS_PER_PAGE = 12;
 
-const normalizeKeyword = (word: string) => {
-  if (word.endsWith("s")) {
-    return [word.slice(0, -1), word];
-  }
-  return [word, `${word}s`];
-};
-
 const SearchResults = () => {
   const queryParams = useQuery();
-  const searchText = (queryParams.get("query") || "").trim();
+  const searchText = queryParams.get("query") || "";
   const fromChip = queryParams.get("from") === "chip";
 
   const [results, setResults] = useState<any[]>([]);
@@ -32,41 +25,36 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(false);
 
   const performSearch = async () => {
-    if (!searchText) return;
+    if (!searchText.trim()) return;
     setLoading(true);
 
-    const allowedTypes = ["wallpaper", "video", "ringtone"];
-    const keyword = searchText.toLowerCase();
-
-    const forms = normalizeKeyword(keyword);
-    const wordRegex = new RegExp(`\\b(${forms.join("|")})\\b`, "i");
+    const normalized = searchText.toLowerCase().replace(/s$/, "");
 
     const { data } = await supabase
       .from("files")
       .select("*")
-      .in("file_type", allowedTypes)
+      .or(
+        [
+          `file_name.ilike.%${normalized}%`,
+          `description.ilike.%${normalized}%`,
+          `tags.cs.{${normalized}}`
+        ].join(",")
+      )
       .limit(300);
 
-    const preciseResults = (data || []).filter((item) => {
-      const name = item.file_name?.toLowerCase() || "";
-      const desc = item.description?.toLowerCase() || "";
-      const tags = Array.isArray(item.tags)
-        ? item.tags.join(" ").toLowerCase()
-        : "";
+    const filtered =
+      data?.filter((item: any) => {
+        const text =
+          `${item.file_name} ${item.description || ""}`.toLowerCase();
+        return new RegExp(`\\b${normalized}s?\\b`).test(text);
+      }) || [];
 
-      return (
-        wordRegex.test(name) ||
-        wordRegex.test(desc) ||
-        wordRegex.test(tags)
-      );
-    });
-
-    preciseResults.sort(
-      (a, b) => (b.downloads || 0) - (a.downloads || 0)
+    filtered.sort(
+      (a: any, b: any) => (b.downloads || 0) - (a.downloads || 0)
     );
 
-    setResults(preciseResults);
-    setVisibleResults(preciseResults.slice(0, ITEMS_PER_PAGE));
+    setResults(filtered);
+    setVisibleResults(filtered.slice(0, ITEMS_PER_PAGE));
     setPage(1);
     setLoading(false);
   };
@@ -88,22 +76,21 @@ const SearchResults = () => {
 
       <main className="container mx-auto px-4 py-8">
         {!fromChip && (
-          <>
-            <h1 className="text-3xl font-bold">Search results for:</h1>
-            <p className="text-xl text-primary font-semibold truncate max-w-[80%] mt-1">
-              {searchText}
-            </p>
-          </>
-        )}
+          <div className="flex items-center gap-4 mb-6">
+            <h1 className="text-3xl font-bold truncate">
+              Search results for:{" "}
+              <span className="text-primary">{searchText}</span>
+            </h1>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-4"
-          onClick={() => window.history.back()}
-        >
-          ← Back
-        </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.history.back()}
+            >
+              ← Back
+            </Button>
+          </div>
+        )}
 
         {loading ? (
           <p className="text-center py-20">Searching...</p>
