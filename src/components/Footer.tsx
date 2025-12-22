@@ -52,7 +52,7 @@ const Footer = () => {
             {/* SOCIAL ICONS */}
             <div className="flex flex-wrap gap-6" aria-label="Social links">
               <a
-                href="https://www.instagram.com/kavi_tunez/"
+                href="https://www.instagram.com/kavitunez/"
                 target="_blank"
                 className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition"
                 aria-label="KaviArts on Instagram"
@@ -112,10 +112,26 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Popular Categories</h4>
             <ul className="space-y-2 text-sm text-muted-foreground mb-4">
-              <li><a href="/search?query=nature&from=footer">Nature Wallpapers</a></li>
-              <li><a href="/search?query=anime&from=footer">Anime Wallpapers</a></li>
-              <li><a href="/search?query=aesthetic&from=footer">Aesthetic Ringtones</a></li>
-              <li><a href="/search?query=cinematic&from=footer">Cinematic Videos</a></li>
+              <li>
+                <a href="/search?query=nature&type=wallpaper&title=Nature%20Wallpapers">
+                  Nature Wallpapers
+                </a>
+              </li>
+              <li>
+                <a href="/search?query=anime&type=wallpaper&title=Anime%20Wallpapers">
+                  Anime Wallpapers
+                </a>
+              </li>
+              <li>
+                <a href="/search?query=romantic&type=ringtone&title=Romantic%20Ringtones">
+                  Romantic Ringtones
+                </a>
+              </li>
+              <li>
+                <a href="/search?query=cinematic&type=video&title=Cinematic%20Videos">
+                  Cinematic Videos
+                </a>
+              </li>
             </ul>
 
             <button

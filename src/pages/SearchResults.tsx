@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ContentGrid from "@/components/ContentGrid";
-
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 
@@ -17,9 +15,9 @@ const ITEMS_PER_PAGE = 12;
 
 const SearchResults = () => {
   const queryParams = useQuery();
-  const navigate = useNavigate();
   const searchText = queryParams.get("query") || "";
-  const fromChip = queryParams.get("from") === "chip";
+  const type = queryParams.get("type"); // wallpaper | ringtone | video
+  const customTitle = queryParams.get("title");
 
   const [results, setResults] = useState<any[]>([]);
   const [visibleResults, setVisibleResults] = useState<any[]>([]);
@@ -30,45 +28,31 @@ const SearchResults = () => {
     if (!searchText.trim()) return;
     setLoading(true);
 
-    const normalized = searchText.toLowerCase().replace(/s$/, "");
+    let query = supabase.from("files").select("*");
 
-    const { data } = await supabase
-      .from("files")
-      .select("*")
-      .or(
-        [
-          `file_name.ilike.%${normalized}%`,
-          `description.ilike.%${normalized}%`,
-          `tags.cs.{${normalized}}`,
-        ].join(",")
-      )
-      .limit(300);
+    if (type) {
+      query = query.eq("file_type", type);
+    }
 
-    const filtered =
-      data?.filter((item: any) => {
-        const text =
-          `${item.file_name} ${item.description || ""}`.toLowerCase();
-        return new RegExp(`\\b${normalized}s?\\b`).test(text);
-      }) || [];
-
-    filtered.sort(
-      (a: any, b: any) => (b.downloads || 0) - (a.downloads || 0)
+    query = query.or(
+      `file_name.ilike.%${searchText}%,description.ilike.%${searchText}%,tags.cs.{${searchText.toLowerCase()}}`
     );
 
-    setResults(filtered);
-    setVisibleResults(filtered.slice(0, ITEMS_PER_PAGE));
+    const { data } = await query.limit(200);
+
+    setResults(data || []);
+    setVisibleResults((data || []).slice(0, ITEMS_PER_PAGE));
     setPage(1);
     setLoading(false);
   };
 
   useEffect(() => {
     performSearch();
-  }, [searchText]);
+  }, [searchText, type]);
 
   const loadMore = () => {
     const nextPage = page + 1;
-    const end = nextPage * ITEMS_PER_PAGE;
-    setVisibleResults(results.slice(0, end));
+    setVisibleResults(results.slice(0, nextPage * ITEMS_PER_PAGE));
     setPage(nextPage);
   };
 
@@ -76,25 +60,20 @@ const SearchResults = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
-        {!fromChip && (
-          <>
-            {/* ✅ IDENTICAL BACK BUTTON TO CATEGORY PAGE */}
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="mb-4"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => window.history.back()}
+            className="font-semibold"
+          >
+            ← Back
+          </Button>
 
-            <h1 className="text-3xl font-bold truncate mb-6">
-              Search results for:{" "}
-              <span className="text-primary">{searchText}</span>
-            </h1>
-          </>
-        )}
+          <h1 className="text-3xl font-bold">
+            {customTitle || `Search results for: ${searchText}`}
+          </h1>
+        </div>
 
         {loading ? (
           <p className="text-center py-20">Searching...</p>
