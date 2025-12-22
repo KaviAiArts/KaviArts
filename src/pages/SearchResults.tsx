@@ -14,23 +14,23 @@ function useQuery() {
 const ITEMS_PER_PAGE = 12;
 
 /* ================================
-   Helpers (NO GUESSWORK)
+   SAFE HELPERS (NO GUESSWORK)
 ================================ */
 
-// singularize cats → cat
+// normalize plural → singular (cats → cat)
 const normalize = (text: string) => {
   const t = text.toLowerCase().trim();
   return t.endsWith("s") ? t.slice(0, -1) : t;
 };
 
-// word boundary for title / description / category
+// word boundary match (title / description)
 const wordMatch = (source: string, word: string) => {
   const re = new RegExp(`\\b${word}\\b`, "i");
   return re.test(source);
 };
 
-// tag match (handles: cat, cats, animal)
-const tagMatch = (tags: string[], word: string) => {
+// tag match (exact + plural/singular)
+const tagMatch = (tags: string[] | null, word: string) => {
   if (!Array.isArray(tags)) return false;
 
   return tags.some((tag) => {
@@ -59,14 +59,9 @@ const SearchResults = () => {
     if (!searchWord) return;
     setLoading(true);
 
-    // 1️⃣ Fetch broad candidates ONLY
-    let query = supabase
-      .from("files")
-      .select("*")
-      .or(
-        `file_name.ilike.%${searchWord}%,description.ilike.%${searchWord}%,category.ilike.%${searchWord}%,tags.cs.{${searchWord},${searchWord}s}`
-      )
-      .limit(300);
+    // 🔥 IMPORTANT FIX:
+    // Fetch rows WITHOUT text filtering
+    let query = supabase.from("files").select("*").limit(500);
 
     if (type) {
       query = query.eq("file_type", type);
@@ -74,18 +69,16 @@ const SearchResults = () => {
 
     const { data } = await query;
 
-    // 2️⃣ Precise filtering (THIS FIXES EVERYTHING)
+    // 🔒 ALL LOGIC HAPPENS HERE (SAFE)
     const filtered =
       data?.filter((item) => {
         const title = item.file_name?.toLowerCase() || "";
         const desc = item.description?.toLowerCase() || "";
-        const category = item.category?.toLowerCase() || "";
         const tags = item.tags || [];
 
         return (
           wordMatch(title, searchWord) ||
           wordMatch(desc, searchWord) ||
-          wordMatch(category, searchWord) ||
           tagMatch(tags, searchWord)
         );
       }) || [];
