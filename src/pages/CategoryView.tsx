@@ -30,10 +30,8 @@ const CategoryView = () => {
       query = query.order("downloads", { ascending: false });
     } else if (sort === "newest") {
       query = query.order("created_at", { ascending: false });
-    } else {
-      // header click = discovery
-      query = query.order("created_at", { ascending: false });
-    }
+    } 
+    // ✅ DEFAULT = RANDOM (no order applied)
 
     const { data } = await query;
     setItems(data || []);
@@ -76,12 +74,11 @@ const CategoryView = () => {
                 navigate(`/category/${category}?sort=popular`)
               }
             >
-              View All
+              Popular
             </Button>
           </div>
         </div>
 
-        {/* 🔑 THIS IS THE KEY FIX */}
         <ContentGrid items={items} />
       </main>
 
