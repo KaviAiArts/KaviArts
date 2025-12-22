@@ -37,7 +37,7 @@ const SearchResults = () => {
         [
           `file_name.ilike.%${normalized}%`,
           `description.ilike.%${normalized}%`,
-          `tags.cs.{${normalized}}`
+          `tags.cs.{${normalized}}`,
         ].join(",")
       )
       .limit(300);
@@ -74,21 +74,22 @@ const SearchResults = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-4">
         {!fromChip && (
-          <div className="flex items-center gap-4 mb-6">
-            <h1 className="text-3xl font-bold truncate">
-              Search results for:{" "}
-              <span className="text-primary">{searchText}</span>
-            </h1>
-
+          <div className="flex items-center gap-4 mb-4">
             <Button
               variant="outline"
               size="sm"
+              className="font-semibold"
               onClick={() => window.history.back()}
             >
               ← Back
             </Button>
+
+            <h1 className="text-3xl font-bold truncate">
+              Search results for:{" "}
+              <span className="text-primary">{searchText}</span>
+            </h1>
           </div>
         )}
 
@@ -96,7 +97,7 @@ const SearchResults = () => {
           <p className="text-center py-20">Searching...</p>
         ) : visibleResults.length === 0 ? (
           <div className="text-center py-20">
-            <h2 className="text-xl mb-2">No results found</h2>
+            <h2 className="text-xl mb-4">No results found</h2>
             <p className="text-muted-foreground">
               Try another keyword.
             </p>
