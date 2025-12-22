@@ -14,9 +14,16 @@ function useQuery() {
 
 const ITEMS_PER_PAGE = 12;
 
+const normalizeKeyword = (word: string) => {
+  if (word.endsWith("s")) {
+    return [word.slice(0, -1), word];
+  }
+  return [word, `${word}s`];
+};
+
 const SearchResults = () => {
   const queryParams = useQuery();
-  const searchText = queryParams.get("query") || "";
+  const searchText = (queryParams.get("query") || "").trim();
   const fromChip = queryParams.get("from") === "chip";
 
   const [results, setResults] = useState<any[]>([]);
@@ -25,24 +32,41 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(false);
 
   const performSearch = async () => {
-    if (!searchText.trim()) return;
+    if (!searchText) return;
     setLoading(true);
 
-    const allowedTypes = ["wallpaper", "video"];
+    const allowedTypes = ["wallpaper", "video", "ringtone"];
+    const keyword = searchText.toLowerCase();
+
+    const forms = normalizeKeyword(keyword);
+    const wordRegex = new RegExp(`\\b(${forms.join("|")})\\b`, "i");
 
     const { data } = await supabase
       .from("files")
       .select("*")
       .in("file_type", allowedTypes)
-      .ilike("file_name", `%${searchText}%`)
-      .limit(200);
+      .limit(300);
 
-    const cleanResults = (data || []).sort(
+    const preciseResults = (data || []).filter((item) => {
+      const name = item.file_name?.toLowerCase() || "";
+      const desc = item.description?.toLowerCase() || "";
+      const tags = Array.isArray(item.tags)
+        ? item.tags.join(" ").toLowerCase()
+        : "";
+
+      return (
+        wordRegex.test(name) ||
+        wordRegex.test(desc) ||
+        wordRegex.test(tags)
+      );
+    });
+
+    preciseResults.sort(
       (a, b) => (b.downloads || 0) - (a.downloads || 0)
     );
 
-    setResults(cleanResults);
-    setVisibleResults(cleanResults.slice(0, ITEMS_PER_PAGE));
+    setResults(preciseResults);
+    setVisibleResults(preciseResults.slice(0, ITEMS_PER_PAGE));
     setPage(1);
     setLoading(false);
   };
@@ -65,9 +89,7 @@ const SearchResults = () => {
       <main className="container mx-auto px-4 py-8">
         {!fromChip && (
           <>
-            <h1 className="text-3xl font-bold">
-              Search results for:
-            </h1>
+            <h1 className="text-3xl font-bold">Search results for:</h1>
             <p className="text-xl text-primary font-semibold truncate max-w-[80%] mt-1">
               {searchText}
             </p>
