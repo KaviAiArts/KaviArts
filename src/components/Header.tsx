@@ -12,7 +12,6 @@ import { supabase } from "@/lib/supabaseClient";
 
 const Header = () => {
   const navigate = useNavigate();
-
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -40,7 +39,6 @@ const Header = () => {
       .limit(20);
 
     let results = data || [];
-
     if (results.length < 10) {
       const fuzzy = await fuzzySearch(text);
       results = [...results, ...fuzzy];
@@ -50,31 +48,18 @@ const Header = () => {
     results.forEach((i) => map.set(i.id, i));
     results = Array.from(map.values());
 
-    const highlighted = results.map((item) => ({
-      ...item,
-      highlightName: highlight(item.file_name, text),
-      highlightCategory: highlight(item.category || "", text),
-      highlightTags: item.tags ? highlight(item.tags.join(", "), text) : null,
-    }));
+    setSuggestions(
+      results.map((item) => ({
+        ...item,
+        highlightName: highlight(item.file_name, text),
+      }))
+    );
 
-    setSuggestions(highlighted);
     setShowDropdown(true);
     setActiveIndex(0);
   };
 
   const debouncedFetch = debounce(fetchSuggestions, 250);
-
-  const handleKeyDown = (e: any) => {
-    if (e.key === "ArrowDown") {
-      setActiveIndex((p) => (p + 1 < suggestions.length ? p + 1 : p));
-    } else if (e.key === "ArrowUp") {
-      setActiveIndex((p) => (p - 1 >= 0 ? p - 1 : p));
-    } else if (e.key === "Enter") {
-      performFullSearch();
-    } else if (e.key === "Escape") {
-      setShowDropdown(false);
-    }
-  };
 
   useEffect(() => {
     function handleClickOutside(e: any) {
@@ -90,16 +75,15 @@ const Header = () => {
     <header className="sticky top-0 z-50 glass-card border-b">
       <div className="container mx-auto px-4 py-4" ref={containerRef}>
         <div className="flex items-center justify-between">
-
-          {/* LOGO */}
           <h1
+            role="link"
+            aria-label="Go to homepage"
             onClick={() => navigate("/")}
             className="text-xl font-bold gradient-text cursor-pointer"
           >
             KaviArts
           </h1>
 
-          {/* DESKTOP SEARCH */}
           <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
             <Input
               value={query}
@@ -107,15 +91,13 @@ const Header = () => {
                 setQuery(e.target.value);
                 debouncedFetch(e.target.value);
               }}
-              onKeyDown={handleKeyDown}
-              onFocus={() => query.trim() && setShowDropdown(true)}
               placeholder="Search wallpapers, ringtones..."
-              className="h-12 pr-12 bg-secondary border-border"
             />
 
             <button
+              aria-label="Search"
               onClick={() => performFullSearch()}
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center"
             >
               <Search className="w-4 h-4" />
             </button>
@@ -124,74 +106,21 @@ const Header = () => {
               suggestions={suggestions}
               visible={showDropdown}
               activeIndex={activeIndex}
-              onSelect={(item) => {
-                setQuery(item.file_name);
-                performFullSearch(item.file_name);
-              }}
+              onSelect={(item) => performFullSearch(item.file_name)}
             />
           </div>
 
-          {/* NAV BUTTONS */}
-          <nav className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="h-11 hover-lift"
-              onClick={() => navigate("/category/wallpaper")}
-            >
+          <nav className="flex gap-2">
+            <Button aria-label="Browse wallpapers" onClick={() => navigate("/category/wallpaper")}>
               <Smartphone className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Wallpapers</span>
             </Button>
-
-            <Button
-              variant="outline"
-              className="h-11 hover-lift"
-              onClick={() => navigate("/category/ringtone")}
-            >
+            <Button aria-label="Browse ringtones" onClick={() => navigate("/category/ringtone")}>
               <Music className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Ringtones</span>
             </Button>
-
-            <Button
-              variant="outline"
-              className="h-11 hover-lift"
-              onClick={() => navigate("/category/video")}
-            >
+            <Button aria-label="Browse videos" onClick={() => navigate("/category/video")}>
               <Video className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Videos</span>
             </Button>
           </nav>
-        </div>
-
-        {/* MOBILE SEARCH */}
-        <div className="md:hidden mt-4 relative">
-          <Input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              debouncedFetch(e.target.value);
-            }}
-            onKeyDown={handleKeyDown}
-            onFocus={() => query.trim() && setShowDropdown(true)}
-            placeholder="Search found here..."
-            className="h-12 pr-12 bg-secondary border-border"
-          />
-
-          <button
-            onClick={() => performFullSearch()}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
-          >
-            <Search className="w-4 h-4" />
-          </button>
-
-          <Autocomplete
-            suggestions={suggestions}
-            visible={showDropdown}
-            activeIndex={activeIndex}
-            onSelect={(item) => {
-              setQuery(item.file_name);
-              performFullSearch(item.file_name);
-            }}
-          />
         </div>
       </div>
     </header>

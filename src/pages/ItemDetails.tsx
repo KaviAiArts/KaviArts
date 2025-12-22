@@ -72,8 +72,16 @@ const ItemDetails = () => {
       <Header />
 
       <main className="container mx-auto px-4 py-4">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+          aria-label="Go back to previous page"
+        >
+          <ArrowLeft
+            className="w-4 h-4 mr-2"
+            aria-hidden="true"
+          />
           Back
         </Button>
 
@@ -92,11 +100,19 @@ const ItemDetails = () => {
             )}
 
             {item.file_type === "ringtone" && (
-              <Music className="w-16 h-16 text-primary" />
+              <Music
+                className="w-16 h-16 text-primary"
+                aria-hidden="true"
+              />
             )}
 
             {item.file_type === "video" && (
-              <video controls src={item.file_url} className="max-h-[70vh]" />
+              <video
+                controls
+                src={item.file_url}
+                className="max-h-[70vh]"
+                aria-label={`${item.file_name} video preview`}
+              />
             )}
           </Card>
 
@@ -107,7 +123,9 @@ const ItemDetails = () => {
               {(item.downloads || 0).toLocaleString()} Downloads
             </p>
 
-            <h1 className="text-2xl font-bold mt-2">{item.file_name}</h1>
+            <h1 className="text-2xl font-bold mt-2">
+              {item.file_name}
+            </h1>
 
             <p className="text-muted-foreground mt-2">
               {item.description}
@@ -137,16 +155,24 @@ const ItemDetails = () => {
                     : navigator.clipboard.writeText(window.location.href)
                 }
                 className="h-11 px-6 rounded-full border"
+                aria-label="Share this item"
               >
-                <Share2 className="w-4 h-4 mr-2" />
+                <Share2
+                  className="w-4 h-4 mr-2"
+                  aria-hidden="true"
+                />
                 Share
               </Button>
 
               <Button
                 onClick={handleDownload}
                 className="h-11 px-10 rounded-full bg-primary text-white"
+                aria-label="Download this item"
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download
+                  className="w-4 h-4 mr-2"
+                  aria-hidden="true"
+                />
                 Download
               </Button>
             </div>
