@@ -49,6 +49,10 @@ const ContentSection = ({
   skeletonCount: number;
   skeletonAspect?: "portrait" | "square";
 }) => {
+  const targetUrl =
+    `/category/${category}` +
+    (view ? `?view=${view}&from=section` : "");
+
   return (
     <>
       {/* MOBILE */}
@@ -58,9 +62,7 @@ const ContentSection = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              (window.location.href = `/category/${category}${view ? `?view=${view}` : ""}`)
-            }
+            onClick={() => (window.location.href = targetUrl)}
           >
             View All
           </Button>
@@ -101,9 +103,7 @@ const ContentSection = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                (window.location.href = `/category/${category}${view ? `?view=${view}` : ""}`)
-              }
+              onClick={() => (window.location.href = targetUrl)}
             >
               View All
             </Button>

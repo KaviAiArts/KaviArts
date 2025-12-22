@@ -15,10 +15,11 @@ const CategoryView = () => {
 
   const params = new URLSearchParams(location.search);
   const view = params.get("view"); // newest | popular | null
+  const from = params.get("from"); // section | null
 
   useEffect(() => {
     loadItems();
-  }, [category, view]);
+  }, [category, view, from]);
 
   const loadItems = async () => {
     let query = supabase
@@ -26,12 +27,17 @@ const CategoryView = () => {
       .select("*")
       .eq("file_type", category);
 
-    if (view === "popular") {
-      query = query.order("downloads", { ascending: false });
-    } else if (view === "newest") {
-      query = query.order("created_at", { ascending: false });
-    } else {
-      // 🔀 RANDOM discovery (category button click)
+    // 🔒 SECTION-LOCKED PAGES (Homepage → View All)
+    if (from === "section") {
+      if (view === "newest") {
+        query = query.order("created_at", { ascending: false });
+      } else if (view === "popular") {
+        query = query.order("downloads", { ascending: false });
+      }
+    } 
+    // 🎲 DISCOVERY MODE (Category buttons)
+    else {
+      // Random / discovery (no enforced order)
       query = query.order("created_at", { ascending: false });
     }
 
@@ -39,8 +45,20 @@ const CategoryView = () => {
     setItems(data || []);
   };
 
-  const title =
-    category?.charAt(0).toUpperCase() + category?.slice(1);
+  const capitalize = (text?: string) =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+
+  // 🧠 TITLE LOGIC
+  const title = (() => {
+    if (from === "section" && view === "newest")
+      return `Newest ${capitalize(category)}s`;
+    if (from === "section" && view === "popular")
+      return `Popular ${capitalize(category)}s`;
+    return `${capitalize(category)}s`;
+  })();
+
+  // 🔘 FILTER VISIBILITY
+  const showFilters = from !== "section";
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,12 +75,10 @@ const CategoryView = () => {
         </Button>
 
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">
-            {title}
-          </h1>
+          <h1 className="text-3xl font-bold">{title}</h1>
 
-          {/* ✅ FILTER BUTTONS ONLY FOR DIRECT CATEGORY VIEW */}
-          {!view && (
+          {/* ✅ FILTERS ONLY FOR DISCOVERY MODE */}
+          {showFilters && (
             <div className="flex gap-2">
               <Button
                 variant="outline"
