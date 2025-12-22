@@ -30,8 +30,8 @@ const CategoryView = () => {
       query = query.order("downloads", { ascending: false });
     } else if (sort === "newest") {
       query = query.order("created_at", { ascending: false });
-    } 
-    // ✅ DEFAULT = RANDOM (no order applied)
+    }
+    // ✅ DEFAULT = RANDOM for ALL categories
 
     const { data } = await query;
     setItems(data || []);
@@ -57,17 +57,17 @@ const CategoryView = () => {
           </h1>
 
           <div className="flex gap-2">
-            {category === "wallpaper" && (
-              <Button
-                variant="outline"
-                onClick={() =>
-                  navigate(`/category/${category}?sort=newest`)
-                }
-              >
-                Newest
-              </Button>
-            )}
+            {/* ✅ NEWEST — NOW FOR ALL CATEGORIES */}
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate(`/category/${category}?sort=newest`)
+              }
+            >
+              Newest
+            </Button>
 
+            {/* ✅ POPULAR — FOR ALL CATEGORIES */}
             <Button
               variant="outline"
               onClick={() =>

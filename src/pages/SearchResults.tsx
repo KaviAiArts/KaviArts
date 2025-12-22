@@ -74,9 +74,10 @@ const SearchResults = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-4">
+      {/* ✅ MATCHES CategoryView spacing exactly */}
+      <main className="container mx-auto px-4 py-6">
         {!fromChip && (
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-6">
             <Button
               variant="outline"
               size="sm"
@@ -97,7 +98,7 @@ const SearchResults = () => {
           <p className="text-center py-20">Searching...</p>
         ) : visibleResults.length === 0 ? (
           <div className="text-center py-20">
-            <h2 className="text-xl mb-4">No results found</h2>
+            <h2 className="text-xl mb-2">No results found</h2>
             <p className="text-muted-foreground">
               Try another keyword.
             </p>
