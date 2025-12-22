@@ -14,25 +14,39 @@ function useQuery() {
 const ITEMS_PER_PAGE = 12;
 
 /* ================================
-   Helpers (logic only)
+   Helpers (NO GUESSWORK)
 ================================ */
 
-// normalize cats → cat
+// singularize cats → cat
 const normalize = (text: string) => {
   const t = text.toLowerCase().trim();
   return t.endsWith("s") ? t.slice(0, -1) : t;
 };
 
-// strict word match (cat !== scatter)
-const containsWord = (source: string, word: string) => {
+// word boundary for title / description / category
+const wordMatch = (source: string, word: string) => {
   const re = new RegExp(`\\b${word}\\b`, "i");
   return re.test(source);
 };
 
+// tag match (handles: cat, cats, animal)
+const tagMatch = (tags: string[], word: string) => {
+  if (!Array.isArray(tags)) return false;
+
+  return tags.some((tag) => {
+    const t = tag.toLowerCase();
+    return (
+      t === word ||
+      t === `${word}s` ||
+      word === `${t}s`
+    );
+  });
+};
+
 const SearchResults = () => {
   const queryParams = useQuery();
-  const rawSearchText = queryParams.get("query") || "";
-  const searchWord = normalize(rawSearchText);
+  const rawQuery = queryParams.get("query") || "";
+  const searchWord = normalize(rawQuery);
   const type = queryParams.get("type");
   const customTitle = queryParams.get("title");
 
@@ -45,14 +59,14 @@ const SearchResults = () => {
     if (!searchWord) return;
     setLoading(true);
 
-    // 1️⃣ Fetch candidates ONLY (safe supabase query)
+    // 1️⃣ Fetch broad candidates ONLY
     let query = supabase
       .from("files")
       .select("*")
       .or(
-        `file_name.ilike.%${searchWord}%,description.ilike.%${searchWord}%,tags.cs.{${searchWord},${searchWord}s}`
+        `file_name.ilike.%${searchWord}%,description.ilike.%${searchWord}%,category.ilike.%${searchWord}%,tags.cs.{${searchWord},${searchWord}s}`
       )
-      .limit(200);
+      .limit(300);
 
     if (type) {
       query = query.eq("file_type", type);
@@ -60,17 +74,19 @@ const SearchResults = () => {
 
     const { data } = await query;
 
-    // 2️⃣ Strict word filtering in JS (this fixes everything)
+    // 2️⃣ Precise filtering (THIS FIXES EVERYTHING)
     const filtered =
       data?.filter((item) => {
         const title = item.file_name?.toLowerCase() || "";
         const desc = item.description?.toLowerCase() || "";
-        const tags = (item.tags || []).join(" ").toLowerCase();
+        const category = item.category?.toLowerCase() || "";
+        const tags = item.tags || [];
 
         return (
-          containsWord(title, searchWord) ||
-          containsWord(desc, searchWord) ||
-          containsWord(tags, searchWord)
+          wordMatch(title, searchWord) ||
+          wordMatch(desc, searchWord) ||
+          wordMatch(category, searchWord) ||
+          tagMatch(tags, searchWord)
         );
       }) || [];
 
@@ -82,7 +98,7 @@ const SearchResults = () => {
 
   useEffect(() => {
     performSearch();
-  }, [rawSearchText, type]);
+  }, [rawQuery, type]);
 
   const loadMore = () => {
     const nextPage = page + 1;
@@ -105,7 +121,7 @@ const SearchResults = () => {
           </Button>
 
           <h1 className="text-3xl font-bold">
-            {customTitle || `Search results for: ${rawSearchText}`}
+            {customTitle || `Search results for: ${rawQuery}`}
           </h1>
         </div>
 
