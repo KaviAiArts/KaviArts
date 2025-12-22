@@ -12,9 +12,7 @@ const PRESET_RINGTONES = import.meta.env.VITE_CLOUDINARY_PRESET_RINGTONES;
 const PRESET_VIDEOS = import.meta.env.VITE_CLOUDINARY_PRESET_VIDEOS;
 
 const Admin = () => {
-  const [authorized, setAuthorized] = useState(
-    localStorage.getItem("admin-auth") === "true"
-  );
+  const [authorized, setAuthorized] = useState(false);
   const [password, setPassword] = useState("");
   const [files, setFiles] = useState<any[]>([]);
 
@@ -52,13 +50,16 @@ const Admin = () => {
         if (result?.event === "success") {
           setPendingUpload(result.info);
           setPendingType(type);
+
           setEditItem({
             file_name: "",
             description: "",
             tags: [],
             file_url: result.info.secure_url,
             file_type: type,
+            __isNew: true, // 🔑 KEY FLAG
           });
+
           setModalOpen(true);
         }
       }
@@ -70,8 +71,8 @@ const Admin = () => {
   /* ---------------- SAVE ---------------- */
 
   const saveItem = async ({ file_name, description, tags }: any) => {
-    // EDIT EXISTING
-    if (editItem?.id) {
+    // EDIT EXISTING ITEM
+    if (editItem && !editItem.__isNew) {
       await supabase
         .from("files")
         .update({ file_name, description, tags })
@@ -83,7 +84,7 @@ const Admin = () => {
       return;
     }
 
-    // NEW UPLOAD (ONLY AFTER SAVE)
+    // NEW UPLOAD
     if (!pendingUpload || !pendingType) return;
 
     const isMp3 = pendingUpload.format === "mp3";
@@ -123,7 +124,6 @@ const Admin = () => {
 
   const login = () => {
     if (password === ADMIN_PASSWORD) {
-      localStorage.setItem("admin-auth", "true");
       setAuthorized(true);
     } else {
       alert("Wrong password");
@@ -155,58 +155,39 @@ const Admin = () => {
 
   return (
     <div className="p-6">
-      {/* HEADER */}
-      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex justify-between mb-6">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchFiles}>
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => {
-              localStorage.removeItem("admin-auth");
-              setAuthorized(false);
-              setPassword("");
-            }}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setAuthorized(false);
+            setPassword("");
+          }}
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Logout
+        </Button>
       </div>
 
-      {/* UPLOAD BUTTONS (RESTORED ✅) */}
-      <div className="flex flex-wrap gap-3 mb-8">
+      <div className="flex gap-3 mb-8">
         <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
           Upload Wallpaper
         </Button>
-
         <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
           Upload Ringtone
         </Button>
-
         <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
           Upload Video
         </Button>
       </div>
 
-      {/* GRID */}
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
           <Card key={file.id} className="p-3 space-y-2">
             <div className="font-semibold text-sm truncate">
               {file.file_name}
             </div>
-
-            <div className="text-xs text-muted-foreground">
-              {file.file_type} • {file.downloads || 0}
-            </div>
-
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -217,7 +198,6 @@ const Admin = () => {
               >
                 <Edit className="w-4 h-4" />
               </Button>
-
               <Button
                 size="sm"
                 variant="destructive"
@@ -237,6 +217,8 @@ const Admin = () => {
         onClose={() => {
           setModalOpen(false);
           setEditItem(null);
+          setPendingUpload(null); // 🔥 CRITICAL FIX
+          setPendingType(null);
         }}
       />
     </div>
