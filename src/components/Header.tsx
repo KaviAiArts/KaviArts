@@ -87,7 +87,10 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 glass-card border-b">
+    <header
+      className="sticky top-0 z-50 glass-card border-b"
+      role="banner"
+    >
       <div className="container mx-auto px-4 py-4" ref={containerRef}>
         <div className="flex items-center justify-between">
 
@@ -95,6 +98,9 @@ const Header = () => {
           <h1
             onClick={() => navigate("/")}
             className="text-xl font-bold gradient-text cursor-pointer"
+            role="link"
+            aria-label="Go to homepage"
+            tabIndex={0}
           >
             KaviArts
           </h1>
@@ -111,13 +117,17 @@ const Header = () => {
               onFocus={() => query.trim() && setShowDropdown(true)}
               placeholder="Search wallpapers, ringtones..."
               className="h-12 pr-12 bg-secondary border-border"
+              aria-label="Search wallpapers and ringtones"
             />
 
             <button
               onClick={() => performFullSearch()}
               className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
+              aria-label="Submit search"
+              title="Search"
+              type="button"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-4 h-4" aria-hidden="true" />
             </button>
 
             <Autocomplete
@@ -132,13 +142,14 @@ const Header = () => {
           </div>
 
           {/* NAV BUTTONS */}
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-2" aria-label="Primary navigation">
             <Button
               variant="outline"
               className="h-11 hover-lift"
               onClick={() => navigate("/category/wallpaper")}
+              aria-label="Browse wallpapers"
             >
-              <Smartphone className="w-4 h-4" />
+              <Smartphone className="w-4 h-4" aria-hidden="true" />
               <span className="hidden md:inline ml-2">Wallpapers</span>
             </Button>
 
@@ -146,8 +157,9 @@ const Header = () => {
               variant="outline"
               className="h-11 hover-lift"
               onClick={() => navigate("/category/ringtone")}
+              aria-label="Browse ringtones"
             >
-              <Music className="w-4 h-4" />
+              <Music className="w-4 h-4" aria-hidden="true" />
               <span className="hidden md:inline ml-2">Ringtones</span>
             </Button>
 
@@ -155,8 +167,9 @@ const Header = () => {
               variant="outline"
               className="h-11 hover-lift"
               onClick={() => navigate("/category/video")}
+              aria-label="Browse videos"
             >
-              <Video className="w-4 h-4" />
+              <Video className="w-4 h-4" aria-hidden="true" />
               <span className="hidden md:inline ml-2">Videos</span>
             </Button>
           </nav>
@@ -174,13 +187,17 @@ const Header = () => {
             onFocus={() => query.trim() && setShowDropdown(true)}
             placeholder="Search found here..."
             className="h-12 pr-12 bg-secondary border-border"
+            aria-label="Search wallpapers and ringtones"
           />
 
           <button
             onClick={() => performFullSearch()}
             className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
+            aria-label="Submit search"
+            title="Search"
+            type="button"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4" aria-hidden="true" />
           </button>
 
           <Autocomplete
