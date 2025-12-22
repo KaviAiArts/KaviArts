@@ -36,6 +36,7 @@ const ContentSection = ({
   title,
   items,
   category,
+  view,
   loading,
   skeletonCount,
   skeletonAspect,
@@ -43,6 +44,7 @@ const ContentSection = ({
   title: string;
   items: any[];
   category: string;
+  view?: string;
   loading: boolean;
   skeletonCount: number;
   skeletonAspect?: "portrait" | "square";
@@ -56,7 +58,9 @@ const ContentSection = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => (window.location.href = `/category/${category}`)}
+            onClick={() =>
+              (window.location.href = `/category/${category}${view ? `?view=${view}` : ""}`)
+            }
           >
             View All
           </Button>
@@ -97,7 +101,9 @@ const ContentSection = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => (window.location.href = `/category/${category}`)}
+              onClick={() =>
+                (window.location.href = `/category/${category}${view ? `?view=${view}` : ""}`)
+              }
             >
               View All
             </Button>
@@ -189,6 +195,7 @@ const Index = () => {
           title="Newest Wallpapers"
           items={newest}
           category="wallpaper"
+          view="newest"
           loading={loading}
           skeletonCount={6}
           skeletonAspect="portrait"
@@ -198,6 +205,7 @@ const Index = () => {
           title="Popular Wallpapers"
           items={popularWallpapers}
           category="wallpaper"
+          view="popular"
           loading={loading}
           skeletonCount={6}
           skeletonAspect="portrait"
@@ -207,6 +215,7 @@ const Index = () => {
           title="Popular Ringtones"
           items={ringtones}
           category="ringtone"
+          view="popular"
           loading={loading}
           skeletonCount={6}
           skeletonAspect="square"
@@ -216,6 +225,7 @@ const Index = () => {
           title="Popular Videos"
           items={videos}
           category="video"
+          view="popular"
           loading={loading}
           skeletonCount={6}
           skeletonAspect="portrait"

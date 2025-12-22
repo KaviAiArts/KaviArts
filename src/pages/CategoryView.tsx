@@ -14,11 +14,11 @@ const CategoryView = () => {
   const [items, setItems] = useState<any[]>([]);
 
   const params = new URLSearchParams(location.search);
-  const sort = params.get("sort"); // popular | newest | null
+  const view = params.get("view"); // newest | popular | null
 
   useEffect(() => {
     loadItems();
-  }, [category, sort]);
+  }, [category, view]);
 
   const loadItems = async () => {
     let query = supabase
@@ -26,16 +26,29 @@ const CategoryView = () => {
       .select("*")
       .eq("file_type", category);
 
-    if (sort === "popular") {
+    // 🔑 SORT LOGIC
+    if (view === "newest") {
+      query = query.order("created_at", { ascending: false });
+    } else if (view === "popular") {
       query = query.order("downloads", { ascending: false });
-    } else if (sort === "newest") {
+    } else {
+      // Header click = discovery mode
       query = query.order("created_at", { ascending: false });
     }
-    // ✅ DEFAULT = RANDOM for ALL categories
 
     const { data } = await query;
     setItems(data || []);
   };
+
+  // 🔑 PAGE TITLE
+  const getTitle = () => {
+    if (view === "newest") return `Newest ${capitalize(category)}`;
+    if (view === "popular") return `Popular ${capitalize(category)}`;
+    return capitalize(category);
+  };
+
+  const showFilters =
+    view === null || category !== "wallpaper"; // wallpapers sections hide filters
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,38 +58,36 @@ const CategoryView = () => {
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-4"
+          className="mb-4 font-semibold"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold capitalize">
-            {category}
-          </h1>
+          <h1 className="text-3xl font-bold">{getTitle()}</h1>
 
-          <div className="flex gap-2">
-            {/* ✅ NEWEST — NOW FOR ALL CATEGORIES */}
-            <Button
-              variant="outline"
-              onClick={() =>
-                navigate(`/category/${category}?sort=newest`)
-              }
-            >
-              Newest
-            </Button>
+          {showFilters && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  navigate(`/category/${category}?view=newest`)
+                }
+              >
+                Newest
+              </Button>
 
-            {/* ✅ POPULAR — FOR ALL CATEGORIES */}
-            <Button
-              variant="outline"
-              onClick={() =>
-                navigate(`/category/${category}?sort=popular`)
-              }
-            >
-              Popular
-            </Button>
-          </div>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  navigate(`/category/${category}?view=popular`)
+                }
+              >
+                Popular
+              </Button>
+            </div>
+          )}
         </div>
 
         <ContentGrid items={items} />
@@ -86,5 +97,10 @@ const CategoryView = () => {
     </div>
   );
 };
+
+function capitalize(text?: string) {
+  if (!text) return "";
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 export default CategoryView;
