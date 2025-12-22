@@ -13,17 +13,27 @@ function useQuery() {
 
 const ITEMS_PER_PAGE = 12;
 
-// ✅ singular normalize (cat / cats → cat)
+/* ================================
+   Helpers (logic only)
+================================ */
+
+// normalize cats → cat
 const normalize = (text: string) => {
   const t = text.toLowerCase().trim();
   return t.endsWith("s") ? t.slice(0, -1) : t;
 };
 
+// strict word match (cat !== scatter)
+const containsWord = (source: string, word: string) => {
+  const re = new RegExp(`\\b${word}\\b`, "i");
+  return re.test(source);
+};
+
 const SearchResults = () => {
   const queryParams = useQuery();
   const rawSearchText = queryParams.get("query") || "";
-  const searchText = normalize(rawSearchText);
-  const type = queryParams.get("type"); // wallpaper | ringtone | video
+  const searchWord = normalize(rawSearchText);
+  const type = queryParams.get("type");
   const customTitle = queryParams.get("title");
 
   const [results, setResults] = useState<any[]>([]);
@@ -32,23 +42,40 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(false);
 
   const performSearch = async () => {
-    if (!searchText.trim()) return;
+    if (!searchWord) return;
     setLoading(true);
 
-    let query = supabase.from("files").select("*");
+    // 1️⃣ Fetch candidates ONLY (safe supabase query)
+    let query = supabase
+      .from("files")
+      .select("*")
+      .or(
+        `file_name.ilike.%${searchWord}%,description.ilike.%${searchWord}%,tags.cs.{${searchWord},${searchWord}s}`
+      )
+      .limit(200);
 
     if (type) {
       query = query.eq("file_type", type);
     }
 
-    query = query.or(
-      `file_name.ilike.%${searchText}%,description.ilike.%${searchText}%,tags.cs.{${searchText}}`
-    );
+    const { data } = await query;
 
-    const { data } = await query.limit(200);
+    // 2️⃣ Strict word filtering in JS (this fixes everything)
+    const filtered =
+      data?.filter((item) => {
+        const title = item.file_name?.toLowerCase() || "";
+        const desc = item.description?.toLowerCase() || "";
+        const tags = (item.tags || []).join(" ").toLowerCase();
 
-    setResults(data || []);
-    setVisibleResults((data || []).slice(0, ITEMS_PER_PAGE));
+        return (
+          containsWord(title, searchWord) ||
+          containsWord(desc, searchWord) ||
+          containsWord(tags, searchWord)
+        );
+      }) || [];
+
+    setResults(filtered);
+    setVisibleResults(filtered.slice(0, ITEMS_PER_PAGE));
     setPage(1);
     setLoading(false);
   };
