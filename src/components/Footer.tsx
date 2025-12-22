@@ -4,7 +4,7 @@ import {
   Music,
   Music2,
   Pin,
-  ArrowUp
+  ArrowUp,
 } from "lucide-react";
 
 const Footer = () => {
@@ -18,59 +18,28 @@ const Footer = () => {
         </p>
 
         <div className="flex gap-5">
-          <a
-            href="https://www.instagram.com/kavi_pics/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Kavi Arts Instagram"
-          >
-            <Instagram aria-hidden="true" />
+          <a href="https://www.instagram.com/kavi_pics/" target="_blank">
+            <Instagram />
           </a>
-
-          <a
-            href="https://www.youtube.com/@Kavitunez"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Kavi Tunez YouTube"
-          >
-            <Youtube aria-hidden="true" />
+          <a href="https://www.youtube.com/@Kavitunez" target="_blank">
+            <Youtube />
           </a>
-
-          <a
-            href="https://in.pinterest.com/Kavi_Pics/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Kavi Arts Pinterest"
-          >
-            <Pin aria-hidden="true" />
+          <a href="https://in.pinterest.com/Kavi_Pics/" target="_blank">
+            <Pinterest />
           </a>
-
-          <a
-            href="https://open.spotify.com/artist/2Yn6quG4CSQl01LcLPU4yu"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Kavi Tunez on Spotify"
-          >
-            <Music aria-hidden="true" />
+          <a href="https://open.spotify.com/artist/2Yn6quG4CSQl01LcLPU4yu" target="_blank">
+            <Music />
           </a>
-
-          <a
-            href="https://music.apple.com/us/artist/kavi-tunez/1826128201"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Kavi Tunez on Apple Music"
-          >
-            <Music2 aria-hidden="true" />
+          <a href="https://music.apple.com/us/artist/kavi-tunez/1826128201" target="_blank">
+            <Music2 />
           </a>
         </div>
 
         <button
-          type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          aria-label="Scroll back to top"
           className="flex items-center gap-2 text-sm"
         >
-          <ArrowUp className="h-4 w-4" aria-hidden="true" />
+          <ArrowUp className="h-4 w-4" />
           Back to top
         </button>
 

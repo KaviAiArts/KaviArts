@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Play, Music } from "lucide-react";
+import { Download, Play, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +9,10 @@ const getVideoThumbnail = (url: string) =>
     .replace(/\.(mp4|webm|mov)$/i, ".jpg");
 
 const makeSlug = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 
 const getAltText = (item: any) =>
   item.description
@@ -20,7 +23,8 @@ const ContentItem = ({ item }: { item: any }) => {
   const navigate = useNavigate();
 
   const handleItemClick = () => {
-    navigate(`/item/${item.id}/${makeSlug(item.file_name)}`);
+    const slug = makeSlug(item.file_name);
+    navigate(`/item/${item.id}/${slug}`);
   };
 
   const aspect =
@@ -29,9 +33,6 @@ const ContentItem = ({ item }: { item: any }) => {
   return (
     <Card
       onClick={handleItemClick}
-      role="button"
-      tabIndex={0}
-      aria-label={`Open ${item.file_name}`}
       className="group glass-card hover-lift cursor-pointer overflow-hidden"
     >
       <div className={`relative ${aspect} overflow-hidden`}>
@@ -39,41 +40,37 @@ const ContentItem = ({ item }: { item: any }) => {
           <img
             src={item.file_url}
             alt={getAltText(item)}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           />
         )}
 
         {item.file_type === "video" && (
           <>
-            <img
-              src={getVideoThumbnail(item.file_url)}
-              alt={item.file_name}
-              loading="lazy"
-              decoding="async"
-              className="w-full h-full object-cover"
-            />
+            <img src={getVideoThumbnail(item.file_url)} />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Play className="w-8 h-8 text-white" aria-hidden="true" />
+              <div className="bg-black/50 rounded-full p-3">
+                <Play className="w-8 h-8 text-white fill-white" />
+              </div>
             </div>
           </>
         )}
 
         {item.file_type === "ringtone" && (
-          <div className="w-full h-full bg-gradient-to-br from-primary/30 to-secondary/30 flex items-center justify-center">
-            <Music className="w-12 h-12 text-white" aria-hidden="true" />
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+            <Music className="w-12 h-12 text-primary/80" />
           </div>
         )}
-
-        <span className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-          {item.file_type}
-        </span>
 
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <Button size="sm" className="bg-gradient-primary text-white">
             {item.file_type === "video" ? "Watch" : "Download"}
           </Button>
+        </div>
+
+        <div className="absolute top-2 left-2">
+          <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
+            {item.file_type}
+          </span>
         </div>
       </div>
 
