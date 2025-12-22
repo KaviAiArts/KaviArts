@@ -66,7 +66,7 @@ const Admin = () => {
   /* ---------------- SAVE ---------------- */
 
   const saveItem = async ({ file_name, description, tags }: any) => {
-    // EDIT MODE
+    /* EDIT */
     if (editItem) {
       await supabase
         .from("files")
@@ -79,7 +79,7 @@ const Admin = () => {
       return;
     }
 
-    // NEW UPLOAD MODE
+    /* NEW UPLOAD */
     if (!pendingUpload || !pendingType) return;
 
     const isMp3 = pendingUpload.format === "mp3";
@@ -106,32 +106,11 @@ const Admin = () => {
     fetchFiles();
   };
 
-  /* ---------------- CANCEL (NEW UPLOAD ONLY) ---------------- */
-
-  const cancelNewUpload = async () => {
-    if (pendingUpload?.public_id) {
-      // destroy asset from Cloudinary
-      try {
-        await fetch("/api/cloudinary-delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ public_id: pendingUpload.public_id }),
-        });
-      } catch (e) {
-        console.warn("Cloudinary cleanup failed");
-      }
-    }
-
-    setPendingUpload(null);
-    setPendingType(null);
-    setEditItem(null);
-    setModalOpen(false);
-  };
-
   /* ---------------- DELETE ---------------- */
 
   const deleteItem = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
+
     await supabase.from("files").delete().eq("id", id);
     fetchFiles();
   };
@@ -185,9 +164,11 @@ const Admin = () => {
   return (
     <div className="p-6">
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-center sm:text-left">
+          Admin Dashboard
+        </h1>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-center sm:justify-end">
           <Button variant="outline" onClick={fetchFiles}>
             <RefreshCcw className="w-4 h-4 mr-2" />
             Refresh
@@ -207,7 +188,7 @@ const Admin = () => {
         </div>
       </div>
 
-      <div className="flex gap-3 mb-8">
+      <div className="flex flex-wrap gap-3 mb-8 justify-center sm:justify-start">
         <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
           Upload Wallpaper
         </Button>
@@ -226,7 +207,11 @@ const Admin = () => {
               {file.file_name}
             </div>
 
-            <div className="flex gap-2">
+            <div className="text-xs text-muted-foreground">
+              {file.file_type} • {file.downloads || 0}
+            </div>
+
+            <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -255,7 +240,12 @@ const Admin = () => {
         initialData={editItem}
         pendingUpload={pendingUpload}
         onSave={saveItem}
-        onCancel={cancelNewUpload}
+        onClose={() => {
+          setModalOpen(false);
+          setEditItem(null);
+          setPendingUpload(null);
+          setPendingType(null);
+        }}
       />
     </div>
   );

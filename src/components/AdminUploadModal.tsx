@@ -16,7 +16,7 @@ type Props = {
     description: string;
     tags: string[];
   }) => void;
-  onCancel: () => void;
+  onClose: () => void;
 };
 
 const AdminUploadModal = ({
@@ -24,7 +24,7 @@ const AdminUploadModal = ({
   initialData,
   pendingUpload,
   onSave,
-  onCancel,
+  onClose,
 }: Props) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -51,8 +51,9 @@ const AdminUploadModal = ({
           {initialData ? "Edit Item" : "Add Details"}
         </h2>
 
+        {/* PREVIEW */}
         {pendingUpload && (
-          <div className="w-full rounded bg-secondary flex justify-center">
+          <div className="w-full rounded overflow-hidden bg-secondary flex justify-center">
             {pendingUpload.resource_type === "image" && (
               <img
                 src={pendingUpload.secure_url}
@@ -74,17 +75,30 @@ const AdminUploadModal = ({
           </div>
         )}
 
-        <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Input placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
-        <Input placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Input
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+
+        <Input
+          placeholder="Tags (comma separated)"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+        />
+
+        <Input
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
 
         <div className="flex justify-between pt-2">
-          <Button variant="ghost" onClick={onCancel}>
+          <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
 
           <Button
-            disabled={!title.trim()}
             onClick={() =>
               onSave({
                 file_name: title.trim(),
@@ -95,6 +109,7 @@ const AdminUploadModal = ({
                   .filter(Boolean),
               })
             }
+            disabled={!title.trim()}
           >
             Save
           </Button>
