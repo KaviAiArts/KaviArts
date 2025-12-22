@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Download, Music, Share2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Download, Music, Share2, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,8 @@ const ItemDetails = () => {
   const { id, slug } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -41,6 +43,12 @@ const ItemDetails = () => {
     };
 
     fetchItem();
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
   }, [id, slug, navigate]);
 
   const handleDownload = async () => {
@@ -65,6 +73,21 @@ const ItemDetails = () => {
     }));
   };
 
+  const togglePlay = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio(item.file_url);
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+
+    setIsPlaying(!isPlaying);
+  };
+
   if (!item) return null;
 
   return (
@@ -78,15 +101,12 @@ const ItemDetails = () => {
           className="mb-4"
           aria-label="Go back to previous page"
         >
-          <ArrowLeft
-            className="w-4 h-4 mr-2"
-            aria-hidden="true"
-          />
+          <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
           Back
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="flex items-center justify-center bg-muted/40 min-h-[260px]">
+          <Card className="flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4">
             {item.file_type === "wallpaper" && (
               <img
                 src={item.file_url}
@@ -100,10 +120,22 @@ const ItemDetails = () => {
             )}
 
             {item.file_type === "ringtone" && (
-              <Music
-                className="w-16 h-16 text-primary"
-                aria-hidden="true"
-              />
+              <>
+                <Music className="w-16 h-16 text-primary" aria-hidden="true" />
+                <Button
+                  variant="outline"
+                  onClick={togglePlay}
+                  className="rounded-full px-6"
+                  aria-label={isPlaying ? "Pause preview" : "Play preview"}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Play className="w-4 h-4 mr-2" />
+                  )}
+                  {isPlaying ? "Pause Preview" : "Play Preview"}
+                </Button>
+              </>
             )}
 
             {item.file_type === "video" && (
@@ -157,10 +189,7 @@ const ItemDetails = () => {
                 className="h-11 px-6 rounded-full border"
                 aria-label="Share this item"
               >
-                <Share2
-                  className="w-4 h-4 mr-2"
-                  aria-hidden="true"
-                />
+                <Share2 className="w-4 h-4 mr-2" aria-hidden="true" />
                 Share
               </Button>
 
@@ -169,10 +198,7 @@ const ItemDetails = () => {
                 className="h-11 px-10 rounded-full bg-primary text-white"
                 aria-label="Download this item"
               >
-                <Download
-                  className="w-4 h-4 mr-2"
-                  aria-hidden="true"
-                />
+                <Download className="w-4 h-4 mr-2" aria-hidden="true" />
                 Download
               </Button>
             </div>

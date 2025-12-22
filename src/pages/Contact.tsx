@@ -41,7 +41,7 @@ const Contact = () => (
           <p className="mt-2 font-bold text-lg text-primary">
             Email:{" "}
             <a
-              href="mailto:kavitunez@gmail.com"
+              href="mailto:tunezkavi@gmail.com"
               className="underline hover:opacity-80"
             >
               kavitunez@gmail.com
@@ -79,7 +79,7 @@ const Contact = () => (
 
           <p className="mt-2 text-md">
             <a
-              href="https://www.instagram.com/kavi_tunez/"
+              href="https://www.instagram.com/kavitunez/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline mr-4"

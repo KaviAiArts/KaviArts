@@ -69,7 +69,7 @@ const GetApp = () => (
           </ul>
         </div>
 
-        {/* CTA */}
+        {/* CTA (Button Removed, Text Kept) */}
         <div className="text-center space-y-4 pt-4">
           <h2 className="text-xl font-semibold text-foreground">
             Stay Tuned for Updates
@@ -81,15 +81,6 @@ const GetApp = () => (
             <strong>Apple App Store</strong> soon.
             Follow us to get notified the moment we launch!
           </p>
-
-          <div className="flex justify-center gap-4 mt-4">
-            <a
-              href="/contact"
-              className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium transition-colors bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-            >
-              Get Notified
-            </a>
-          </div>
         </div>
       </section>
     </main>
