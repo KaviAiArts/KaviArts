@@ -62,8 +62,8 @@ const Header = () => {
   const debouncedFetch = debounce(fetchSuggestions, 250);
 
   useEffect(() => {
-    function handleClickOutside(e: any) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
       }
     }
@@ -77,6 +77,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <h1
             role="link"
+            tabIndex={0}
             aria-label="Go to homepage"
             onClick={() => navigate("/")}
             className="text-xl font-bold gradient-text cursor-pointer"
@@ -92,14 +93,17 @@ const Header = () => {
                 debouncedFetch(e.target.value);
               }}
               placeholder="Search wallpapers, ringtones..."
+              aria-label="Search content"
             />
 
             <button
-              aria-label="Search"
+              type="button"
+              aria-label="Submit search"
+              title="Search"
               onClick={() => performFullSearch()}
               className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-4 h-4" aria-hidden="true" />
             </button>
 
             <Autocomplete
@@ -111,14 +115,14 @@ const Header = () => {
           </div>
 
           <nav className="flex gap-2">
-            <Button aria-label="Browse wallpapers" onClick={() => navigate("/category/wallpaper")}>
-              <Smartphone className="w-4 h-4" />
+            <Button aria-label="Browse wallpapers" title="Wallpapers" onClick={() => navigate("/category/wallpaper")}>
+              <Smartphone aria-hidden="true" />
             </Button>
-            <Button aria-label="Browse ringtones" onClick={() => navigate("/category/ringtone")}>
-              <Music className="w-4 h-4" />
+            <Button aria-label="Browse ringtones" title="Ringtones" onClick={() => navigate("/category/ringtone")}>
+              <Music aria-hidden="true" />
             </Button>
-            <Button aria-label="Browse videos" onClick={() => navigate("/category/video")}>
-              <Video className="w-4 h-4" />
+            <Button aria-label="Browse videos" title="Videos" onClick={() => navigate("/category/video")}>
+              <Video aria-hidden="true" />
             </Button>
           </nav>
         </div>

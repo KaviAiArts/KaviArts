@@ -4,7 +4,7 @@ import {
   Music,
   Music2,
   Pinterest,
-  ArrowUp,
+  ArrowUp
 } from "lucide-react";
 
 const Footer = () => {
@@ -22,54 +22,55 @@ const Footer = () => {
             href="https://www.instagram.com/kavi_pics/"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Visit our Instagram profile"
+            aria-label="Kavi Arts Instagram"
           >
-            <Instagram />
+            <Instagram aria-hidden="true" />
           </a>
 
           <a
             href="https://www.youtube.com/@Kavitunez"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Visit our YouTube channel"
+            aria-label="Kavi Tunez YouTube"
           >
-            <Youtube />
+            <Youtube aria-hidden="true" />
           </a>
 
           <a
             href="https://in.pinterest.com/Kavi_Pics/"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Visit our Pinterest profile"
+            aria-label="Kavi Arts Pinterest"
           >
-            <Pinterest />
+            <Pinterest aria-hidden="true" />
           </a>
 
           <a
             href="https://open.spotify.com/artist/2Yn6quG4CSQl01LcLPU4yu"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Listen on Spotify"
+            aria-label="Kavi Tunez on Spotify"
           >
-            <Music />
+            <Music aria-hidden="true" />
           </a>
 
           <a
             href="https://music.apple.com/us/artist/kavi-tunez/1826128201"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Listen on Apple Music"
+            aria-label="Kavi Tunez on Apple Music"
           >
-            <Music2 />
+            <Music2 aria-hidden="true" />
           </a>
         </div>
 
         <button
+          type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          aria-label="Back to top"
+          aria-label="Scroll back to top"
           className="flex items-center gap-2 text-sm"
         >
-          <ArrowUp aria-hidden="true" className="h-4 w-4" />
+          <ArrowUp className="h-4 w-4" aria-hidden="true" />
           Back to top
         </button>
 
