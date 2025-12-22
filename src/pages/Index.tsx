@@ -11,6 +11,24 @@ import { Button } from "@/components/ui/button";
 const ContentItem = lazy(() => import("@/components/ContentItem"));
 
 /* ------------------------------ */
+/* SKELETON CARD (UI ONLY)        */
+/* ------------------------------ */
+
+const SkeletonCard = ({ aspect = "portrait" }: { aspect?: "portrait" | "square" }) => {
+  const ratio =
+    aspect === "square" ? "aspect-square" : "aspect-[9/16]";
+
+  return (
+    <div className="glass-card overflow-hidden animate-pulse">
+      <div className={`${ratio} bg-muted`} />
+      <div className="p-3">
+        <div className="h-3 w-3/4 bg-muted rounded" />
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------ */
 /* CONTENT SECTION COMPONENT      */
 /* ------------------------------ */
 
@@ -18,10 +36,16 @@ const ContentSection = ({
   title,
   items,
   category,
+  loading,
+  skeletonCount,
+  skeletonAspect,
 }: {
   title: string;
   items: any[];
   category: string;
+  loading: boolean;
+  skeletonCount: number;
+  skeletonAspect?: "portrait" | "square";
 }) => {
   return (
     <>
@@ -40,17 +64,27 @@ const ContentSection = ({
 
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex gap-3 px-4 w-max">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex-shrink-0"
-                style={{ width: "42vw", maxWidth: "190px" }}
-              >
-                <Suspense fallback={null}>
-                  <ContentItem item={item} />
-                </Suspense>
-              </div>
-            ))}
+            {loading
+              ? Array.from({ length: skeletonCount }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0"
+                    style={{ width: "42vw", maxWidth: "190px" }}
+                  >
+                    <SkeletonCard aspect={skeletonAspect} />
+                  </div>
+                ))
+              : items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex-shrink-0"
+                    style={{ width: "42vw", maxWidth: "190px" }}
+                  >
+                    <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
+                      <ContentItem item={item} />
+                    </Suspense>
+                  </div>
+                ))}
           </div>
         </div>
       </section>
@@ -70,11 +104,15 @@ const ContentSection = ({
           </div>
 
           <div className="grid grid-cols-6 gap-3">
-            {items.map((item) => (
-              <Suspense key={item.id} fallback={null}>
-                <ContentItem item={item} />
-              </Suspense>
-            ))}
+            {loading
+              ? Array.from({ length: skeletonCount }).map((_, i) => (
+                  <SkeletonCard key={i} aspect={skeletonAspect} />
+                ))
+              : items.map((item) => (
+                  <Suspense key={item.id} fallback={<SkeletonCard aspect={skeletonAspect} />}>
+                    <ContentItem item={item} />
+                  </Suspense>
+                ))}
           </div>
         </div>
       </section>
@@ -91,12 +129,15 @@ const Index = () => {
   const [popularWallpapers, setPopularWallpapers] = useState<any[]>([]);
   const [ringtones, setRingtones] = useState<any[]>([]);
   const [videos, setVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadAllData();
   }, []);
 
   const loadAllData = async () => {
+    setLoading(true);
+
     const { data: newestData } = await supabase
       .from("files")
       .select("*")
@@ -129,6 +170,8 @@ const Index = () => {
     setPopularWallpapers(popularData || []);
     setRingtones(ringtoneData || []);
     setVideos(videoData || []);
+
+    setLoading(false);
   };
 
   return (
@@ -141,21 +184,36 @@ const Index = () => {
         title="Newest Wallpapers"
         items={newest}
         category="wallpaper"
+        loading={loading}
+        skeletonCount={6}
+        skeletonAspect="portrait"
       />
+
       <ContentSection
         title="Popular Wallpapers"
         items={popularWallpapers}
         category="wallpaper"
+        loading={loading}
+        skeletonCount={6}
+        skeletonAspect="portrait"
       />
+
       <ContentSection
         title="Popular Ringtones"
         items={ringtones}
         category="ringtone"
+        loading={loading}
+        skeletonCount={6}
+        skeletonAspect="square"
       />
+
       <ContentSection
         title="Popular Videos"
         items={videos}
         category="video"
+        loading={loading}
+        skeletonCount={6}
+        skeletonAspect="portrait"
       />
 
       <Footer />
