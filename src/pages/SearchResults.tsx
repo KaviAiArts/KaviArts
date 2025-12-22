@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,6 +17,7 @@ const ITEMS_PER_PAGE = 12;
 
 const SearchResults = () => {
   const queryParams = useQuery();
+  const navigate = useNavigate();
   const searchText = queryParams.get("query") || "";
   const fromChip = queryParams.get("from") === "chip";
 
@@ -74,24 +76,24 @@ const SearchResults = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* ✅ MATCHES CategoryView spacing exactly */}
       <main className="container mx-auto px-4 py-6">
         {!fromChip && (
-          <div className="flex items-center gap-4 mb-6">
+          <>
+            {/* ✅ IDENTICAL BACK BUTTON TO CATEGORY PAGE */}
             <Button
-              variant="outline"
-              size="sm"
-              className="font-semibold"
-              onClick={() => window.history.back()}
+              variant="ghost"
+              onClick={() => navigate(-1)}
+              className="mb-4"
             >
-              ← Back
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
             </Button>
 
-            <h1 className="text-3xl font-bold truncate">
+            <h1 className="text-3xl font-bold truncate mb-6">
               Search results for:{" "}
               <span className="text-primary">{searchText}</span>
             </h1>
-          </div>
+          </>
         )}
 
         {loading ? (
