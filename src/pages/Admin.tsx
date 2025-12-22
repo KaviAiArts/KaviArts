@@ -6,6 +6,10 @@ import { Trash, Edit, RefreshCcw, LogOut } from "lucide-react";
 import AdminUploadModal from "@/components/AdminUploadModal";
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const PRESET_WALLPAPERS = import.meta.env.VITE_CLOUDINARY_PRESET_WALLPAPERS;
+const PRESET_RINGTONES = import.meta.env.VITE_CLOUDINARY_PRESET_RINGTONES;
+const PRESET_VIDEOS = import.meta.env.VITE_CLOUDINARY_PRESET_VIDEOS;
 
 const Admin = () => {
   const [authorized, setAuthorized] = useState(
@@ -13,10 +17,15 @@ const Admin = () => {
   );
   const [password, setPassword] = useState("");
   const [files, setFiles] = useState<any[]>([]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
+  const [pendingUpload, setPendingUpload] = useState<any>(null);
+  const [pendingType, setPendingType] =
+    useState<"wallpaper" | "ringtone" | "video" | null>(null);
 
-  /* FETCH FILES */
+  /* ---------------- FETCH ---------------- */
+
   const fetchFiles = async () => {
     const { data } = await supabase
       .from("files")
@@ -30,7 +39,88 @@ const Admin = () => {
     if (authorized) fetchFiles();
   }, [authorized]);
 
-  /* LOGIN */
+  /* ---------------- UPLOAD ---------------- */
+
+  const upload = (preset: string, type: any) => {
+    const widget = (window as any).cloudinary.createUploadWidget(
+      {
+        cloudName: CLOUD_NAME,
+        uploadPreset: preset,
+        multiple: false,
+      },
+      (_: any, result: any) => {
+        if (result?.event === "success") {
+          setPendingUpload(result.info);
+          setPendingType(type);
+          setEditItem({
+            file_name: "",
+            description: "",
+            tags: [],
+            file_url: result.info.secure_url,
+            file_type: type,
+          });
+          setModalOpen(true);
+        }
+      }
+    );
+
+    widget.open();
+  };
+
+  /* ---------------- SAVE ---------------- */
+
+  const saveItem = async ({ file_name, description, tags }: any) => {
+    // EDIT EXISTING
+    if (editItem?.id) {
+      await supabase
+        .from("files")
+        .update({ file_name, description, tags })
+        .eq("id", editItem.id);
+
+      setModalOpen(false);
+      setEditItem(null);
+      fetchFiles();
+      return;
+    }
+
+    // NEW UPLOAD (ONLY AFTER SAVE)
+    if (!pendingUpload || !pendingType) return;
+
+    const isMp3 = pendingUpload.format === "mp3";
+    const finalType = isMp3 ? "ringtone" : pendingType;
+
+    await supabase.from("files").insert({
+      file_name,
+      description,
+      tags,
+      file_url: pendingUpload.secure_url,
+      public_id: pendingUpload.public_id,
+      file_type: finalType,
+      category: finalType,
+      downloads: 0,
+      width: pendingUpload.width ?? null,
+      height: pendingUpload.height ?? null,
+      format: pendingUpload.format ?? null,
+      duration: pendingUpload.duration ?? null,
+    });
+
+    setModalOpen(false);
+    setPendingUpload(null);
+    setPendingType(null);
+    setEditItem(null);
+    fetchFiles();
+  };
+
+  /* ---------------- DELETE ---------------- */
+
+  const deleteItem = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this item?")) return;
+    await supabase.from("files").delete().eq("id", id);
+    fetchFiles();
+  };
+
+  /* ---------------- AUTH ---------------- */
+
   const login = () => {
     if (password === ADMIN_PASSWORD) {
       localStorage.setItem("admin-auth", "true");
@@ -40,24 +130,6 @@ const Admin = () => {
     }
   };
 
-  /* SAVE */
-  const saveItem = async (data: any) => {
-    if (editItem) {
-      await supabase.from("files").update(data).eq("id", editItem.id);
-    }
-    setModalOpen(false);
-    setEditItem(null);
-    fetchFiles();
-  };
-
-  /* DELETE CONFIRM */
-  const deleteItem = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
-    await supabase.from("files").delete().eq("id", id);
-    fetchFiles();
-  };
-
-  /* LOGIN SCREEN */
   if (!authorized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -79,10 +151,12 @@ const Admin = () => {
     );
   }
 
-  /* DASHBOARD */
+  /* ---------------- UI ---------------- */
+
   return (
     <div className="p-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between mb-6 gap-4">
+      {/* HEADER */}
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
         <div className="flex gap-2">
@@ -105,6 +179,22 @@ const Admin = () => {
         </div>
       </div>
 
+      {/* UPLOAD BUTTONS (RESTORED ✅) */}
+      <div className="flex flex-wrap gap-3 mb-8">
+        <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
+          Upload Wallpaper
+        </Button>
+
+        <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
+          Upload Ringtone
+        </Button>
+
+        <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
+          Upload Video
+        </Button>
+      </div>
+
+      {/* GRID */}
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
           <Card key={file.id} className="p-3 space-y-2">
@@ -116,7 +206,7 @@ const Admin = () => {
               {file.file_type} • {file.downloads || 0}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
                 variant="outline"
