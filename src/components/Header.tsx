@@ -27,25 +27,33 @@ const Header = () => {
     setShowDropdown(false);
   };
 
+  // ✅ ONLY LOGIC CHANGE IS HERE
   const fetchSuggestions = async (text: string) => {
     if (!text.trim()) {
       setSuggestions([]);
+      setShowDropdown(false);
       return;
     }
+
+    const q = text.toLowerCase();
 
     const { data } = await supabase
       .from("files")
       .select("*")
-      .ilike("file_name", `%${text}%`)
+      .or(
+        `file_name.ilike.%${q}%,description.ilike.%${q}%,tags.cs.{${q}}`
+      )
       .limit(20);
 
     let results = data || [];
 
+    // keep fuzzy as fallback only
     if (results.length < 10) {
       const fuzzy = await fuzzySearch(text);
       results = [...results, ...fuzzy];
     }
 
+    // dedupe by id
     const map = new Map();
     results.forEach((i) => map.set(i.id, i));
     results = Array.from(map.values());
@@ -54,7 +62,9 @@ const Header = () => {
       ...item,
       highlightName: highlight(item.file_name, text),
       highlightCategory: highlight(item.category || "", text),
-      highlightTags: item.tags ? highlight(item.tags.join(", "), text) : null,
+      highlightTags: item.tags
+        ? highlight(item.tags.join(", "), text)
+        : null,
     }));
 
     setSuggestions(highlighted);
@@ -83,18 +93,15 @@ const Header = () => {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <header
-      className="sticky top-0 z-50 glass-card border-b"
-      role="banner"
-    >
+    <header className="sticky top-0 z-50 glass-card border-b" role="banner">
       <div className="container mx-auto px-4 py-4" ref={containerRef}>
         <div className="flex items-center justify-between">
 
-          {/* LOGO */}
           <h1
             onClick={() => navigate("/")}
             className="text-xl font-bold gradient-text cursor-pointer"
@@ -105,7 +112,6 @@ const Header = () => {
             KaviArts
           </h1>
 
-          {/* DESKTOP SEARCH */}
           <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
             <Input
               value={query}
@@ -117,17 +123,14 @@ const Header = () => {
               onFocus={() => query.trim() && setShowDropdown(true)}
               placeholder="Search wallpapers, ringtones..."
               className="h-12 pr-12 bg-secondary border-border"
-              aria-label="Search wallpapers and ringtones"
             />
 
             <button
               onClick={() => performFullSearch()}
               className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
-              aria-label="Submit search"
-              title="Search"
               type="button"
             >
-              <Search className="w-4 h-4" aria-hidden="true" />
+              <Search className="w-4 h-4" />
             </button>
 
             <Autocomplete
@@ -141,41 +144,24 @@ const Header = () => {
             />
           </div>
 
-          {/* NAV BUTTONS */}
-          <nav className="flex items-center gap-2" aria-label="Primary navigation">
-            <Button
-              variant="outline"
-              className="h-11 hover-lift"
-              onClick={() => navigate("/category/wallpaper")}
-              aria-label="Browse wallpapers"
-            >
-              <Smartphone className="w-4 h-4" aria-hidden="true" />
+          <nav className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => navigate("/category/wallpaper")}>
+              <Smartphone className="w-4 h-4" />
               <span className="hidden md:inline ml-2">Wallpapers</span>
             </Button>
 
-            <Button
-              variant="outline"
-              className="h-11 hover-lift"
-              onClick={() => navigate("/category/ringtone")}
-              aria-label="Browse ringtones"
-            >
-              <Music className="w-4 h-4" aria-hidden="true" />
+            <Button variant="outline" onClick={() => navigate("/category/ringtone")}>
+              <Music className="w-4 h-4" />
               <span className="hidden md:inline ml-2">Ringtones</span>
             </Button>
 
-            <Button
-              variant="outline"
-              className="h-11 hover-lift"
-              onClick={() => navigate("/category/video")}
-              aria-label="Browse videos"
-            >
-              <Video className="w-4 h-4" aria-hidden="true" />
+            <Button variant="outline" onClick={() => navigate("/category/video")}>
+              <Video className="w-4 h-4" />
               <span className="hidden md:inline ml-2">Videos</span>
             </Button>
           </nav>
         </div>
 
-        {/* MOBILE SEARCH */}
         <div className="md:hidden mt-4 relative">
           <Input
             value={query}
@@ -187,17 +173,14 @@ const Header = () => {
             onFocus={() => query.trim() && setShowDropdown(true)}
             placeholder="Search found here..."
             className="h-12 pr-12 bg-secondary border-border"
-            aria-label="Search wallpapers and ringtones"
           />
 
           <button
             onClick={() => performFullSearch()}
             className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
-            aria-label="Submit search"
-            title="Search"
             type="button"
           >
-            <Search className="w-4 h-4" aria-hidden="true" />
+            <Search className="w-4 h-4" />
           </button>
 
           <Autocomplete

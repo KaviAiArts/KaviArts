@@ -13,9 +13,16 @@ function useQuery() {
 
 const ITEMS_PER_PAGE = 12;
 
+// ✅ singular normalize (cat / cats → cat)
+const normalize = (text: string) => {
+  const t = text.toLowerCase().trim();
+  return t.endsWith("s") ? t.slice(0, -1) : t;
+};
+
 const SearchResults = () => {
   const queryParams = useQuery();
-  const searchText = queryParams.get("query") || "";
+  const rawSearchText = queryParams.get("query") || "";
+  const searchText = normalize(rawSearchText);
   const type = queryParams.get("type"); // wallpaper | ringtone | video
   const customTitle = queryParams.get("title");
 
@@ -35,7 +42,7 @@ const SearchResults = () => {
     }
 
     query = query.or(
-      `file_name.ilike.%${searchText}%,description.ilike.%${searchText}%,tags.cs.{${searchText.toLowerCase()}}`
+      `file_name.ilike.%${searchText}%,description.ilike.%${searchText}%,tags.cs.{${searchText}}`
     );
 
     const { data } = await query.limit(200);
@@ -48,7 +55,7 @@ const SearchResults = () => {
 
   useEffect(() => {
     performSearch();
-  }, [searchText, type]);
+  }, [rawSearchText, type]);
 
   const loadMore = () => {
     const nextPage = page + 1;
@@ -71,7 +78,7 @@ const SearchResults = () => {
           </Button>
 
           <h1 className="text-3xl font-bold">
-            {customTitle || `Search results for: ${searchText}`}
+            {customTitle || `Search results for: ${rawSearchText}`}
           </h1>
         </div>
 
