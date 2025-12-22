@@ -73,18 +73,24 @@ const ContentItem = ({ item }: { item: any }) => {
           </div>
         )}
 
+        {/* Hover overlay — unfocusable button */}
         <div
           className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
           aria-hidden="true"
         >
-          <Button size="sm" className="bg-gradient-primary text-white">
+          <Button
+            size="sm"
+            className="bg-gradient-primary text-white"
+            tabIndex={-1}
+          >
             {item.file_type === "video" ? "Watch" : "Download"}
           </Button>
         </div>
 
+        {/* Badge with translucent contrast layer */}
         <div className="absolute top-2 left-2">
           <span
-            className="bg-primary text-white text-xs px-2 py-1 rounded-full"
+            className="bg-black/60 text-white text-xs px-2 py-1 rounded-full"
             aria-hidden="true"
           >
             {item.file_type}

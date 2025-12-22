@@ -109,7 +109,10 @@ const ContentSection = ({
                   <SkeletonCard key={i} aspect={skeletonAspect} />
                 ))
               : items.map((item) => (
-                  <Suspense key={item.id} fallback={<SkeletonCard aspect={skeletonAspect} />}>
+                  <Suspense
+                    key={item.id}
+                    fallback={<SkeletonCard aspect={skeletonAspect} />}
+                  >
                     <ContentItem item={item} />
                   </Suspense>
                 ))}
@@ -177,44 +180,47 @@ const Index = () => {
   return (
     <div>
       <Header />
-      <Hero />
-      <CategoryNav />
 
-      <ContentSection
-        title="Newest Wallpapers"
-        items={newest}
-        category="wallpaper"
-        loading={loading}
-        skeletonCount={6}
-        skeletonAspect="portrait"
-      />
+      <main id="main-content">
+        <Hero />
+        <CategoryNav />
 
-      <ContentSection
-        title="Popular Wallpapers"
-        items={popularWallpapers}
-        category="wallpaper"
-        loading={loading}
-        skeletonCount={6}
-        skeletonAspect="portrait"
-      />
+        <ContentSection
+          title="Newest Wallpapers"
+          items={newest}
+          category="wallpaper"
+          loading={loading}
+          skeletonCount={6}
+          skeletonAspect="portrait"
+        />
 
-      <ContentSection
-        title="Popular Ringtones"
-        items={ringtones}
-        category="ringtone"
-        loading={loading}
-        skeletonCount={6}
-        skeletonAspect="square"
-      />
+        <ContentSection
+          title="Popular Wallpapers"
+          items={popularWallpapers}
+          category="wallpaper"
+          loading={loading}
+          skeletonCount={6}
+          skeletonAspect="portrait"
+        />
 
-      <ContentSection
-        title="Popular Videos"
-        items={videos}
-        category="video"
-        loading={loading}
-        skeletonCount={6}
-        skeletonAspect="portrait"
-      />
+        <ContentSection
+          title="Popular Ringtones"
+          items={ringtones}
+          category="ringtone"
+          loading={loading}
+          skeletonCount={6}
+          skeletonAspect="square"
+        />
+
+        <ContentSection
+          title="Popular Videos"
+          items={videos}
+          category="video"
+          loading={loading}
+          skeletonCount={6}
+          skeletonAspect="portrait"
+        />
+      </main>
 
       <Footer />
     </div>
