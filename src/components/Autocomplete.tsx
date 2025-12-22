@@ -4,11 +4,8 @@ import React from "react";
 interface Suggestion {
   id: number;
   file_name: string;
-  category?: string;
-  tags?: string[];
+  file_type?: "wallpaper" | "ringtone" | "video";
   highlightName?: React.ReactNode;
-  highlightCategory?: React.ReactNode;
-  highlightTags?: React.ReactNode;
 }
 
 interface Props {
@@ -62,17 +59,10 @@ const Autocomplete: React.FC<Props> = ({
               {item.highlightName || item.file_name}
             </div>
 
-            {/* Category */}
-            {item.category && (
+            {/* File type only (wallpaper / ringtone / video) */}
+            {item.file_type && (
               <div className="text-xs text-muted-foreground truncate">
-                {item.highlightCategory || item.category}
-              </div>
-            )}
-
-            {/* Tags */}
-            {item.tags && item.tags.length > 0 && (
-              <div className="text-xs text-muted-foreground truncate">
-                [{item.highlightTags || item.tags.join(", ")}]
+                {item.file_type}
               </div>
             )}
           </div>

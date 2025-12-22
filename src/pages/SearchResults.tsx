@@ -6,8 +6,6 @@ import Footer from "@/components/Footer";
 import ContentGrid from "@/components/ContentGrid";
 
 import { supabase } from "@/lib/supabaseClient";
-import fuzzySearch from "@/utils/fuzzyEngine";
-
 import { Button } from "@/components/ui/button";
 
 function useQuery() {
@@ -30,55 +28,21 @@ const SearchResults = () => {
     if (!searchText.trim()) return;
     setLoading(true);
 
-    let combined: any[] = [];
     const allowedTypes = ["wallpaper", "video"];
 
-    const { data: titleMatches } = await supabase
+    const { data } = await supabase
       .from("files")
       .select("*")
       .in("file_type", allowedTypes)
       .ilike("file_name", `%${searchText}%`)
       .limit(200);
 
-    const { data: tagMatches } = await supabase
-      .from("files")
-      .select("*")
-      .in("file_type", allowedTypes)
-      .contains("tags", [searchText.toLowerCase()])
-      .limit(200);
+    const cleanResults = (data || []).sort(
+      (a, b) => (b.downloads || 0) - (a.downloads || 0)
+    );
 
-    const { data: categoryMatches } = await supabase
-      .from("files")
-      .select("*")
-      .in("file_type", allowedTypes)
-      .ilike("category", `%${searchText}%`)
-      .limit(100);
-
-    combined = [
-      ...(titleMatches || []),
-      ...(tagMatches || []),
-      ...(categoryMatches || []),
-    ];
-
-    const map = new Map();
-    combined.forEach((item) => map.set(item.id, item));
-    combined = Array.from(map.values());
-
-    if (combined.length < 12) {
-      const fuzzy = await fuzzySearch(searchText);
-      fuzzy
-        .filter((item: any) =>
-          allowedTypes.includes(item.file_type)
-        )
-        .forEach((item: any) => map.set(item.id, item));
-
-      combined = Array.from(map.values());
-    }
-
-    combined.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
-
-    setResults(combined);
-    setVisibleResults(combined.slice(0, ITEMS_PER_PAGE));
+    setResults(cleanResults);
+    setVisibleResults(cleanResults.slice(0, ITEMS_PER_PAGE));
     setPage(1);
     setLoading(false);
   };
@@ -99,7 +63,6 @@ const SearchResults = () => {
       <Header />
 
       <main className="container mx-auto px-4 py-8">
-        {/* ✅ SHOW ONLY FOR MANUAL SEARCH */}
         {!fromChip && (
           <>
             <h1 className="text-3xl font-bold">
