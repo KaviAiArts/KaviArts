@@ -19,7 +19,7 @@ const CategoryView = () => {
 
   useEffect(() => {
     loadItems();
-  }, [category, view, from]);
+  }, [category, view]);
 
   const loadItems = async () => {
     let query = supabase
@@ -27,37 +27,28 @@ const CategoryView = () => {
       .select("*")
       .eq("file_type", category);
 
-    // 🔒 SECTION-LOCKED PAGES (Homepage → View All)
-    if (from === "section") {
-      if (view === "newest") {
-        query = query.order("created_at", { ascending: false });
-      } else if (view === "popular") {
-        query = query.order("downloads", { ascending: false });
-      }
-    } 
-    // 🎲 DISCOVERY MODE (Category buttons)
-    else {
-      // Random / discovery (no enforced order)
+    // ✅ SORT ALWAYS FOLLOWS VIEW
+    if (view === "newest") {
       query = query.order("created_at", { ascending: false });
+    } else if (view === "popular") {
+      query = query.order("downloads", { ascending: false });
     }
+    // else → discovery (no enforced order)
 
     const { data } = await query;
     setItems(data || []);
   };
 
-  const capitalize = (text?: string) =>
-    text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+  const capitalize = (t?: string) =>
+    t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
 
-  // 🧠 TITLE LOGIC
-  const title = (() => {
-    if (from === "section" && view === "newest")
-      return `Newest ${capitalize(category)}s`;
-    if (from === "section" && view === "popular")
-      return `Popular ${capitalize(category)}s`;
-    return `${capitalize(category)}s`;
-  })();
+  const title =
+    from === "section" && view === "newest"
+      ? `Newest ${capitalize(category)}s`
+      : from === "section" && view === "popular"
+      ? `Popular ${capitalize(category)}s`
+      : `${capitalize(category)}s`;
 
-  // 🔘 FILTER VISIBILITY
   const showFilters = from !== "section";
 
   return (
@@ -77,7 +68,6 @@ const CategoryView = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">{title}</h1>
 
-          {/* ✅ FILTERS ONLY FOR DISCOVERY MODE */}
           {showFilters && (
             <div className="flex gap-2">
               <Button
@@ -88,7 +78,6 @@ const CategoryView = () => {
               >
                 Newest
               </Button>
-
               <Button
                 variant="outline"
                 onClick={() =>

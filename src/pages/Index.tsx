@@ -161,19 +161,19 @@ const Index = () => {
       .order("downloads", { ascending: false })
       .limit(6);
 
-    const { data: ringtoneData } = await supabase
-      .from("files")
-      .select("*")
-      .eq("file_type", "ringtone")
-      .order("created_at", { ascending: false })
-      .limit(12);
+const { data: ringtoneData } = await supabase
+  .from("files")
+  .select("*")
+  .eq("file_type", "ringtone")
+  .order("downloads", { ascending: false }) // ✅ FIX
+  .limit(12);
 
-    const { data: videoData } = await supabase
-      .from("files")
-      .select("*")
-      .eq("file_type", "video")
-      .order("created_at", { ascending: false })
-      .limit(6);
+const { data: videoData } = await supabase
+  .from("files")
+  .select("*")
+  .eq("file_type", "video")
+  .order("downloads", { ascending: false }) // ✅ FIX
+  .limit(6);
 
     setNewest(newestData || []);
     setPopularWallpapers(popularData || []);
