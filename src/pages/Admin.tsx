@@ -50,16 +50,7 @@ const Admin = () => {
         if (result?.event === "success") {
           setPendingUpload(result.info);
           setPendingType(type);
-
-          setEditItem({
-            file_name: "",
-            description: "",
-            tags: [],
-            file_url: result.info.secure_url,
-            file_type: type,
-            __isNew: true, // 🔑 KEY FLAG
-          });
-
+          setEditItem(null);
           setModalOpen(true);
         }
       }
@@ -68,15 +59,21 @@ const Admin = () => {
     widget.open();
   };
 
-  /* ---------------- SAVE ---------------- */
+  /* ---------------- SAVE (EDIT / INSERT) ---------------- */
 
   const saveItem = async ({ file_name, description, tags }: any) => {
-    // EDIT EXISTING ITEM
-    if (editItem && !editItem.__isNew) {
-      await supabase
+    /* ===== CASE 1: EDIT EXISTING ITEM ===== */
+    if (editItem) {
+      const { error } = await supabase
         .from("files")
         .update({ file_name, description, tags })
         .eq("id", editItem.id);
+
+      if (error) {
+        console.error("EDIT ERROR:", error);
+        alert("Edit failed");
+        return;
+      }
 
       setModalOpen(false);
       setEditItem(null);
@@ -84,51 +81,67 @@ const Admin = () => {
       return;
     }
 
-    // NEW UPLOAD
+    /* ===== CASE 2: NEW UPLOAD ===== */
     if (!pendingUpload || !pendingType) return;
 
     const isMp3 = pendingUpload.format === "mp3";
     const finalType = isMp3 ? "ringtone" : pendingType;
 
-    await supabase.from("files").insert({
-      file_name,
-      description,
-      tags,
-      file_url: pendingUpload.secure_url,
-      public_id: pendingUpload.public_id,
-      file_type: finalType,
-      category: finalType,
-      downloads: 0,
-      width: pendingUpload.width ?? null,
-      height: pendingUpload.height ?? null,
-      format: pendingUpload.format ?? null,
-      duration: pendingUpload.duration ?? null,
-    });
+    const { data: existing } = await supabase
+      .from("files")
+      .select("id")
+      .eq("public_id", pendingUpload.public_id)
+      .single();
+
+    if (existing) {
+      await supabase
+        .from("files")
+        .update({
+          file_name,
+          description,
+          tags,
+          file_type: finalType,
+          category: finalType,
+        })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("files").insert({
+        file_name,
+        description,
+        tags,
+        file_url: pendingUpload.secure_url,
+        public_id: pendingUpload.public_id,
+        file_type: finalType,
+        category: finalType,
+        downloads: 0,
+        width: pendingUpload.width ?? null,
+        height: pendingUpload.height ?? null,
+        format: pendingUpload.format ?? null,
+        duration: pendingUpload.duration ?? null,
+      });
+    }
 
     setModalOpen(false);
     setPendingUpload(null);
     setPendingType(null);
-    setEditItem(null);
     fetchFiles();
   };
 
   /* ---------------- DELETE ---------------- */
 
   const deleteItem = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
-    await supabase.from("files").delete().eq("id", id);
+    const { error } = await supabase.from("files").delete().eq("id", id);
+
+    if (error) {
+      console.error("DELETE ERROR:", error);
+      alert("Delete failed");
+      return;
+    }
+
     fetchFiles();
   };
 
   /* ---------------- AUTH ---------------- */
-
-  const login = () => {
-    if (password === ADMIN_PASSWORD) {
-      setAuthorized(true);
-    } else {
-      alert("Wrong password");
-    }
-  };
 
   if (!authorized) {
     return (
@@ -141,9 +154,15 @@ const Admin = () => {
             placeholder="Admin password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && login()}
           />
-          <Button className="w-full" onClick={login}>
+          <Button
+            className="w-full"
+            onClick={() =>
+              password === ADMIN_PASSWORD
+                ? setAuthorized(true)
+                : alert("Wrong password")
+            }
+          >
             Login
           </Button>
         </Card>
@@ -155,39 +174,69 @@ const Admin = () => {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <Button
-          variant="outline"
-          onClick={() => {
-            setAuthorized(false);
-            setPassword("");
-          }}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
-        </Button>
-      </div>
+      {/* HEADER */}
 
-      <div className="flex gap-3 mb-8">
-        <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
-          Upload Wallpaper
-        </Button>
-        <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
-          Upload Ringtone
-        </Button>
-        <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
-          Upload Video
-        </Button>
-      </div>
 
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+  <h1 className="text-2xl font-bold text-center sm:text-left">
+    Admin Dashboard
+  </h1>
+
+  <div className="flex gap-2 justify-center sm:justify-end">
+    <Button variant="outline" onClick={fetchFiles}>
+      <RefreshCcw className="w-4 h-4 mr-2" />
+      Refresh
+    </Button>
+
+    <Button
+      variant="outline"
+      onClick={() => {
+        setAuthorized(false);
+        setPassword("");
+      }}
+    >
+      <LogOut className="w-4 h-4 mr-2" />
+      Logout
+    </Button>
+  </div>
+</div>
+
+
+
+
+      {/* UPLOAD */}
+     <div className="flex flex-wrap gap-3 mb-8 justify-center sm:justify-start">
+  <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
+    Upload Wallpaper
+  </Button>
+
+  <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
+    Upload Ringtone
+  </Button>
+
+  <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
+    Upload Video
+  </Button>
+</div>
+
+
+      {/* GRID
+          mobile: 3 cols
+          tablet: 4 cols
+          desktop: 6 cols
+      */}
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
           <Card key={file.id} className="p-3 space-y-2">
             <div className="font-semibold text-sm truncate">
               {file.file_name}
             </div>
-            <div className="flex gap-2">
+
+            <div className="text-xs text-muted-foreground">
+              {file.file_type} • {file.downloads || 0}
+            </div>
+
+            <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -198,6 +247,7 @@ const Admin = () => {
               >
                 <Edit className="w-4 h-4" />
               </Button>
+
               <Button
                 size="sm"
                 variant="destructive"
@@ -217,8 +267,6 @@ const Admin = () => {
         onClose={() => {
           setModalOpen(false);
           setEditItem(null);
-          setPendingUpload(null); // 🔥 CRITICAL FIX
-          setPendingType(null);
         }}
       />
     </div>
