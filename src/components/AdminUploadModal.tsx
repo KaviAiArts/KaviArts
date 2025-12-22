@@ -10,6 +10,7 @@ type Props = {
     description?: string;
     tags?: string[];
   };
+  pendingUpload?: any;
   onSave: (data: {
     file_name: string;
     description: string;
@@ -18,7 +19,13 @@ type Props = {
   onClose: () => void;
 };
 
-const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
+const AdminUploadModal = ({
+  open,
+  initialData,
+  pendingUpload,
+  onSave,
+  onClose,
+}: Props) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -28,17 +35,45 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
       setTitle(initialData.file_name || "");
       setDescription(initialData.description || "");
       setTags(initialData.tags?.join(", ") || "");
+    } else {
+      setTitle("");
+      setDescription("");
+      setTags("");
     }
-  }, [initialData]);
+  }, [initialData, open]);
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <Card className="p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">
+      <Card className="p-6 w-full max-w-md space-y-4">
+        <h2 className="text-xl font-bold">
           {initialData ? "Edit Item" : "Add Details"}
         </h2>
+
+        {/* PREVIEW */}
+        {pendingUpload && (
+          <div className="w-full rounded overflow-hidden bg-secondary flex justify-center">
+            {pendingUpload.resource_type === "image" && (
+              <img
+                src={pendingUpload.secure_url}
+                className="max-h-60 object-contain"
+              />
+            )}
+
+            {pendingUpload.resource_type === "video" && (
+              <video
+                src={pendingUpload.secure_url}
+                controls
+                className="max-h-60"
+              />
+            )}
+
+            {pendingUpload.format === "mp3" && (
+              <audio controls src={pendingUpload.secure_url} />
+            )}
+          </div>
+        )}
 
         <Input
           placeholder="Title"
@@ -47,23 +82,22 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
         />
 
         <Input
-          className="mt-3"
           placeholder="Tags (comma separated)"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
         />
 
         <Input
-          className="mt-3"
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <div className="flex justify-between mt-4">
+        <div className="flex justify-between pt-2">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
+
           <Button
             onClick={() =>
               onSave({
@@ -75,6 +109,7 @@ const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
                   .filter(Boolean),
               })
             }
+            disabled={!title.trim()}
           >
             Save
           </Button>
