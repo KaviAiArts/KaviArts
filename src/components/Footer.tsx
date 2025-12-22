@@ -4,7 +4,7 @@ import {
   Music,
   Music2,
   Pinterest,
-  ArrowUp
+  ArrowUp as ArrowUpIcon
 } from "lucide-react";
 
 const Footer = () => {
@@ -70,7 +70,7 @@ const Footer = () => {
           aria-label="Scroll back to top"
           className="flex items-center gap-2 text-sm"
         >
-          <ArrowUp className="h-4 w-4" aria-hidden="true" />
+          <ArrowUpIcon className="h-4 w-4" aria-hidden="true" />
           Back to top
         </button>
 
