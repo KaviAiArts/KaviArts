@@ -26,13 +26,12 @@ const CategoryView = () => {
       .select("*")
       .eq("file_type", category);
 
-    // 🔑 SORT LOGIC
-    if (view === "newest") {
-      query = query.order("created_at", { ascending: false });
-    } else if (view === "popular") {
+    if (view === "popular") {
       query = query.order("downloads", { ascending: false });
+    } else if (view === "newest") {
+      query = query.order("created_at", { ascending: false });
     } else {
-      // Header click = discovery mode
+      // 🔀 RANDOM discovery (category button click)
       query = query.order("created_at", { ascending: false });
     }
 
@@ -40,15 +39,8 @@ const CategoryView = () => {
     setItems(data || []);
   };
 
-  // 🔑 PAGE TITLE
-  const getTitle = () => {
-    if (view === "newest") return `Newest ${capitalize(category)}`;
-    if (view === "popular") return `Popular ${capitalize(category)}`;
-    return capitalize(category);
-  };
-
-  const showFilters =
-    view === null || category !== "wallpaper"; // wallpapers sections hide filters
+  const title =
+    category?.charAt(0).toUpperCase() + category?.slice(1);
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,9 +57,12 @@ const CategoryView = () => {
         </Button>
 
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">{getTitle()}</h1>
+          <h1 className="text-3xl font-bold">
+            {title}
+          </h1>
 
-          {showFilters && (
+          {/* ✅ FILTER BUTTONS ONLY FOR DIRECT CATEGORY VIEW */}
+          {!view && (
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -97,10 +92,5 @@ const CategoryView = () => {
     </div>
   );
 };
-
-function capitalize(text?: string) {
-  if (!text) return "";
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
 
 export default CategoryView;
