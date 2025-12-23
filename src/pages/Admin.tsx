@@ -16,7 +16,7 @@ const SESSION_KEY = "admin_authorized";
 
 const Admin = () => {
   const [authorized, setAuthorized] = useState(
-    sessionStorage.getItem(SESSION_KEY) === "true"
+    localStorage.getItem(SESSION_KEY) === "true"
   );
   const [password, setPassword] = useState("");
   const [files, setFiles] = useState<any[]>([]);
@@ -73,15 +73,13 @@ const Admin = () => {
         .update({ file_name, description, tags })
         .eq("id", editItem.id);
 
-      setModalOpen(false);
-      setEditItem(null);
+      handleCloseModal();
       fetchFiles();
       return;
     }
 
     if (!pendingUpload || !pendingType) return;
 
-    // 🔒 KEEP YOUR WORKING LOGIC
     const isMp3 = pendingUpload.format === "mp3";
     const finalType = isMp3 ? "ringtone" : pendingType;
 
@@ -100,10 +98,15 @@ const Admin = () => {
       duration: pendingUpload.duration ?? null,
     });
 
+    handleCloseModal();
+    fetchFiles();
+  };
+
+  const handleCloseModal = () => {
     setModalOpen(false);
+    setEditItem(null);
     setPendingUpload(null);
     setPendingType(null);
-    fetchFiles();
   };
 
   /* ---------------- DELETE ---------------- */
@@ -115,6 +118,15 @@ const Admin = () => {
   };
 
   /* ---------------- AUTH ---------------- */
+
+  const handleLogin = () => {
+    if (password === ADMIN_PASSWORD) {
+      localStorage.setItem(SESSION_KEY, "true");
+      setAuthorized(true);
+    } else {
+      alert("Wrong password");
+    }
+  };
 
   if (!authorized) {
     return (
@@ -130,27 +142,12 @@ const Admin = () => {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                if (password === ADMIN_PASSWORD) {
-                  sessionStorage.setItem(SESSION_KEY, "true");
-                  setAuthorized(true);
-                } else {
-                  alert("Wrong password");
-                }
+                handleLogin();
               }
             }}
           />
 
-          <Button
-            className="w-full"
-            onClick={() => {
-              if (password === ADMIN_PASSWORD) {
-                sessionStorage.setItem(SESSION_KEY, "true");
-                setAuthorized(true);
-              } else {
-                alert("Wrong password");
-              }
-            }}
-          >
+          <Button className="w-full" onClick={handleLogin}>
             Login
           </Button>
         </Card>
@@ -172,7 +169,7 @@ const Admin = () => {
           <Button
             variant="outline"
             onClick={() => {
-              sessionStorage.removeItem(SESSION_KEY);
+              localStorage.removeItem(SESSION_KEY);
               setAuthorized(false);
               setPassword("");
             }}
@@ -232,12 +229,7 @@ const Admin = () => {
         initialData={editItem}
         pendingUpload={pendingUpload}
         onSave={saveItem}
-        onClose={() => {
-          setModalOpen(false);
-          setEditItem(null);
-          setPendingUpload(null); // ✅ THE ONLY FIX
-          setPendingType(null);   // ✅ THE ONLY FIX
-        }}
+        onClose={handleCloseModal}
       />
     </div>
   );
