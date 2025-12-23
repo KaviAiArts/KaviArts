@@ -1,4 +1,3 @@
-// AdminUploadModal.tsx
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,45 +51,32 @@ const AdminUploadModal = ({
           {initialData ? "Edit Item" : "Add Details"}
         </h2>
 
-        {/* PREVIEW */}
         {pendingUpload && (
-          <div className="w-full rounded overflow-hidden bg-secondary flex justify-center">
-            {pendingUpload.resource_type === "image" && (
-              <img src={pendingUpload.secure_url} className="max-h-60 object-contain" />
-            )}
-            {pendingUpload.format === "mp3" && (
+          <div className="w-full bg-secondary rounded p-2">
+            {pendingUpload.format === "mp3" ? (
               <audio controls src={pendingUpload.secure_url} />
-            )}
-            {pendingUpload.resource_type === "video" && pendingUpload.format !== "mp3" && (
-              <video src={pendingUpload.secure_url} controls className="max-h-60" />
+            ) : pendingUpload.resource_type === "video" ? (
+              <video controls src={pendingUpload.secure_url} />
+            ) : (
+              <img src={pendingUpload.secure_url} className="max-h-60 mx-auto" />
             )}
           </div>
         )}
 
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Input value={tags} onChange={(e) => setTags(e.target.value)} />
         <Input
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
-        <Input
-          placeholder="Tags (comma separated)"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-        />
-
-        <Input
-          placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <div className="flex justify-between pt-2">
+        <div className="flex justify-between">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
 
           <Button
+            disabled={!title.trim()}
             onClick={() =>
               onSave({
                 file_name: title.trim(),
@@ -101,7 +87,6 @@ const AdminUploadModal = ({
                   .filter(Boolean),
               })
             }
-            disabled={!title.trim()}
           >
             Save
           </Button>

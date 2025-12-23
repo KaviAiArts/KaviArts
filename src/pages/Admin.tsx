@@ -1,4 +1,3 @@
-// Admin.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -74,8 +73,7 @@ const Admin = () => {
         .update({ file_name, description, tags })
         .eq("id", editItem.id);
 
-      setModalOpen(false);
-      setEditItem(null);
+      closeModal();
       fetchFiles();
       return;
     }
@@ -83,8 +81,9 @@ const Admin = () => {
     /* NEW UPLOAD */
     if (!pendingUpload || !pendingType) return;
 
-    const isMp3 = pendingUpload.format === "mp3";
-    const finalType = isMp3 ? "ringtone" : pendingType;
+    // 🔴 THE ONLY CORRECT FILE TYPE LOGIC
+    const finalType =
+      pendingUpload.format === "mp3" ? "ringtone" : pendingType;
 
     await supabase.from("files").insert({
       file_name,
@@ -101,18 +100,23 @@ const Admin = () => {
       duration: pendingUpload.duration ?? null,
     });
 
-    setModalOpen(false);
-    setPendingUpload(null);
-    setPendingType(null);
+    closeModal();
     fetchFiles();
+  };
+
+  /* ---------------- CANCEL ---------------- */
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditItem(null);
+    setPendingUpload(null);   // 🔴 REQUIRED
+    setPendingType(null);     // 🔴 REQUIRED
   };
 
   /* ---------------- DELETE ---------------- */
 
   const deleteItem = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this item?"))
-      return;
-
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
     await supabase.from("files").delete().eq("id", id);
     fetchFiles();
   };
@@ -136,9 +140,7 @@ const Admin = () => {
                 if (password === ADMIN_PASSWORD) {
                   sessionStorage.setItem(SESSION_KEY, "true");
                   setAuthorized(true);
-                } else {
-                  alert("Wrong password");
-                }
+                } else alert("Wrong password");
               }
             }}
           />
@@ -149,9 +151,7 @@ const Admin = () => {
               if (password === ADMIN_PASSWORD) {
                 sessionStorage.setItem(SESSION_KEY, "true");
                 setAuthorized(true);
-              } else {
-                alert("Wrong password");
-              }
+              } else alert("Wrong password");
             }}
           >
             Login
@@ -165,32 +165,9 @@ const Admin = () => {
 
   return (
     <div className="p-6">
-      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-center sm:text-left">
-          Admin Dashboard
-        </h1>
+      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
-        <div className="flex gap-2 justify-center sm:justify-end">
-          <Button variant="outline" onClick={fetchFiles}>
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => {
-              sessionStorage.removeItem(SESSION_KEY);
-              setAuthorized(false);
-              setPassword("");
-            }}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-3 mb-8 justify-center sm:justify-start">
+      <div className="flex gap-3 mb-8">
         <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
           Upload Wallpaper
         </Button>
@@ -213,7 +190,7 @@ const Admin = () => {
               {file.file_type} • {file.downloads || 0}
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -242,12 +219,7 @@ const Admin = () => {
         initialData={editItem}
         pendingUpload={pendingUpload}
         onSave={saveItem}
-        onClose={() => {
-          setModalOpen(false);
-          setEditItem(null);
-          setPendingUpload(null);
-          setPendingType(null);
-        }}
+        onClose={closeModal}
       />
     </div>
   );
