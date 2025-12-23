@@ -1,128 +1,214 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, Search, X } from "lucide-react";
+import { Search, Smartphone, Music, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
+import Autocomplete from "./Autocomplete";
+import debounce from "@/utils/debounce";
+import fuzzySearch from "@/utils/fuzzyEngine";
+import highlight from "@/utils/highlight";
+import { supabase } from "@/lib/supabaseClient";
 
 const Header = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
-      setIsOpen(false);
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const performFullSearch = (value?: string) => {
+    const q = (value ?? query).trim();
+    if (!q) return;
+    navigate(`/search?query=${encodeURIComponent(q)}`);
+    setShowDropdown(false);
+  };
+
+  const fetchSuggestions = async (text: string) => {
+    if (!text.trim()) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const q = text.toLowerCase();
+
+    const { data } = await supabase
+      .from("files")
+      .select("*")
+      .or(
+        `file_name.ilike.%${q}%,description.ilike.%${q}%,tags.cs.{${q}}`
+      )
+      .limit(20);
+
+    let results = data || [];
+
+    if (results.length < 10) {
+      const fuzzy = await fuzzySearch(text);
+      results = [...results, ...fuzzy];
+    }
+
+    const map = new Map();
+    results.forEach((i) => map.set(i.id, i));
+    results = Array.from(map.values());
+
+    const highlighted = results.map((item) => ({
+      ...item,
+      highlightName: highlight(item.file_name, text),
+      highlightCategory: highlight(item.category || "", text),
+      highlightTags: item.tags
+        ? highlight(item.tags.join(", "), text)
+        : null,
+    }));
+
+    setSuggestions(highlighted);
+    setShowDropdown(true);
+    setActiveIndex(0);
+  };
+
+  const debouncedFetch = debounce(fetchSuggestions, 250);
+
+  const handleKeyDown = (e: any) => {
+    if (e.key === "ArrowDown") {
+      setActiveIndex((p) => (p + 1 < suggestions.length ? p + 1 : p));
+    } else if (e.key === "ArrowUp") {
+      setActiveIndex((p) => (p - 1 >= 0 ? p - 1 : p));
+    } else if (e.key === "Enter") {
+      performFullSearch();
+    } else if (e.key === "Escape") {
+      setShowDropdown(false);
     }
   };
 
-  const navLinks = [
-    { name: "Wallpapers", href: "/search?type=wallpaper" },
-    { name: "Ringtones", href: "/search?type=ringtone" },
-    { name: "Videos", href: "/search?type=video" },
-    { name: "About", href: "/about" },
-  ];
+  useEffect(() => {
+    function handleClickOutside(e: any) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        
-        {/* LOGO - Added aria-label */}
-        <Link to="/" className="flex items-center gap-2" aria-label="KaviArts Home">
-          <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+    <header className="sticky top-0 z-50 glass-card border-b" role="banner">
+      <div className="container mx-auto px-4 py-4" ref={containerRef}>
+        <div className="flex items-center justify-between">
+
+          {/* Logo already had aria-label, keeping it */}
+          <h1
+            onClick={() => navigate("/")}
+            className="text-xl font-bold gradient-text cursor-pointer"
+            role="link"
+            aria-label="Go to homepage"
+            tabIndex={0}
+          >
             KaviArts
-          </span>
-        </Link>
+          </h1>
 
-        {/* DESKTOP NAV */}
-        <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.href}
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              {link.name}
-            </Link>
-          ))}
-        </nav>
-
-        {/* SEARCH BAR (Desktop) */}
-        <div className="hidden md:flex flex-1 max-w-sm ml-4">
-          <form onSubmit={handleSearch} className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
             <Input
-              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                debouncedFetch(e.target.value);
+              }}
+              onKeyDown={handleKeyDown}
+              onFocus={() => query.trim() && setShowDropdown(true)}
               placeholder="Search wallpapers, ringtones..."
-              className="w-full pl-9 rounded-full bg-secondary"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search content" // Added Accessibility Label
+              className="h-12 pr-12 bg-secondary border-border"
             />
-          </form>
+
+            {/* FIX 1: Added aria-label to Desktop Search Button */}
+            <button
+              onClick={() => performFullSearch()}
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
+              type="button"
+              aria-label="Search content"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+
+            <Autocomplete
+              suggestions={suggestions}
+              visible={showDropdown}
+              activeIndex={activeIndex}
+              onSelect={(item) => {
+                setQuery(item.file_name);
+                performFullSearch(item.file_name);
+              }}
+            />
+          </div>
+
+          <nav className="flex items-center gap-2">
+            {/* FIX 2: Added aria-labels to Category Buttons 
+               (Because the text span is hidden on mobile, these become icon-only buttons there) */}
+            
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/category/wallpaper")}
+              aria-label="View Wallpapers"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Wallpapers</span>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/category/ringtone")}
+              aria-label="View Ringtones"
+            >
+              <Music className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Ringtones</span>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/category/video")}
+              aria-label="View Videos"
+            >
+              <Video className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Videos</span>
+            </Button>
+          </nav>
         </div>
 
-        {/* MOBILE MENU TRIGGER */}
-        <div className="md:hidden flex items-center gap-2">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              {/* FIX: Added aria-label for Screen Readers */}
-              <Button variant="ghost" size="icon" aria-label="Open main menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              {/* Accessibility Requirement: Sheet must have a Title */}
-              <SheetTitle className="sr-only">Mobile Navigation Menu</SheetTitle>
-              <SheetDescription className="sr-only">
-                Navigate through categories and search for content.
-              </SheetDescription>
+        <div className="md:hidden mt-4 relative">
+          <Input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              debouncedFetch(e.target.value);
+            }}
+            onKeyDown={handleKeyDown}
+            onFocus={() => query.trim() && setShowDropdown(true)}
+            placeholder="Search found here..."
+            className="h-12 pr-12 bg-secondary border-border"
+          />
 
-              <div className="flex flex-col gap-6 mt-6">
-                <Link 
-                  to="/" 
-                  className="font-bold text-xl" 
-                  onClick={() => setIsOpen(false)}
-                >
-                  KaviArts
-                </Link>
+          {/* FIX 3: Added aria-label to Mobile Search Button */}
+          <button
+            onClick={() => performFullSearch()}
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
+            type="button"
+            aria-label="Search content"
+          >
+            <Search className="w-4 h-4" />
+          </button>
 
-                <form onSubmit={handleSearch} className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search..."
-                    className="pl-9 h-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    aria-label="Search mobile"
-                  />
-                </form>
-
-                <nav className="flex flex-col gap-4">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.name}
-                      to={link.href}
-                      className="text-lg font-medium hover:text-primary transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      {link.name}
-                    </Link>
-                  ))}
-                  <Link
-                      to="/contact"
-                      className="text-lg font-medium hover:text-primary transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Contact
-                    </Link>
-                </nav>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <Autocomplete
+            suggestions={suggestions}
+            visible={showDropdown}
+            activeIndex={activeIndex}
+            onSelect={(item) => {
+              setQuery(item.file_name);
+              performFullSearch(item.file_name);
+            }}
+          />
         </div>
       </div>
     </header>
