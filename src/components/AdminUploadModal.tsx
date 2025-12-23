@@ -17,15 +17,15 @@ type Props = {
     description: string;
     tags: string[];
   }) => void;
-  onClose: () => void;
+  onCancel: () => void; // New prop for robust cancellation
 };
 
-const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }: Props) => {
+const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onCancel }: Props) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
 
-  // 5. Reset data cleanly for every new upload
+  // Reset or load data when modal opens
   useEffect(() => {
     if (open) {
       if (initialData) {
@@ -33,19 +33,19 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
         setDescription(initialData.description || "");
         setTags(initialData.tags?.join(", ") || "");
       } else {
-        // Clear for new upload
-        setTitle("");
+        // Smart Default: use filename if available
+        setTitle(pendingUpload?.original_filename || "");
         setDescription("");
         setTags("");
       }
     }
-  }, [open, initialData]);
+  }, [open, initialData, pendingUpload]);
 
   if (!open) return null;
 
   const handleLocalSave = () => {
     onSave({
-      file_name: title.trim(),
+      file_name: title.trim() || (pendingUpload?.original_filename ?? "Untitled"),
       description: description.trim(),
       tags: tags
         .split(",")
@@ -61,7 +61,7 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
           {initialData ? "Edit Item" : "Add Details"}
         </h2>
 
-        {/* 3. Preview Section */}
+        {/* Preview Section */}
         {pendingUpload && (
           <div className="mb-4 rounded-lg overflow-hidden bg-secondary/50 flex items-center justify-center min-h-[150px] border">
             {pendingUpload.resource_type === "image" ? (
@@ -70,7 +70,7 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
                 alt="Preview" 
                 className="max-h-48 object-contain"
               />
-            ) : pendingUpload.resource_type === "video" && !pendingUpload.is_audio ? (
+            ) : (pendingUpload.resource_type === "video" && !pendingUpload.is_audio && pendingUpload.format !== "mp3") ? (
               <video 
                 src={pendingUpload.secure_url} 
                 controls 
@@ -78,8 +78,8 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
               />
             ) : (
               <div className="p-4 text-center">
-                <p className="text-2xl mb-2">🎵</p>
-                <p className="text-sm font-medium">Audio Uploaded</p>
+                <p className="text-4xl mb-2">🎵</p>
+                <p className="text-sm font-medium">Audio Detected</p>
                 <p className="text-xs text-muted-foreground mt-1">
                     {pendingUpload.original_filename}.{pendingUpload.format}
                 </p>
@@ -93,7 +93,6 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            // 2. Allow saving with Enter key
             onKeyDown={(e) => e.key === "Enter" && handleLocalSave()}
           />
 
@@ -113,15 +112,14 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
         </div>
 
         <div className="flex justify-between mt-6">
-          {/* 4. Cancel button strictly calls onClose without saving */}
           <Button 
             variant="ghost" 
             onClick={(e) => {
-                e.preventDefault(); // Prevent accidental submits
-                onClose();
+                e.preventDefault(); 
+                onCancel();
             }}
           >
-            Cancel
+            Cancel Upload
           </Button>
           <Button onClick={handleLocalSave}>
             Save

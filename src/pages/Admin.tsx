@@ -15,7 +15,7 @@ const PRESET_VIDEOS = import.meta.env.VITE_CLOUDINARY_PRESET_VIDEOS;
 const SESSION_KEY = "admin_authorized";
 
 const Admin = () => {
-  // 1. Use localStorage for persistent session across refreshes
+  // 1. Use localStorage so refresh doesn't logout
   const [authorized, setAuthorized] = useState(
     localStorage.getItem(SESSION_KEY) === "true"
   );
@@ -51,11 +51,11 @@ const Admin = () => {
         cloudName: CLOUD_NAME,
         uploadPreset: preset,
         multiple: false,
-        resourceType: "auto", // Allow detection of audio/video/image
+        resourceType: "auto",
       },
       (error: any, result: any) => {
         if (!error && result && result.event === "success") {
-          console.log("Upload success:", result.info); // Debugging
+          console.log("Upload Info:", result.info);
           setPendingUpload(result.info);
           setPendingType(type);
           setEditItem(null);
@@ -71,7 +71,7 @@ const Admin = () => {
 
   const saveItem = async ({ file_name, description, tags }: any) => {
     try {
-      // CASE 1: Editing existing item
+      // CASE 1: Editing an existing item (from the list)
       if (editItem) {
         const { error } = await supabase
           .from("files")
@@ -79,63 +79,100 @@ const Admin = () => {
           .eq("id", editItem.id);
 
         if (error) throw error;
-        handleCloseModal();
+        closeAndReset();
         fetchFiles();
         return;
       }
 
-      // CASE 2: New Upload
+      // CASE 2: Saving a new upload
       if (!pendingUpload) {
-        alert("Error: No file uploaded found. Please try again.");
+        alert("No upload found to save.");
         return;
       }
 
-      // 🔒 FIXED LOGIC: Prioritize 'ringtone' type if selected or if file is mp3
-      // If user clicked "Upload Ringtone", pendingType is 'ringtone'.
-      // If user uploaded MP3 to Video preset, format is 'mp3'.
-      const isAudio = 
-        pendingType === "ringtone" || 
-        pendingUpload.format === "mp3" || 
-        pendingUpload.audio_codec; // robust check
+      // Determine correct type (Fixing the Ringtone/Video issue)
+      const isAudio =
+        pendingType === "ringtone" ||
+        pendingUpload.format === "mp3" ||
+        pendingUpload.is_audio === true ||
+        pendingUpload.audio_codec;
 
       const finalType = isAudio ? "ringtone" : pendingType;
 
-      const { error } = await supabase.from("files").insert({
-        file_name,
-        description,
-        tags,
-        file_url: pendingUpload.secure_url,
-        public_id: pendingUpload.public_id,
-        file_type: finalType,
-        category: finalType,
-        downloads: 0,
-        width: pendingUpload.width ?? null,
-        height: pendingUpload.height ?? null,
-        format: pendingUpload.format ?? null,
-        duration: pendingUpload.duration ?? null,
-      });
+      // Smart Save: Check if Webhook already inserted the row using public_id
+      const { data: existing } = await supabase
+        .from("files")
+        .select("id")
+        .eq("public_id", pendingUpload.public_id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existing) {
+        // UPDATE existing record (fixes wrong type from webhook)
+        const { error } = await supabase
+          .from("files")
+          .update({
+            file_name,
+            description,
+            tags,
+            file_type: finalType, // Force correct type
+            category: finalType,
+            // Update other fields just in case
+            width: pendingUpload.width ?? null,
+            height: pendingUpload.height ?? null,
+            format: pendingUpload.format ?? null,
+            duration: pendingUpload.duration ?? null,
+          })
+          .eq("id", existing.id);
 
-      handleCloseModal();
+        if (error) throw error;
+      } else {
+        // INSERT new record (if webhook hasn't run yet)
+        const { error } = await supabase.from("files").insert({
+          file_name,
+          description,
+          tags,
+          file_url: pendingUpload.secure_url,
+          public_id: pendingUpload.public_id,
+          file_type: finalType,
+          category: finalType,
+          downloads: 0,
+          width: pendingUpload.width ?? null,
+          height: pendingUpload.height ?? null,
+          format: pendingUpload.format ?? null,
+          duration: pendingUpload.duration ?? null,
+        });
+
+        if (error) throw error;
+      }
+
+      closeAndReset();
       fetchFiles();
-      // alert("Saved successfully!"); // Optional confirmation
     } catch (err: any) {
-      console.error("Save error:", err);
-      alert("Failed to save: " + err.message);
+      console.error("Save Error:", err);
+      alert("Error saving: " + err.message);
     }
   };
 
-  /* ---------------- CLOSE / CANCEL ---------------- */
+  /* ---------------- CANCEL / CLOSE ---------------- */
 
-  const handleCloseModal = () => {
+  const handleCancelUpload = async () => {
+    // If we have a pending upload, delete the auto-injected DB record
+    if (pendingUpload?.public_id) {
+      console.log("Canceling and cleaning up:", pendingUpload.public_id);
+      await supabase.from("files").delete().eq("public_id", pendingUpload.public_id);
+      // We also refresh to make sure it disappears from UI
+      fetchFiles();
+    }
+    closeAndReset();
+  };
+
+  const closeAndReset = () => {
     setModalOpen(false);
-    // Delay clearing slightly to ensure UI closes smoothly
     setTimeout(() => {
       setEditItem(null);
       setPendingUpload(null);
       setPendingType(null);
-    }, 100);
+    }, 200);
   };
 
   /* ---------------- DELETE ---------------- */
@@ -168,19 +205,14 @@ const Admin = () => {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="p-6 w-full max-w-sm">
           <h2 className="text-xl font-bold mb-4">Admin Login</h2>
-
           <input
             type="password"
             className="w-full mb-4 p-2 rounded bg-secondary"
             placeholder="Admin password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            // 2. Enable Enter key for login
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleLogin();
-            }}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
           />
-
           <Button className="w-full" onClick={handleLogin}>
             Login
           </Button>
@@ -256,7 +288,7 @@ const Admin = () => {
         initialData={editItem}
         pendingUpload={pendingUpload}
         onSave={saveItem}
-        onClose={handleCloseModal}
+        onCancel={handleCancelUpload} // Hooked up the robust cancel logic
       />
     </div>
   );
