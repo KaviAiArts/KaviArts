@@ -1,3 +1,4 @@
+// Admin.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -75,8 +76,6 @@ const Admin = () => {
 
       setModalOpen(false);
       setEditItem(null);
-      setPendingUpload(null);
-      setPendingType(null);
       fetchFiles();
       return;
     }
@@ -111,7 +110,8 @@ const Admin = () => {
   /* ---------------- DELETE ---------------- */
 
   const deleteItem = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    if (!window.confirm("Are you sure you want to delete this item?"))
+      return;
 
     await supabase.from("files").delete().eq("id", id);
     fetchFiles();

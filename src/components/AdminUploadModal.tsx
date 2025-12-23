@@ -1,3 +1,4 @@
+// AdminUploadModal.tsx
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,22 +56,13 @@ const AdminUploadModal = ({
         {pendingUpload && (
           <div className="w-full rounded overflow-hidden bg-secondary flex justify-center">
             {pendingUpload.resource_type === "image" && (
-              <img
-                src={pendingUpload.secure_url}
-                className="max-h-60 object-contain"
-              />
+              <img src={pendingUpload.secure_url} className="max-h-60 object-contain" />
             )}
-
-            {pendingUpload.resource_type === "video" && (
-              <video
-                src={pendingUpload.secure_url}
-                controls
-                className="max-h-60"
-              />
-            )}
-
             {pendingUpload.format === "mp3" && (
               <audio controls src={pendingUpload.secure_url} />
+            )}
+            {pendingUpload.resource_type === "video" && pendingUpload.format !== "mp3" && (
+              <video src={pendingUpload.secure_url} controls className="max-h-60" />
             )}
           </div>
         )}
@@ -109,7 +101,7 @@ const AdminUploadModal = ({
                   .filter(Boolean),
               })
             }
-            disabled={!title.trim() || (!initialData && !pendingUpload)}
+            disabled={!title.trim()}
           >
             Save
           </Button>
