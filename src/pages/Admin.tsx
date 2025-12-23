@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,6 +26,9 @@ const Admin = () => {
   const [pendingType, setPendingType] =
     useState<"wallpaper" | "ringtone" | "video" | null>(null);
 
+  // 🔒 cancel guard
+  const isCancelledRef = useRef(false);
+
   /* ---------------- FETCH ---------------- */
 
   const fetchFiles = async () => {
@@ -52,6 +55,7 @@ const Admin = () => {
       },
       (_: any, result: any) => {
         if (result?.event === "success") {
+          isCancelledRef.current = false;
           setPendingUpload(result.info);
           setPendingType(type);
           setEditItem(null);
@@ -66,6 +70,9 @@ const Admin = () => {
   /* ---------------- SAVE ---------------- */
 
   const saveItem = async ({ file_name, description, tags }: any) => {
+    // ❌ HARD BLOCK if cancelled
+    if (isCancelledRef.current) return;
+
     /* EDIT */
     if (editItem) {
       await supabase
@@ -73,8 +80,7 @@ const Admin = () => {
         .update({ file_name, description, tags })
         .eq("id", editItem.id);
 
-      setModalOpen(false);
-      setEditItem(null);
+      closeModal();
       fetchFiles();
       return;
     }
@@ -100,10 +106,16 @@ const Admin = () => {
       duration: pendingUpload.duration ?? null,
     });
 
+    closeModal();
+    fetchFiles();
+  };
+
+  const closeModal = () => {
+    isCancelledRef.current = true;
     setModalOpen(false);
+    setEditItem(null);
     setPendingUpload(null);
     setPendingType(null);
-    fetchFiles();
   };
 
   /* ---------------- DELETE ---------------- */
@@ -164,11 +176,9 @@ const Admin = () => {
   return (
     <div className="p-6">
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-center sm:text-left">
-          Admin Dashboard
-        </h1>
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
-        <div className="flex gap-2 justify-center sm:justify-end">
+        <div className="flex gap-2">
           <Button variant="outline" onClick={fetchFiles}>
             <RefreshCcw className="w-4 h-4 mr-2" />
             Refresh
@@ -188,7 +198,7 @@ const Admin = () => {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-8 justify-center sm:justify-start">
+      <div className="flex flex-wrap gap-3 mb-8">
         <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
           Upload Wallpaper
         </Button>
@@ -216,6 +226,7 @@ const Admin = () => {
                 size="sm"
                 variant="outline"
                 onClick={() => {
+                  isCancelledRef.current = false;
                   setEditItem(file);
                   setModalOpen(true);
                 }}
@@ -240,12 +251,7 @@ const Admin = () => {
         initialData={editItem}
         pendingUpload={pendingUpload}
         onSave={saveItem}
-        onClose={() => {
-          setModalOpen(false);
-          setEditItem(null);
-          setPendingUpload(null);
-          setPendingType(null);
-        }}
+        onClose={closeModal}
       />
     </div>
   );

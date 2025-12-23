@@ -51,7 +51,6 @@ const AdminUploadModal = ({
           {initialData ? "Edit Item" : "Add Details"}
         </h2>
 
-        {/* PREVIEW */}
         {pendingUpload && (
           <div className="w-full rounded overflow-hidden bg-secondary flex justify-center">
             {pendingUpload.resource_type === "image" && (
@@ -99,6 +98,7 @@ const AdminUploadModal = ({
           </Button>
 
           <Button
+            disabled={!title.trim()}
             onClick={() =>
               onSave({
                 file_name: title.trim(),
@@ -109,7 +109,6 @@ const AdminUploadModal = ({
                   .filter(Boolean),
               })
             }
-            disabled={!title.trim()}
           >
             Save
           </Button>
