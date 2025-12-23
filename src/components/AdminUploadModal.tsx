@@ -3,7 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 
-const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }: any) => {
+type Props = {
+  open: boolean;
+  initialData?: {
+    file_name: string;
+    description?: string;
+    tags?: string[];
+  };
+  onSave: (data: {
+    file_name: string;
+    description: string;
+    tags: string[];
+  }) => void;
+  onClose: () => void;
+};
+
+const AdminUploadModal = ({ open, initialData, onSave, onClose }: Props) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -13,39 +28,51 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
       setTitle(initialData.file_name || "");
       setDescription(initialData.description || "");
       setTags(initialData.tags?.join(", ") || "");
-    } else {
-      setTitle("");
-      setDescription("");
-      setTags("");
     }
-  }, [initialData, open]);
+  }, [initialData]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
-      <Card className="p-6 space-y-4">
-        {pendingUpload?.format === "mp3" ? (
-          <audio controls src={pendingUpload.secure_url} />
-        ) : pendingUpload?.resource_type === "video" ? (
-          <video controls src={pendingUpload.secure_url} />
-        ) : (
-          <img src={pendingUpload?.secure_url} />
-        )}
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <Card className="p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">
+          {initialData ? "Edit Item" : "Add Details"}
+        </h2>
 
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Input value={tags} onChange={(e) => setTags(e.target.value)} />
-        <Input value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Input
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-        <div className="flex justify-between">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Input
+          className="mt-3"
+          placeholder="Tags (comma separated)"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+        />
+
+        <Input
+          className="mt-3"
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+
+        <div className="flex justify-between mt-4">
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
           <Button
-            disabled={!title.trim()}
             onClick={() =>
               onSave({
                 file_name: title.trim(),
                 description: description.trim(),
-                tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+                tags: tags
+                  .split(",")
+                  .map((t) => t.trim().toLowerCase())
+                  .filter(Boolean),
               })
             }
           >
