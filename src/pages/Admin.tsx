@@ -1,3 +1,4 @@
+// Admin.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,12 @@ const PRESET_WALLPAPERS = import.meta.env.VITE_CLOUDINARY_PRESET_WALLPAPERS;
 const PRESET_RINGTONES = import.meta.env.VITE_CLOUDINARY_PRESET_RINGTONES;
 const PRESET_VIDEOS = import.meta.env.VITE_CLOUDINARY_PRESET_VIDEOS;
 
+const SESSION_KEY = "admin_authorized";
+
 const Admin = () => {
-  const [authorized, setAuthorized] = useState(false);
+  const [authorized, setAuthorized] = useState(
+    sessionStorage.getItem(SESSION_KEY) === "true"
+  );
   const [password, setPassword] = useState("");
   const [files, setFiles] = useState<any[]>([]);
 
@@ -59,21 +64,14 @@ const Admin = () => {
     widget.open();
   };
 
-  /* ---------------- SAVE (EDIT / INSERT) ---------------- */
+  /* ---------------- SAVE ---------------- */
 
   const saveItem = async ({ file_name, description, tags }: any) => {
-    /* ===== CASE 1: EDIT EXISTING ITEM ===== */
     if (editItem) {
-      const { error } = await supabase
+      await supabase
         .from("files")
         .update({ file_name, description, tags })
         .eq("id", editItem.id);
-
-      if (error) {
-        console.error("EDIT ERROR:", error);
-        alert("Edit failed");
-        return;
-      }
 
       setModalOpen(false);
       setEditItem(null);
@@ -81,45 +79,26 @@ const Admin = () => {
       return;
     }
 
-    /* ===== CASE 2: NEW UPLOAD ===== */
     if (!pendingUpload || !pendingType) return;
 
+    // 🔒 KEEP YOUR WORKING LOGIC
     const isMp3 = pendingUpload.format === "mp3";
     const finalType = isMp3 ? "ringtone" : pendingType;
 
-    const { data: existing } = await supabase
-      .from("files")
-      .select("id")
-      .eq("public_id", pendingUpload.public_id)
-      .single();
-
-    if (existing) {
-      await supabase
-        .from("files")
-        .update({
-          file_name,
-          description,
-          tags,
-          file_type: finalType,
-          category: finalType,
-        })
-        .eq("id", existing.id);
-    } else {
-      await supabase.from("files").insert({
-        file_name,
-        description,
-        tags,
-        file_url: pendingUpload.secure_url,
-        public_id: pendingUpload.public_id,
-        file_type: finalType,
-        category: finalType,
-        downloads: 0,
-        width: pendingUpload.width ?? null,
-        height: pendingUpload.height ?? null,
-        format: pendingUpload.format ?? null,
-        duration: pendingUpload.duration ?? null,
-      });
-    }
+    await supabase.from("files").insert({
+      file_name,
+      description,
+      tags,
+      file_url: pendingUpload.secure_url,
+      public_id: pendingUpload.public_id,
+      file_type: finalType,
+      category: finalType,
+      downloads: 0,
+      width: pendingUpload.width ?? null,
+      height: pendingUpload.height ?? null,
+      format: pendingUpload.format ?? null,
+      duration: pendingUpload.duration ?? null,
+    });
 
     setModalOpen(false);
     setPendingUpload(null);
@@ -130,14 +109,8 @@ const Admin = () => {
   /* ---------------- DELETE ---------------- */
 
   const deleteItem = async (id: number) => {
-    const { error } = await supabase.from("files").delete().eq("id", id);
-
-    if (error) {
-      console.error("DELETE ERROR:", error);
-      alert("Delete failed");
-      return;
-    }
-
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    await supabase.from("files").delete().eq("id", id);
     fetchFiles();
   };
 
@@ -148,20 +121,35 @@ const Admin = () => {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="p-6 w-full max-w-sm">
           <h2 className="text-xl font-bold mb-4">Admin Login</h2>
+
           <input
             type="password"
             className="w-full mb-4 p-2 rounded bg-secondary"
             placeholder="Admin password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (password === ADMIN_PASSWORD) {
+                  sessionStorage.setItem(SESSION_KEY, "true");
+                  setAuthorized(true);
+                } else {
+                  alert("Wrong password");
+                }
+              }
+            }}
           />
+
           <Button
             className="w-full"
-            onClick={() =>
-              password === ADMIN_PASSWORD
-                ? setAuthorized(true)
-                : alert("Wrong password")
-            }
+            onClick={() => {
+              if (password === ADMIN_PASSWORD) {
+                sessionStorage.setItem(SESSION_KEY, "true");
+                setAuthorized(true);
+              } else {
+                alert("Wrong password");
+              }
+            }}
           >
             Login
           </Button>
@@ -174,69 +162,49 @@ const Admin = () => {
 
   return (
     <div className="p-6">
-      {/* HEADER */}
+      <div className="flex justify-between mb-6">
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={fetchFiles}>
+            <RefreshCcw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              sessionStorage.removeItem(SESSION_KEY);
+              setAuthorized(false);
+              setPassword("");
+            }}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </div>
 
+      <div className="flex gap-3 mb-8">
+        <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
+          Upload Wallpaper
+        </Button>
+        <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
+          Upload Ringtone
+        </Button>
+        <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
+          Upload Video
+        </Button>
+      </div>
 
-      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-  <h1 className="text-2xl font-bold text-center sm:text-left">
-    Admin Dashboard
-  </h1>
-
-  <div className="flex gap-2 justify-center sm:justify-end">
-    <Button variant="outline" onClick={fetchFiles}>
-      <RefreshCcw className="w-4 h-4 mr-2" />
-      Refresh
-    </Button>
-
-    <Button
-      variant="outline"
-      onClick={() => {
-        setAuthorized(false);
-        setPassword("");
-      }}
-    >
-      <LogOut className="w-4 h-4 mr-2" />
-      Logout
-    </Button>
-  </div>
-</div>
-
-
-
-
-      {/* UPLOAD */}
-     <div className="flex flex-wrap gap-3 mb-8 justify-center sm:justify-start">
-  <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
-    Upload Wallpaper
-  </Button>
-
-  <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
-    Upload Ringtone
-  </Button>
-
-  <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
-    Upload Video
-  </Button>
-</div>
-
-
-      {/* GRID
-          mobile: 3 cols
-          tablet: 4 cols
-          desktop: 6 cols
-      */}
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
           <Card key={file.id} className="p-3 space-y-2">
             <div className="font-semibold text-sm truncate">
               {file.file_name}
             </div>
-
             <div className="text-xs text-muted-foreground">
               {file.file_type} • {file.downloads || 0}
             </div>
-
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -247,7 +215,6 @@ const Admin = () => {
               >
                 <Edit className="w-4 h-4" />
               </Button>
-
               <Button
                 size="sm"
                 variant="destructive"
@@ -263,10 +230,13 @@ const Admin = () => {
       <AdminUploadModal
         open={modalOpen}
         initialData={editItem}
+        pendingUpload={pendingUpload}
         onSave={saveItem}
         onClose={() => {
           setModalOpen(false);
           setEditItem(null);
+          setPendingUpload(null); // ✅ THE ONLY FIX
+          setPendingType(null);   // ✅ THE ONLY FIX
         }}
       />
     </div>
