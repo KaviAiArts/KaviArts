@@ -1,3 +1,4 @@
+/* Admin.tsx */
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,6 @@ const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const PRESET_WALLPAPERS = import.meta.env.VITE_CLOUDINARY_PRESET_WALLPAPERS;
 const PRESET_RINGTONES = import.meta.env.VITE_CLOUDINARY_PRESET_RINGTONES;
 const PRESET_VIDEOS = import.meta.env.VITE_CLOUDINARY_PRESET_VIDEOS;
-
 const SESSION_KEY = "admin_authorized";
 
 const Admin = () => {
@@ -26,14 +26,12 @@ const Admin = () => {
   const [pendingType, setPendingType] =
     useState<"wallpaper" | "ringtone" | "video" | null>(null);
 
-  /* ---------------- FETCH ---------------- */
-
+  /* FETCH */
   const fetchFiles = async () => {
     const { data } = await supabase
       .from("files")
       .select("*")
       .order("created_at", { ascending: false });
-
     setFiles(data || []);
   };
 
@@ -41,15 +39,10 @@ const Admin = () => {
     if (authorized) fetchFiles();
   }, [authorized]);
 
-  /* ---------------- UPLOAD ---------------- */
-
+  /* UPLOAD */
   const upload = (preset: string, type: any) => {
     const widget = (window as any).cloudinary.createUploadWidget(
-      {
-        cloudName: CLOUD_NAME,
-        uploadPreset: preset,
-        multiple: false,
-      },
+      { cloudName: CLOUD_NAME, uploadPreset: preset, multiple: false },
       (_: any, result: any) => {
         if (result?.event === "success") {
           setPendingUpload(result.info);
@@ -59,31 +52,28 @@ const Admin = () => {
         }
       }
     );
-
     widget.open();
   };
 
-  /* ---------------- SAVE ---------------- */
-
+  /* SAVE */
   const saveItem = async ({ file_name, description, tags }: any) => {
-    /* EDIT */
     if (editItem) {
       await supabase
         .from("files")
         .update({ file_name, description, tags })
         .eq("id", editItem.id);
-
       closeModal();
       fetchFiles();
       return;
     }
 
-    /* NEW UPLOAD */
-    if (!pendingUpload || !pendingType) return;
+    if (!pendingUpload) return;
 
-    // 🔴 THE ONLY CORRECT FILE TYPE LOGIC
+    // 🔴 ONLY VALID TYPE LOGIC
     const finalType =
-      pendingUpload.format === "mp3" ? "ringtone" : pendingType;
+      pendingUpload.format === "mp3"
+        ? "ringtone"
+        : pendingType;
 
     await supabase.from("files").insert({
       file_name,
@@ -104,54 +94,36 @@ const Admin = () => {
     fetchFiles();
   };
 
-  /* ---------------- CANCEL ---------------- */
-
+  /* CANCEL / CLOSE */
   const closeModal = () => {
     setModalOpen(false);
     setEditItem(null);
-    setPendingUpload(null);   // 🔴 REQUIRED
-    setPendingType(null);     // 🔴 REQUIRED
+    setPendingUpload(null);
+    setPendingType(null);
   };
 
-  /* ---------------- DELETE ---------------- */
-
+  /* DELETE */
   const deleteItem = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
     await supabase.from("files").delete().eq("id", id);
     fetchFiles();
   };
 
-  /* ---------------- AUTH ---------------- */
-
   if (!authorized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="p-6 w-full max-w-sm">
-          <h2 className="text-xl font-bold mb-4">Admin Login</h2>
-
           <input
             type="password"
-            className="w-full mb-4 p-2 rounded bg-secondary"
-            placeholder="Admin password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                if (password === ADMIN_PASSWORD) {
-                  sessionStorage.setItem(SESSION_KEY, "true");
-                  setAuthorized(true);
-                } else alert("Wrong password");
-              }
-            }}
           />
-
           <Button
-            className="w-full"
             onClick={() => {
               if (password === ADMIN_PASSWORD) {
                 sessionStorage.setItem(SESSION_KEY, "true");
                 setAuthorized(true);
-              } else alert("Wrong password");
+              }
             }}
           >
             Login
@@ -161,13 +133,9 @@ const Admin = () => {
     );
   }
 
-  /* ---------------- UI ---------------- */
-
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
-
-      <div className="flex gap-3 mb-8">
+      <div className="flex gap-2 mb-6">
         <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
           Upload Wallpaper
         </Button>
@@ -177,39 +145,30 @@ const Admin = () => {
         <Button onClick={() => upload(PRESET_VIDEOS, "video")}>
           Upload Video
         </Button>
+
+        <Button variant="outline" onClick={fetchFiles}>
+          <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            sessionStorage.removeItem(SESSION_KEY);
+            setAuthorized(false);
+          }}
+        >
+          <LogOut className="w-4 h-4 mr-2" /> Logout
+        </Button>
       </div>
 
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
-          <Card key={file.id} className="p-3 space-y-2">
-            <div className="font-semibold text-sm truncate">
-              {file.file_name}
-            </div>
-
-            <div className="text-xs text-muted-foreground">
-              {file.file_type} • {file.downloads || 0}
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setEditItem(file);
-                  setModalOpen(true);
-                }}
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
-
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => deleteItem(file.id)}
-              >
-                <Trash className="w-4 h-4" />
-              </Button>
-            </div>
+          <Card key={file.id} className="p-3">
+            <div className="text-sm font-semibold">{file.file_name}</div>
+            <div className="text-xs">{file.file_type}</div>
+            <Button size="sm" onClick={() => deleteItem(file.id)}>
+              <Trash className="w-4 h-4" />
+            </Button>
           </Card>
         ))}
       </div>
