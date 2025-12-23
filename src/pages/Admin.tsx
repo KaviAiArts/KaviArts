@@ -15,6 +15,7 @@ const PRESET_VIDEOS = import.meta.env.VITE_CLOUDINARY_PRESET_VIDEOS;
 const SESSION_KEY = "admin_authorized";
 
 const Admin = () => {
+  // 1. Use localStorage for persistent session across refreshes
   const [authorized, setAuthorized] = useState(
     localStorage.getItem(SESSION_KEY) === "true"
   );
@@ -50,9 +51,11 @@ const Admin = () => {
         cloudName: CLOUD_NAME,
         uploadPreset: preset,
         multiple: false,
+        resourceType: "auto", // Allow detection of audio/video/image
       },
-      (_: any, result: any) => {
-        if (result?.event === "success") {
+      (error: any, result: any) => {
+        if (!error && result && result.event === "success") {
+          console.log("Upload success:", result.info); // Debugging
           setPendingUpload(result.info);
           setPendingType(type);
           setEditItem(null);
@@ -67,46 +70,72 @@ const Admin = () => {
   /* ---------------- SAVE ---------------- */
 
   const saveItem = async ({ file_name, description, tags }: any) => {
-    if (editItem) {
-      await supabase
-        .from("files")
-        .update({ file_name, description, tags })
-        .eq("id", editItem.id);
+    try {
+      // CASE 1: Editing existing item
+      if (editItem) {
+        const { error } = await supabase
+          .from("files")
+          .update({ file_name, description, tags })
+          .eq("id", editItem.id);
+
+        if (error) throw error;
+        handleCloseModal();
+        fetchFiles();
+        return;
+      }
+
+      // CASE 2: New Upload
+      if (!pendingUpload) {
+        alert("Error: No file uploaded found. Please try again.");
+        return;
+      }
+
+      // 🔒 FIXED LOGIC: Prioritize 'ringtone' type if selected or if file is mp3
+      // If user clicked "Upload Ringtone", pendingType is 'ringtone'.
+      // If user uploaded MP3 to Video preset, format is 'mp3'.
+      const isAudio = 
+        pendingType === "ringtone" || 
+        pendingUpload.format === "mp3" || 
+        pendingUpload.audio_codec; // robust check
+
+      const finalType = isAudio ? "ringtone" : pendingType;
+
+      const { error } = await supabase.from("files").insert({
+        file_name,
+        description,
+        tags,
+        file_url: pendingUpload.secure_url,
+        public_id: pendingUpload.public_id,
+        file_type: finalType,
+        category: finalType,
+        downloads: 0,
+        width: pendingUpload.width ?? null,
+        height: pendingUpload.height ?? null,
+        format: pendingUpload.format ?? null,
+        duration: pendingUpload.duration ?? null,
+      });
+
+      if (error) throw error;
 
       handleCloseModal();
       fetchFiles();
-      return;
+      // alert("Saved successfully!"); // Optional confirmation
+    } catch (err: any) {
+      console.error("Save error:", err);
+      alert("Failed to save: " + err.message);
     }
-
-    if (!pendingUpload || !pendingType) return;
-
-    const isMp3 = pendingUpload.format === "mp3";
-    const finalType = isMp3 ? "ringtone" : pendingType;
-
-    await supabase.from("files").insert({
-      file_name,
-      description,
-      tags,
-      file_url: pendingUpload.secure_url,
-      public_id: pendingUpload.public_id,
-      file_type: finalType,
-      category: finalType,
-      downloads: 0,
-      width: pendingUpload.width ?? null,
-      height: pendingUpload.height ?? null,
-      format: pendingUpload.format ?? null,
-      duration: pendingUpload.duration ?? null,
-    });
-
-    handleCloseModal();
-    fetchFiles();
   };
+
+  /* ---------------- CLOSE / CANCEL ---------------- */
 
   const handleCloseModal = () => {
     setModalOpen(false);
-    setEditItem(null);
-    setPendingUpload(null);
-    setPendingType(null);
+    // Delay clearing slightly to ensure UI closes smoothly
+    setTimeout(() => {
+      setEditItem(null);
+      setPendingUpload(null);
+      setPendingType(null);
+    }, 100);
   };
 
   /* ---------------- DELETE ---------------- */
@@ -128,6 +157,12 @@ const Admin = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem(SESSION_KEY);
+    setAuthorized(false);
+    setPassword("");
+  };
+
   if (!authorized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -140,10 +175,9 @@ const Admin = () => {
             placeholder="Admin password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            // 2. Enable Enter key for login
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleLogin();
-              }
+              if (e.key === "Enter") handleLogin();
             }}
           />
 
@@ -166,14 +200,7 @@ const Admin = () => {
             <RefreshCcw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              localStorage.removeItem(SESSION_KEY);
-              setAuthorized(false);
-              setPassword("");
-            }}
-          >
+          <Button variant="outline" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>

@@ -1,3 +1,4 @@
+// AdminUploadModal.tsx
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
 
-  // Reset or load data when modal opens
+  // 5. Reset data cleanly for every new upload
   useEffect(() => {
     if (open) {
       if (initialData) {
@@ -32,7 +33,7 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
         setDescription(initialData.description || "");
         setTags(initialData.tags?.join(", ") || "");
       } else {
-        // Clear old data for new uploads
+        // Clear for new upload
         setTitle("");
         setDescription("");
         setTags("");
@@ -60,16 +61,16 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
           {initialData ? "Edit Item" : "Add Details"}
         </h2>
 
-        {/* Preview Section */}
+        {/* 3. Preview Section */}
         {pendingUpload && (
-          <div className="mb-4 rounded-lg overflow-hidden bg-secondary flex items-center justify-center min-h-[150px]">
+          <div className="mb-4 rounded-lg overflow-hidden bg-secondary/50 flex items-center justify-center min-h-[150px] border">
             {pendingUpload.resource_type === "image" ? (
               <img 
                 src={pendingUpload.secure_url} 
                 alt="Preview" 
                 className="max-h-48 object-contain"
               />
-            ) : pendingUpload.resource_type === "video" ? (
+            ) : pendingUpload.resource_type === "video" && !pendingUpload.is_audio ? (
               <video 
                 src={pendingUpload.secure_url} 
                 controls 
@@ -77,8 +78,11 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
               />
             ) : (
               <div className="p-4 text-center">
-                <p className="text-sm font-medium">Audio/File Uploaded</p>
-                <p className="text-xs text-muted-foreground">{pendingUpload.original_filename}.{pendingUpload.format}</p>
+                <p className="text-2xl mb-2">🎵</p>
+                <p className="text-sm font-medium">Audio Uploaded</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                    {pendingUpload.original_filename}.{pendingUpload.format}
+                </p>
               </div>
             )}
           </div>
@@ -89,6 +93,7 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            // 2. Allow saving with Enter key
             onKeyDown={(e) => e.key === "Enter" && handleLocalSave()}
           />
 
@@ -108,7 +113,14 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onClose }:
         </div>
 
         <div className="flex justify-between mt-6">
-          <Button variant="ghost" onClick={onClose}>
+          {/* 4. Cancel button strictly calls onClose without saving */}
+          <Button 
+            variant="ghost" 
+            onClick={(e) => {
+                e.preventDefault(); // Prevent accidental submits
+                onClose();
+            }}
+          >
             Cancel
           </Button>
           <Button onClick={handleLocalSave}>
