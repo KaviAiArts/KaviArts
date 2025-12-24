@@ -7,7 +7,10 @@ import Footer from "@/components/Footer";
 import ContentGrid from "@/components/ContentGrid";
 import { Button } from "@/components/ui/button";
 
-/* ✅ ADDED: Skeleton Loader Component (Same style as Homepage) */
+// ✅ 1. Define Limit per page
+const ITEMS_PER_PAGE = 12;
+
+/* Skeleton Loader Component */
 const SkeletonCard = ({ aspect = "portrait" }: { aspect?: "portrait" | "square" }) => {
   const ratio = aspect === "square" ? "aspect-square" : "aspect-[9/16]";
   return (
@@ -25,9 +28,11 @@ const CategoryView = () => {
   const { category } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [items, setItems] = useState<any[]>([]);
-  
-  /* ✅ ADDED: Loading State */
+
+  // ✅ 2. Add State for Pagination
+  const [allItems, setAllItems] = useState<any[]>([]);       // Stores everything fetched
+  const [visibleItems, setVisibleItems] = useState<any[]>([]); // Stores what user sees
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
   const params = new URLSearchParams(location.search);
@@ -39,24 +44,40 @@ const CategoryView = () => {
   }, [category, view]);
 
   const loadItems = async () => {
-    setLoading(true); // Start loading
+    setLoading(true);
+    // Reset page on new category load
+    setPage(1); 
 
     let query = supabase
       .from("files")
       .select("*")
       .eq("file_type", category);
 
-    // ✅ SORT ALWAYS FOLLOWS VIEW
+    // SORTING LOGIC
     if (view === "newest") {
       query = query.order("created_at", { ascending: false });
     } else if (view === "popular") {
       query = query.order("downloads", { ascending: false });
     }
-    // else → discovery (no enforced order)
 
     const { data } = await query;
-    setItems(data || []);
-    setLoading(false); // Stop loading
+    const fullData = data || [];
+
+    // ✅ 3. Set Initial Data (First 12 items)
+    setAllItems(fullData);
+    setVisibleItems(fullData.slice(0, ITEMS_PER_PAGE));
+    
+    setLoading(false);
+  };
+
+  // ✅ 4. Load More Function (Same logic as SearchResults)
+  const loadMore = () => {
+    const nextPage = page + 1;
+    const newLimit = nextPage * ITEMS_PER_PAGE;
+    
+    // Show next batch of items
+    setVisibleItems(allItems.slice(0, newLimit));
+    setPage(nextPage);
   };
 
   const capitalize = (t?: string) =>
@@ -114,7 +135,6 @@ const CategoryView = () => {
           )}
         </div>
 
-        {/* ✅ FIXED: Show Skeleton while loading, Content when done */}
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -122,7 +142,30 @@ const CategoryView = () => {
             ))}
           </div>
         ) : (
-          <ContentGrid items={items} />
+          <>
+            {/* Show Visible Items */}
+            <ContentGrid items={visibleItems} />
+
+            {/* ✅ 5. Render Load More Button if there are more items hidden */}
+            {visibleItems.length < allItems.length && (
+              <div className="text-center mt-10">
+                <Button 
+                  variant="outline" 
+                  onClick={loadMore}
+                  className="min-w-[150px]"
+                >
+                  Load More
+                </Button>
+              </div>
+            )}
+
+            {/* Empty State Check */}
+            {visibleItems.length === 0 && (
+              <div className="text-center py-20 text-muted-foreground">
+                No items found in this category.
+              </div>
+            )}
+          </>
         )}
       </main>
 
