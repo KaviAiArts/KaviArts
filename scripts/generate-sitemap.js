@@ -23,6 +23,7 @@ const __dirname = path.dirname(__filename);
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 
+// ⚠️ CHANGE THIS TO YOUR REAL DOMAIN WHEN YOU BUY IT (e.g., https://kaviarts.com)
 const SITE_URL = "https://kavi-arts.vercel.app";
 
 /* ---------------------------------- */
@@ -64,9 +65,10 @@ async function generateSitemap() {
     try {
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+      // ✅ FIX: Changed 'updated_at' to 'created_at' to match your DB
       const { data, error } = await supabase
         .from("files")
-        .select("id, file_name, updated_at");
+        .select("id, file_name, created_at");
 
       if (error) {
         console.error("❌ Supabase error:", error.message);
@@ -75,8 +77,9 @@ async function generateSitemap() {
       if (Array.isArray(data)) {
         dynamicUrls = data.map((item) => {
           const slug = makeSlug(item.file_name);
-          const lastmod = item.updated_at
-            ? new Date(item.updated_at).toISOString()
+          // ✅ FIX: Use 'created_at' for the last modified date
+          const lastmod = item.created_at
+            ? new Date(item.created_at).toISOString()
             : new Date().toISOString();
 
           return `
@@ -117,6 +120,5 @@ ${dynamicUrls.join("")}
 /* ---------------------------------- */
 generateSitemap().catch((err) => {
   console.error("❌ Fatal sitemap error:", err.message);
-  // IMPORTANT: never crash build
   process.exit(0);
 });
