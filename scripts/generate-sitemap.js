@@ -24,7 +24,7 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 
 // ⚠️ CHANGE THIS TO YOUR REAL DOMAIN WHEN YOU BUY IT (e.g., https://kaviarts.com)
-const SITE_URL = "https://kavi-arts.vercel.app";
+const SITE_URL = "https://kaviarts.com";
 
 /* ---------------------------------- */
 /* Helpers                             */
