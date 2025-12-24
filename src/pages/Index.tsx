@@ -11,6 +11,12 @@ import { Button } from "@/components/ui/button";
 const ContentItem = lazy(() => import("@/components/ContentItem"));
 
 /* ------------------------------ */
+/* CACHE CONFIGURATION            */
+/* ------------------------------ */
+const CACHE_KEY = "kaviarts_home_cache_v1";
+const CACHE_TIME = 5 * 60 * 1000; // 5 Minutes (Data stays fresh for 5 mins)
+
+/* ------------------------------ */
 /* SKELETON CARD (UI ONLY)        */
 /* ------------------------------ */
 
@@ -141,10 +147,28 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadAllData();
+    loadData();
   }, []);
 
-  const loadAllData = async () => {
+  const loadData = async () => {
+    // 1. CHECK CACHE FIRST
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      const isFresh = Date.now() - timestamp < CACHE_TIME;
+
+      if (isFresh) {
+        // Use cached data (INSTANT LOAD)
+        setNewest(data.newest);
+        setPopularWallpapers(data.popularWallpapers);
+        setRingtones(data.ringtones);
+        setVideos(data.videos);
+        setLoading(false);
+        return; 
+      }
+    }
+
+    // 2. IF NO CACHE, FETCH FROM DB
     setLoading(true);
 
     const { data: newestData } = await supabase
@@ -161,24 +185,37 @@ const Index = () => {
       .order("downloads", { ascending: false })
       .limit(6);
 
-const { data: ringtoneData } = await supabase
-  .from("files")
-  .select("*")
-  .eq("file_type", "ringtone")
-  .order("downloads", { ascending: false }) // ✅ FIX
-  .limit(12);
+    const { data: ringtoneData } = await supabase
+      .from("files")
+      .select("*")
+      .eq("file_type", "ringtone")
+      .order("downloads", { ascending: false })
+      .limit(12);
 
-const { data: videoData } = await supabase
-  .from("files")
-  .select("*")
-  .eq("file_type", "video")
-  .order("downloads", { ascending: false }) // ✅ FIX
-  .limit(6);
+    const { data: videoData } = await supabase
+      .from("files")
+      .select("*")
+      .eq("file_type", "video")
+      .order("downloads", { ascending: false })
+      .limit(6);
 
-    setNewest(newestData || []);
-    setPopularWallpapers(popularData || []);
-    setRingtones(ringtoneData || []);
-    setVideos(videoData || []);
+    const finalData = {
+      newest: newestData || [],
+      popularWallpapers: popularData || [],
+      ringtones: ringtoneData || [],
+      videos: videoData || [],
+    };
+
+    // 3. SET STATE & SAVE TO CACHE
+    setNewest(finalData.newest);
+    setPopularWallpapers(finalData.popularWallpapers);
+    setRingtones(finalData.ringtones);
+    setVideos(finalData.videos);
+    
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+      data: finalData,
+      timestamp: Date.now()
+    }));
 
     setLoading(false);
   };
