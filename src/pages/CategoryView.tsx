@@ -7,11 +7,28 @@ import Footer from "@/components/Footer";
 import ContentGrid from "@/components/ContentGrid";
 import { Button } from "@/components/ui/button";
 
+/* ✅ ADDED: Skeleton Loader Component (Same style as Homepage) */
+const SkeletonCard = ({ aspect = "portrait" }: { aspect?: "portrait" | "square" }) => {
+  const ratio = aspect === "square" ? "aspect-square" : "aspect-[9/16]";
+  return (
+    <div className="glass-card overflow-hidden animate-pulse rounded-xl border bg-card/50">
+      <div className={`${ratio} bg-muted/50`} />
+      <div className="p-3 space-y-2">
+        <div className="h-4 w-3/4 bg-muted/50 rounded" />
+        <div className="h-3 w-1/2 bg-muted/50 rounded" />
+      </div>
+    </div>
+  );
+};
+
 const CategoryView = () => {
   const { category } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [items, setItems] = useState<any[]>([]);
+  
+  /* ✅ ADDED: Loading State */
+  const [loading, setLoading] = useState(true);
 
   const params = new URLSearchParams(location.search);
   const view = params.get("view"); // newest | popular | null
@@ -22,6 +39,8 @@ const CategoryView = () => {
   }, [category, view]);
 
   const loadItems = async () => {
+    setLoading(true); // Start loading
+
     let query = supabase
       .from("files")
       .select("*")
@@ -37,6 +56,7 @@ const CategoryView = () => {
 
     const { data } = await query;
     setItems(data || []);
+    setLoading(false); // Stop loading
   };
 
   const capitalize = (t?: string) =>
@@ -50,6 +70,10 @@ const CategoryView = () => {
       : `${capitalize(category)}s`;
 
   const showFilters = from !== "section";
+
+  // Determine skeleton shape based on category
+  const isRingtone = category === "ringtone";
+  const skeletonAspect = isRingtone ? "square" : "portrait";
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,7 +114,16 @@ const CategoryView = () => {
           )}
         </div>
 
-        <ContentGrid items={items} />
+        {/* ✅ FIXED: Show Skeleton while loading, Content when done */}
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <SkeletonCard key={i} aspect={skeletonAspect} />
+            ))}
+          </div>
+        ) : (
+          <ContentGrid items={items} />
+        )}
       </main>
 
       <Footer />
