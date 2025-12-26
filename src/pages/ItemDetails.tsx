@@ -189,11 +189,17 @@ const ItemDetails = () => {
 
             {/* Content Description Area */}
 
-            <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
-  {/* The 'whitespace-pre-line' class forces new lines to show up */}
-  <p className="whitespace-pre-line">
-    {item.description || "No description available for this item."}
-  </p>
+<div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
+  {item.description ? (
+    item.description.split("\n").map((line: string, index: number) => (
+      <span key={index}>
+        {line}
+        <br />
+      </span>
+    ))
+  ) : (
+    "No description available for this item."
+  )}
 </div>
 
             {item.tags?.length > 0 && (
