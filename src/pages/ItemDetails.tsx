@@ -131,7 +131,13 @@ const ItemDetails = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
+          {/* CHANGE 1: Added 'relative' class and put the Badge inside here */}
+          <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
+            
+            {/* NEW: Badge overlaid on the top-left of the image box */}
+            <Badge className="absolute top-3 left-3 z-10 capitalize shadow-md">
+              {item.file_type}
+            </Badge>
             
             {/* 3. LAYOUT SHIFT FIX: Added width/height props */}
             {item.file_type === "wallpaper" && (
@@ -178,7 +184,7 @@ const ItemDetails = () => {
 
           <div className="flex flex-col h-full space-y-4">
             <div>
-                <Badge className="mb-2 capitalize">{item.file_type}</Badge>
+                {/* CHANGE 2: Removed Badge from here */}
                 <h1 className="text-3xl font-bold leading-tight">
                 {item.file_name}
                 </h1>
@@ -188,12 +194,11 @@ const ItemDetails = () => {
             </div>
 
             {/* Content Description Area */}
-
-<div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
-  <p className="whitespace-pre-wrap font-sans">
-    {item.description || "No description available."}
-  </p>
-</div>
+            <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
+              <p className="whitespace-pre-wrap font-sans">
+                {item.description || "No description available."}
+              </p>
+            </div>
 
             {item.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -234,10 +239,11 @@ const ItemDetails = () => {
               </Button>
             </div>
             
-            {/* Technical Details (Good for "Valuable Content" checks) */}
-            <div className="text-xs text-muted-foreground pt-4 border-t mt-4">
-                <p>License: Free for Personal Use</p>
-                <p>Format: {item.format?.toUpperCase() || "Unknown"}</p>
+            {/* CHANGE 3: Footer Cleaned - Removed Format, kept only License */}
+            <div className="pt-4 border-t mt-4 flex items-center justify-end text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                   ✅ License: Free for Personal Use
+                </span>
             </div>
           </div>
         </div>
