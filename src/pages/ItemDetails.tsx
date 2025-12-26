@@ -188,9 +188,13 @@ const ItemDetails = () => {
             </div>
 
             {/* Content Description Area */}
+
             <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
-              <p>{item.description || "No description available for this item."}</p>
-            </div>
+  {/* The 'whitespace-pre-line' class forces new lines to show up */}
+  <p className="whitespace-pre-line">
+    {item.description || "No description available for this item."}
+  </p>
+</div>
 
             {item.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2">
