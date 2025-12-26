@@ -191,7 +191,7 @@ const ItemDetails = () => {
 
 <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
   {item.description ? (
-    // This splits the text by real new lines OR Windows new lines
+    // This splits the text by real new lines (Linux/Mac) OR Windows new lines (\r\n)
     item.description.split(/\r?\n/).map((line: string, index: number) => (
       <p key={index} className="min-h-[1em] mb-3">
         {line}
