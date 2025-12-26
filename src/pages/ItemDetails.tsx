@@ -191,11 +191,11 @@ const ItemDetails = () => {
 
 <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
   {item.description ? (
-    item.description.split("\n").map((line: string, index: number) => (
-      <span key={index}>
+    // This splits the text by real new lines OR Windows new lines
+    item.description.split(/\r?\n/).map((line: string, index: number) => (
+      <p key={index} className="min-h-[1em] mb-3">
         {line}
-        <br />
-      </span>
+      </p>
     ))
   ) : (
     "No description available for this item."

@@ -103,12 +103,16 @@ const AdminUploadModal = ({ open, initialData, pendingUpload, onSave, onCancel }
             onKeyDown={(e) => e.key === "Enter" && handleLocalSave()}
           />
 
-          <Input
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLocalSave()}
-          />
+
+          {/* CHANGED: Textarea instead of Input, and removed onKeyDown so Enter creates new lines */}
+<textarea
+  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+  placeholder="Description (Press Enter for new lines)"
+  value={description}
+  onChange={(e) => setDescription(e.target.value)}
+/>
+
+
         </div>
 
         <div className="flex justify-between mt-6">
