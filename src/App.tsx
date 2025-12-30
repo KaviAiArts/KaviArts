@@ -1,19 +1,21 @@
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react"; // ✅ Vercel Analytics
 
-import Index from "@/pages/Index";
-import ItemDetails from "@/pages/ItemDetails";
-import CategoryView from "@/pages/CategoryView";
-import SearchResults from "@/pages/SearchResults";
-import Admin from "@/pages/Admin";
-import NotFound from "@/pages/NotFound";
+/* ⚡ LAZY LOAD PAGES (Fixes Mobile Stats) */
+const Index = lazy(() => import("@/pages/Index"));
+const ItemDetails = lazy(() => import("@/pages/ItemDetails"));
+const CategoryView = lazy(() => import("@/pages/CategoryView"));
+const SearchResults = lazy(() => import("@/pages/SearchResults"));
+const Admin = lazy(() => import("@/pages/Admin"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
-/* ✅ SUPPORT PAGES */
-import About from "@/pages/About";
-import Terms from "@/pages/Terms";
-import Privacy from "@/pages/Privacy";
-import Contact from "@/pages/Contact";
-import GetApp from "@/pages/GetApp";
+/* ✅ SUPPORT PAGES (Lazy Loaded) */
+const About = lazy(() => import("@/pages/About"));
+const Terms = lazy(() => import("@/pages/Terms"));
+const Privacy = lazy(() => import("@/pages/Privacy"));
+const Contact = lazy(() => import("@/pages/Contact"));
+const GetApp = lazy(() => import("@/pages/GetApp"));
 
 /* 🔒 SAFE SCROLL STABILIZER */
 const ScrollToTop = () => {
@@ -30,29 +32,35 @@ const App = () => {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      
+      {/* ⚡ SUSPENSE WRAPPER (Required for Lazy Loading) */}
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+        <Routes>
+          {/* HOME */}
+          <Route path="/" element={<Index />} />
 
-      <Routes>
-        {/* HOME */}
-        <Route path="/" element={<Index />} />
+          {/* SEO-friendly item URL */}
+          <Route path="/item/:id/:slug?" element={<ItemDetails />} />
 
-        {/* SEO-friendly item URL */}
-        <Route path="/item/:id/:slug?" element={<ItemDetails />} />
+          {/* CORE ROUTES */}
+          <Route path="/category/:category" element={<CategoryView />} />
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/admin" element={<Admin />} />
 
-        {/* CORE ROUTES */}
-        <Route path="/category/:category" element={<CategoryView />} />
-        <Route path="/search" element={<SearchResults />} />
-        <Route path="/admin" element={<Admin />} />
+          {/* SUPPORT ROUTES */}
+          <Route path="/about" element={<About />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/app" element={<GetApp />} />
 
-        {/* SUPPORT ROUTES */}
-        <Route path="/about" element={<About />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/app" element={<GetApp />} />
+          {/* FALLBACK */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
 
-        {/* FALLBACK */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      {/* 📊 ANALYTICS TRACKER */}
+      <SpeedInsights />
     </BrowserRouter>
   );
 };

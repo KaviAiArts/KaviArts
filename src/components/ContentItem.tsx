@@ -43,6 +43,8 @@ const ContentItem = ({ item }: { item: any }) => {
           <img
             src={item.file_url}
             alt={getAltText(item)}
+            loading="lazy"    // ⚡ FIX
+            decoding="async"  // ⚡ FIX
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           />
         )}
@@ -52,6 +54,8 @@ const ContentItem = ({ item }: { item: any }) => {
             <img
               src={getVideoThumbnail(item.file_url)}
               alt={`${item.file_name} video thumbnail`}
+              loading="lazy"    // ⚡ FIX
+              decoding="async"  // ⚡ FIX
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="bg-black/50 rounded-full p-3">

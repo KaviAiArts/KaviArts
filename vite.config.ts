@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
 
-  // ⭐ REQUIRED FIX FOR FUSE.JS v7 (Vercel + Rollup compatible)
+  // ⭐ REQUIRED FIX FOR FUSE.JS v7 (Keep this)
   optimizeDeps: {
     include: ["fuse.js"],
   },
@@ -29,6 +29,14 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       // ensure fuse.js is bundled and not treated as external
       external: [],
+      
+      // ⚡ NEW: Splits big libraries into separate files for faster loading
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@radix-ui/react-slot', 'lucide-react', 'clsx', 'tailwind-merge']
+        },
+      },
     },
   },
 }));
