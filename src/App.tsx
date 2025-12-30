@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { SpeedInsights } from "@vercel/speed-insights/react"; // ✅ Vercel Analytics
 
 /* ⚡ LAZY LOAD PAGES (Fixes Mobile Stats) */
 const Index = lazy(() => import("@/pages/Index"));
@@ -58,9 +57,6 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-
-      {/* 📊 ANALYTICS TRACKER */}
-      <SpeedInsights />
     </BrowserRouter>
   );
 };
