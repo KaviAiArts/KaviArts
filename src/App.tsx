@@ -44,7 +44,7 @@ const App = () => {
           {/* CORE ROUTES */}
           <Route path="/category/:category" element={<CategoryView />} />
           <Route path="/search" element={<SearchResults />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/kavi-control-99" element={<Admin />} />
 
           {/* SUPPORT ROUTES */}
           <Route path="/about" element={<About />} />

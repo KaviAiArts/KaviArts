@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
-import { Helmet } from "react-helmet-async"; // Added for SEO
+import { Helmet } from "react-helmet-async";
+import { getOptimizedDisplayUrl, getOriginalDownloadUrl } from "@/lib/utils"; // Import helpers
 
 const makeSlug = (name: string) =>
   name
@@ -40,7 +41,6 @@ const ItemDetails = () => {
       }
 
       setItem(data);
-      // We now handle document title via Helmet below
     };
 
     fetchItem();
@@ -54,28 +54,25 @@ const ItemDetails = () => {
 
   const handleDownload = async () => {
     try {
-      const res = await fetch(item.file_url);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = item.file_name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      // Increment download count
-      await supabase
+      // 1. Track the download in Supabase FIRST
+      const { error } = await supabase
         .from("files")
         .update({ downloads: (item.downloads || 0) + 1 })
         .eq("id", item.id);
+        
+      if (error) console.error("Tracking error:", error);
 
+      // 2. Update local state immediately
       setItem((prev: any) => ({
         ...prev,
         downloads: (prev.downloads || 0) + 1,
       }));
+
+      // 3. ⚡ FIX: Force browser to download the ORIGINAL raw file
+      // We use window.location.href with the 'fl_attachment' URL
+      const downloadUrl = getOriginalDownloadUrl(item.file_url);
+      window.location.href = downloadUrl;
+      
     } catch (error) {
       console.error("Download failed:", error);
     }
@@ -96,21 +93,17 @@ const ItemDetails = () => {
     setIsPlaying(!isPlaying);
   };
 
-  if (!item) return null; // You could add a Skeleton here if you wanted
+  if (!item) return null;
 
-  // 1. Construct dynamic SEO description
   const seoDescription = item.description 
     ? item.description.slice(0, 160) 
     : `Download ${item.file_name} for free on KaviArts. High quality ${item.file_type} available now.`;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* 2. SEO META TAGS (Crucial for AdSense/Google) */}
       <Helmet>
         <title>{`${item.file_name} | Download Free on KaviArts`}</title>
         <meta name="description" content={seoDescription} />
-        
-        {/* Open Graph / Social Media Preview Tags */}
         <meta property="og:title" content={item.file_name} />
         <meta property="og:description" content={seoDescription} />
         <meta property="og:image" content={item.file_url} />
@@ -131,23 +124,22 @@ const ItemDetails = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* CHANGE 1: Added 'relative' class and put the Badge inside here */}
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
             
-            {/* NEW: Badge overlaid on the top-left of the image box */}
             <Badge className="absolute top-3 left-3 z-10 capitalize shadow-md">
               {item.file_type}
             </Badge>
             
-            {/* 3. LAYOUT SHIFT FIX: Added width/height props */}
             {item.file_type === "wallpaper" && (
               <img
-                src={item.file_url}
-                width={item.width}   // Prevents layout shift
-                height={item.height} // Prevents layout shift
+                // ⚡ FIX: Use optimized URL for display (w_1200 is plenty for screen)
+                // This keeps the page fast while the download button gets the 4K original
+                src={getOptimizedDisplayUrl(item.file_url, 1200)}
+                width={item.width} 
+                height={item.height}
                 alt={item.description || item.file_name}
                 className="max-w-full max-h-[70vh] object-contain shadow-md rounded"
-                loading="eager" // Load main image immediately
+                loading="eager"
               />
             )}
 
@@ -184,7 +176,6 @@ const ItemDetails = () => {
 
           <div className="flex flex-col h-full space-y-4">
             <div>
-                {/* CHANGE 2: Removed Badge from here */}
                 <h1 className="text-3xl font-bold leading-tight">
                 {item.file_name}
                 </h1>
@@ -193,7 +184,6 @@ const ItemDetails = () => {
                 </p>
             </div>
 
-            {/* Content Description Area */}
             <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
               <p className="whitespace-pre-wrap font-sans">
                 {item.description || "No description available."}
@@ -239,7 +229,6 @@ const ItemDetails = () => {
               </Button>
             </div>
             
-            {/* CHANGE 3: Footer Cleaned - Removed Format, kept only License */}
             <div className="pt-4 border-t mt-4 flex items-center justify-end text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                    ✅ License: Free for Personal Use

@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Download, Play, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { getOptimizedDisplayUrl } from "@/lib/utils"; // Import the helper
 
 const getVideoThumbnail = (url: string) =>
   url
@@ -41,10 +42,11 @@ const ContentItem = ({ item }: { item: any }) => {
       <div className={`relative ${aspect} overflow-hidden`}>
         {item.file_type === "wallpaper" && (
           <img
-            src={item.file_url}
+            // ⚡ FIX: Optimize grid images to 500px width for speed
+            src={getOptimizedDisplayUrl(item.file_url, 500)}
             alt={getAltText(item)}
-            loading="lazy"    // ⚡ FIX
-            decoding="async"  // ⚡ FIX
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           />
         )}
@@ -54,8 +56,8 @@ const ContentItem = ({ item }: { item: any }) => {
             <img
               src={getVideoThumbnail(item.file_url)}
               alt={`${item.file_name} video thumbnail`}
-              loading="lazy"    // ⚡ FIX
-              decoding="async"  // ⚡ FIX
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="bg-black/50 rounded-full p-3">
