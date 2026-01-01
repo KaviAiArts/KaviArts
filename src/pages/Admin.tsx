@@ -1,50 +1,75 @@
-// Admin.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trash, Edit, RefreshCcw, LogOut, UploadCloud } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Trash, Edit, RefreshCcw, LogOut, Loader2, UploadCloud } from "lucide-react";
 import AdminUploadModal from "@/components/AdminUploadModal";
+import { toast } from "sonner"; // Assuming you use Sonner, or use alert()
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const PRESET_WALLPAPERS = import.meta.env.VITE_CLOUDINARY_PRESET_WALLPAPERS;
 const PRESET_RINGTONES = import.meta.env.VITE_CLOUDINARY_PRESET_RINGTONES;
 const PRESET_VIDEOS = import.meta.env.VITE_CLOUDINARY_PRESET_VIDEOS;
 
-const SESSION_KEY = "admin_authorized";
-
 const Admin = () => {
-  // 1. Use localStorage so refresh doesn't logout
-  const [authorized, setAuthorized] = useState(
-    localStorage.getItem(SESSION_KEY) === "true"
-  );
+  // 1. Auth State (Supabase)
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // 2. Login Form State
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [files, setFiles] = useState<any[]>([]);
+  const [loginLoading, setLoginLoading] = useState(false);
 
+  // 3. Data State
+  const [files, setFiles] = useState<any[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [pendingUpload, setPendingUpload] = useState<any>(null);
-  const [pendingType, setPendingType] =
-    useState<"wallpaper" | "ringtone" | "video" | null>(null);
+  const [pendingType, setPendingType] = useState<"wallpaper" | "ringtone" | "video" | null>(null);
 
-  /* ---------------- FETCH ---------------- */
+  /* ---------------- AUTH CHECK ---------------- */
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  /* ---------------- FETCH DATA ---------------- */
   const fetchFiles = async () => {
     const { data } = await supabase
       .from("files")
       .select("*")
       .order("created_at", { ascending: false });
-
     setFiles(data || []);
   };
 
   useEffect(() => {
-    if (authorized) fetchFiles();
-  }, [authorized]);
+    if (session) fetchFiles();
+  }, [session]);
 
-  /* ---------------- UPLOAD ---------------- */
+  /* ---------------- LOGIN ACTIONS ---------------- */
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+        alert("Login failed: " + error.message);
+    }
+    setLoginLoading(false);
+  };
 
+  const handleLogout = async () => await supabase.auth.signOut();
+
+  /* ---------------- UPLOAD (NEW ITEM) ---------------- */
   const upload = (preset: string, type: any) => {
     const widget = (window as any).cloudinary.createUploadWidget(
       {
@@ -63,14 +88,12 @@ const Admin = () => {
         }
       }
     );
-
     widget.open();
   };
 
-  /* ---------------- REPLACE (NEW LOGIC) ---------------- */
-  // This is the new function to handle re-uploading
+  /* ---------------- REPLACE FILE (NEW LOGIC) ---------------- */
   const replaceFile = (item: any) => {
-    // 1. Select correct preset so Ringtones don't go to Video
+    // Select correct preset
     let preset = PRESET_WALLPAPERS;
     if (item.file_type === "ringtone") preset = PRESET_RINGTONES;
     if (item.file_type === "video") preset = PRESET_VIDEOS;
@@ -85,9 +108,8 @@ const Admin = () => {
       async (error: any, result: any) => {
         if (!error && result && result.event === "success") {
           const info = result.info;
-          
           try {
-            // 2. Update Supabase immediately with the new file details
+            // Update Supabase immediately
             const { error: dbError } = await supabase
               .from("files")
               .update({
@@ -101,9 +123,8 @@ const Admin = () => {
               .eq("id", item.id);
 
             if (dbError) throw dbError;
-
             alert("File replaced successfully!");
-            fetchFiles(); // Refresh to see changes
+            fetchFiles();
           } catch (err: any) {
             console.error(err);
             alert("Error replacing file: " + err.message);
@@ -114,11 +135,10 @@ const Admin = () => {
     widget.open();
   };
 
-  /* ---------------- SAVE ---------------- */
-
+  /* ---------------- SAVE (YOUR ORIGINAL LOGIC RESTORED) ---------------- */
   const saveItem = async ({ file_name, description, tags }: any) => {
     try {
-      // CASE 1: Editing an existing item (from the list)
+      // CASE 1: Editing an existing item text
       if (editItem) {
         const { error } = await supabase
           .from("files")
@@ -137,7 +157,7 @@ const Admin = () => {
         return;
       }
 
-      // Determine correct type (Fixing the Ringtone/Video issue)
+      // Your Logic: Determine correct type (Fixing Ringtone/Video issue)
       const isAudio =
         pendingType === "ringtone" ||
         pendingUpload.format === "mp3" ||
@@ -146,7 +166,7 @@ const Admin = () => {
 
       const finalType = isAudio ? "ringtone" : pendingType;
 
-      // Smart Save: Check if Webhook already inserted the row using public_id
+      // Your Logic: Smart Save (Check Webhook)
       const { data: existing } = await supabase
         .from("files")
         .select("id")
@@ -154,16 +174,15 @@ const Admin = () => {
         .maybeSingle();
 
       if (existing) {
-        // UPDATE existing record (fixes wrong type from webhook)
+        // UPDATE existing record
         const { error } = await supabase
           .from("files")
           .update({
             file_name,
             description,
             tags,
-            file_type: finalType, // Force correct type
+            file_type: finalType,
             category: finalType,
-            // Update other fields just in case
             width: pendingUpload.width ?? null,
             height: pendingUpload.height ?? null,
             format: pendingUpload.format ?? null,
@@ -173,7 +192,7 @@ const Admin = () => {
 
         if (error) throw error;
       } else {
-        // INSERT new record (if webhook hasn't run yet)
+        // INSERT new record
         const { error } = await supabase.from("files").insert({
           file_name,
           description,
@@ -200,14 +219,10 @@ const Admin = () => {
     }
   };
 
-  /* ---------------- CANCEL / CLOSE ---------------- */
-
+  /* ---------------- CANCEL / DELETE ---------------- */
   const handleCancelUpload = async () => {
-    // If we have a pending upload, delete the auto-injected DB record
     if (pendingUpload?.public_id) {
-      console.log("Canceling and cleaning up:", pendingUpload.public_id);
       await supabase.from("files").delete().eq("public_id", pendingUpload.public_id);
-      // We also refresh to make sure it disappears from UI
       fetchFiles();
     }
     closeAndReset();
@@ -222,63 +237,51 @@ const Admin = () => {
     }, 200);
   };
 
-  /* ---------------- DELETE ---------------- */
-
   const deleteItem = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
     await supabase.from("files").delete().eq("id", id);
     fetchFiles();
   };
 
-  /* ---------------- AUTH ---------------- */
+  /* ---------------- UI RENDER ---------------- */
+  if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
 
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem(SESSION_KEY, "true");
-      setAuthorized(true);
-    } else {
-      alert("Wrong password");
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem(SESSION_KEY);
-    setAuthorized(false);
-    setPassword("");
-  };
-
-  if (!authorized) {
+  // LOGIN SCREEN
+  if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="p-6 w-full max-w-sm">
-          <h2 className="text-xl font-bold mb-4">Admin Login</h2>
-          <input
-            type="password"
-            className="w-full mb-4 p-2 rounded bg-secondary"
-            placeholder="Admin password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-          />
-          <Button className="w-full" onClick={handleLogin}>
-            Login
-          </Button>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="p-8 w-full max-w-sm shadow-lg">
+          <h2 className="text-2xl font-bold mb-6 text-center">Admin Access</h2>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <Input
+              type="email"
+              placeholder="Admin Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Button className="w-full" type="submit" disabled={loginLoading}>
+              {loginLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Login"}
+            </Button>
+          </form>
         </Card>
       </div>
     );
   }
 
-  /* ---------------- UI ---------------- */
-
+  // DASHBOARD SCREEN
   return (
-    
-<div className="p-6 container mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-primary">
-          Admin Dashboard
-        </h1>
+    <div className="p-6">
+      <div className="flex justify-between mb-6">
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
         <div className="flex gap-2">
-
           <Button variant="outline" onClick={fetchFiles}>
             <RefreshCcw className="w-4 h-4 mr-2" />
             Refresh
@@ -290,11 +293,9 @@ const Admin = () => {
         </div>
       </div>
 
-       <div className="flex gap-4 mb-8">
-        <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500">
-          + Wallpaper
-
-
+      <div className="flex gap-3 mb-8">
+        <Button onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}>
+          Upload Wallpaper
         </Button>
         <Button onClick={() => upload(PRESET_RINGTONES, "ringtone")}>
           Upload Ringtone
@@ -304,15 +305,12 @@ const Admin = () => {
         </Button>
       </div>
 
-
-
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
-          <Card key={file.id} className="p-3 space-y-2 hover:border-primary transition-colors relative group">
-            <div className="font-semibold text-sm truncate pr-6">
+          <Card key={file.id} className="p-3 space-y-2">
+            <div className="font-semibold text-sm truncate">
               {file.file_name}
             </div>
-
             <div className="text-xs text-muted-foreground">
               {file.file_type} • {file.downloads || 0}
             </div>
@@ -324,25 +322,26 @@ const Admin = () => {
                   setEditItem(file);
                   setModalOpen(true);
                 }}
+                title="Edit Text"
               >
                 <Edit className="w-4 h-4" />
               </Button>
               
-              {/* NEW REUPLOAD BUTTON START */}
+              {/* ⭐ NEW: Replace File Button */}
               <Button
                 size="sm"
                 variant="outline"
-                title="Replace File"
                 onClick={() => replaceFile(file)}
+                title="Replace File"
               >
                 <UploadCloud className="w-4 h-4" />
               </Button>
-              {/* NEW REUPLOAD BUTTON END */}
 
               <Button
                 size="sm"
                 variant="destructive"
                 onClick={() => deleteItem(file.id)}
+                title="Delete"
               >
                 <Trash className="w-4 h-4" />
               </Button>
@@ -356,7 +355,7 @@ const Admin = () => {
         initialData={editItem}
         pendingUpload={pendingUpload}
         onSave={saveItem}
-        onCancel={handleCancelUpload} 
+        onCancel={handleCancelUpload}
       />
     </div>
   );
