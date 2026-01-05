@@ -29,11 +29,14 @@ const SITE_URL = "https://kaviarts.com";
 /* ---------------------------------- */
 /* Helpers                             */
 /* ---------------------------------- */
-const makeSlug = (text = "") =>
-  text
+
+
+const makeSlug = (text) =>
+  (text || "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
 
 /* ---------------------------------- */
 /* Main function                       */
@@ -65,12 +68,19 @@ async function generateSitemap() {
     try {
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      // ✅ FIX: Changed 'updated_at' to 'created_at' to match your DB
+
+// ✅ FIX: Changed 'updated_at' to 'created_at' to match your DB
       const { data, error } = await supabase
         .from("files")
         .select("id, file_name, created_at");
 
+      // ---> PASTE THIS LINE HERE:
+      if (data) console.log(`📊 Supabase returned ${data.length} rows.`); 
+      // <---
+
       if (error) {
+
+
         console.error("❌ Supabase error:", error.message);
       }
 
