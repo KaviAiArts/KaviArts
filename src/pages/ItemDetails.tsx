@@ -68,9 +68,9 @@ const ItemDetails = () => {
         downloads: (prev.downloads || 0) + 1,
       }));
 
-      // 3. ⚡ FIX: Force browser to download the ORIGINAL raw file
-      // We use window.location.href with the 'fl_attachment' URL
-      const downloadUrl = getOriginalDownloadUrl(item.file_url);
+      // 3. ⚡ FIX: Pass the item.file_name as the second argument
+      const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
+      
       window.location.href = downloadUrl;
       
     } catch (error) {

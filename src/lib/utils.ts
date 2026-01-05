@@ -20,10 +20,10 @@ export const getOptimizedDisplayUrl = (url: string, width = 800) => {
 };
 
 /**
- * For downloading: Forces the "fl_attachment" flag and removes any 
- * resizing/cropping parameters so the user gets the original 4K file.
+ * For downloading: Forces the "fl_attachment" flag and lets you rename the file.
+ * We sanitize the name to ensure the URL doesn't break.
  */
-export const getOriginalDownloadUrl = (url: string) => {
+export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   if (!url || !url.includes("cloudinary")) return url;
   
   const parts = url.split("/upload/");
@@ -35,5 +35,13 @@ export const getOriginalDownloadUrl = (url: string) => {
   // Regex to remove existing transformations (like w_500) before the version number (v123...)
   const cleanFilePart = filePart.replace(/^(?:[^/]+\/)*v/, "v"); 
 
-  return `${baseUrl}/upload/fl_attachment/${cleanFilePart}`;
+  // ✅ FIX: If customName exists, tell Cloudinary to rename the download
+  let attachmentFlag = "fl_attachment";
+  if (customName) {
+    // Replace spaces with underscores and remove special chars
+    const safeName = customName.replace(/[^a-zA-Z0-9-_]/g, "_");
+    attachmentFlag = `fl_attachment:${safeName}`;
+  }
+
+  return `${baseUrl}/upload/${attachmentFlag}/${cleanFilePart}`;
 };
