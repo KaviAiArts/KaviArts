@@ -11,7 +11,6 @@ export const getOptimizedDisplayUrl = (url: string, width = 800) => {
   if (!url || !url.includes("cloudinary")) return url;
   if (url.includes("/video/upload/")) return url;
   
-  // Basic optimization for viewing
   return url.replace("/upload/", `/upload/w_${width},q_auto,f_auto/`);
 };
 
@@ -24,27 +23,28 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   const baseUrl = parts[0];
   const filePart = parts[1];
   
-  // Clean existing transformations to get the original file
+  // Clean existing transformations
   const cleanFilePart = filePart.replace(/^(?:[^/]+\/)*v/, "v"); 
 
   let attachmentFlag = "fl_attachment";
   
   if (customName) {
     // 1. Get the REAL extension from the URL (safest method)
-    // Example: "image.jpg?foo=bar" -> "jpg"
     const urlParts = url.split("?")[0].split(".");
     const extension = urlParts.length > 1 ? urlParts.pop() : "";
 
-    // 2. Remove extension from customName if user typed it
+    // 2. Prepare the base name
     let baseName = customName;
     if (extension && customName.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
        baseName = customName.slice(0, -(extension.length + 1));
     }
 
-    // 3. Sanitize name (Allow letters, numbers, underscores, hyphens)
-    const safeName = baseName.replace(/[^a-zA-Z0-9\-_]/g, "_");
+    // 3. SAFE SANITIZATION (Fixes 400 Error)
+    // Instead of destroying non-English chars, we just make them URL safe.
+    // We replace spaces with underscores for cleaner filenames.
+    const safeName = encodeURIComponent(baseName.replace(/\s+/g, "_"));
     
-    // 4. Attach extension properly. THIS IS KEY for fixing the 400 Error.
+    // 4. Attach extension properly
     const finalFilename = extension ? `${safeName}.${extension}` : safeName;
 
     attachmentFlag = `fl_attachment:${finalFilename}`;

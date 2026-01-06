@@ -53,31 +53,27 @@ const ItemDetails = () => {
     };
   }, [id, slug, navigate]);
 
-  const handleDownload = () => {
-    // 1. Start Download IMMEDIATELY (Don't wait for DB)
+  const handleDownload = async () => {
+    // 1. Start Download IMMEDIATELY
     const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
     window.location.href = downloadUrl;
 
-    // 2. Update local state immediately (Visual feedback)
+    // 2. Update local state
     setItem((prev: any) => ({
       ...prev,
       downloads: (prev.downloads || 0) + 1,
     }));
 
-    // 3. Track in Supabase (Background Process)
-    // We try the secure RPC call first. 
-    supabase.rpc("increment_downloads", { row_id: item.id })
-      .then(({ error }) => {
-        if (error) {
-          // If RPC fails (e.g. not set up), fall back to standard update
-          // Note: Standard update will fail if RLS is on, but download won't stop.
-          supabase
+    // 3. Track in Supabase (Try secure RPC first, then fallback)
+    const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
+    
+    if (error) {
+        // Fallback for old method if RPC isn't set up yet
+        await supabase
             .from("files")
             .update({ downloads: (item.downloads || 0) + 1 })
-            .eq("id", item.id)
-            .then(() => {}); 
-        }
-      });
+            .eq("id", item.id);
+    }
   };
 
   const togglePlay = () => {
@@ -96,7 +92,7 @@ const ItemDetails = () => {
     ? item.description.slice(0, 160) 
     : `Download ${item.file_name} for free on KaviArts.`;
 
-  // UI: Logic for Resolution / Format display
+  // UI: Resolution Logic
   const resolutionInfo = item.width && item.height 
     ? `${item.width}x${item.height} Pixels` 
     : item.file_type === "wallpaper" ? "High Resolution" : "HD Quality";
@@ -119,7 +115,6 @@ const ItemDetails = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* PREVIEW CARD */}
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
             <Badge className="absolute top-3 left-3 z-10 capitalize shadow-md">{item.file_type}</Badge>
             
@@ -147,7 +142,6 @@ const ItemDetails = () => {
             )}
           </Card>
 
-          {/* ITEM DETAILS */}
           <div className="flex flex-col h-full space-y-4">
             <div>
                 <h1 className="text-3xl font-bold leading-tight">{item.file_name}</h1>
