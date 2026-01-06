@@ -31,7 +31,7 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   
   if (customName) {
     // 1. Get the REAL extension from the URL (safest method)
-    // Example: "image.jpg" -> "jpg"
+    // Example: "image.jpg?foo=bar" -> "jpg"
     const urlParts = url.split("?")[0].split(".");
     const extension = urlParts.length > 1 ? urlParts.pop() : "";
 
@@ -42,10 +42,9 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
     }
 
     // 3. Sanitize name (Allow letters, numbers, underscores, hyphens)
-    const safeName = baseName.replace(/[^a-zA-Z0-9-_]/g, "_");
+    const safeName = baseName.replace(/[^a-zA-Z0-9\-_]/g, "_");
     
-    // 4. Attach extension properly. THIS IS KEY.
-    // If we don't add the extension, Cloudinary sends a 400 Error.
+    // 4. Attach extension properly. THIS IS KEY for fixing the 400 Error.
     const finalFilename = extension ? `${safeName}.${extension}` : safeName;
 
     attachmentFlag = `fl_attachment:${finalFilename}`;
