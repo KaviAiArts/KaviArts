@@ -33,15 +33,15 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
     const urlParts = url.split("?")[0].split(".");
     const extension = urlParts.length > 1 ? urlParts.pop() : "";
 
-    // 2. Prepare the base name
+    // 2. Remove extension from customName if user typed it
     let baseName = customName;
     if (extension && customName.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
        baseName = customName.slice(0, -(extension.length + 1));
     }
 
     // 3. SAFE SANITIZATION (Fixes 400 Error)
-    // Instead of destroying non-English chars, we just make them URL safe.
-    // We replace spaces with underscores for cleaner filenames.
+    // We replace spaces with underscores for cleaner filenames, 
+    // but use encodeURIComponent to keep special characters safe.
     const safeName = encodeURIComponent(baseName.replace(/\s+/g, "_"));
     
     // 4. Attach extension properly
