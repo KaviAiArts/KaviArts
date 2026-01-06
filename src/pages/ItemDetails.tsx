@@ -53,31 +53,46 @@ const ItemDetails = () => {
     };
   }, [id, slug, navigate]);
 
-  const handleDownload = () => {
-    // 1. Start Download IMMEDIATELY
+  const handleDownload = async () => {
+    // 1. Generate the correct Cloudinary attachment URL
     const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
-    window.location.href = downloadUrl;
+    
+    // 2. Start Download using a temporary anchor tag
+    // This is more reliable than window.location.href and prevents page navigation/refresh
+    try {
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', item.file_name);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (e) {
+        console.error("Download trigger failed:", e);
+        // Fallback
+        window.location.href = downloadUrl;
+    }
 
-    // 2. Update local state immediately (Visual feedback)
+    // 3. Update local state immediately (Visual feedback)
     setItem((prev: any) => ({
       ...prev,
       downloads: (prev.downloads || 0) + 1,
     }));
 
-    // 3. Track in Supabase (Background Process)
-    // We try the secure RPC call first. 
-    supabase.rpc("increment_downloads", { row_id: item.id })
-      .then(({ error }) => {
+    // 4. Track in Supabase (Background Process)
+    try {
+        const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
+        
         if (error) {
-          // If RPC fails (e.g. not set up), fall back to standard update
-          // This ensures backward compatibility if RLS is off
-          supabase
+          console.error("RPC Error, attempting fallback:", error);
+          // Fallback to standard update if RPC fails (e.g., function not defined)
+          await supabase
             .from("files")
             .update({ downloads: (item.downloads || 0) + 1 })
-            .eq("id", item.id)
-            .then(() => {}); 
+            .eq("id", item.id);
         }
-      });
+    } catch (err) {
+        console.error("Error updating download count:", err);
+    }
   };
 
   const togglePlay = () => {
