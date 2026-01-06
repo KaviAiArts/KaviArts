@@ -1,4 +1,4 @@
-// 1. HELPER FUNCTION: Prevents XML crashes by fixing special characters
+// 1. SAFETY FUNCTION (Crucial: Prevents the "Line 639" Error)
 const escapeXml = (unsafe) => {
   if (typeof unsafe !== 'string') return unsafe;
   return unsafe.replace(/[<>&'"]/g, (c) => {
@@ -12,35 +12,34 @@ const escapeXml = (unsafe) => {
   });
 }
 
-// 2. DEFINE YOUR REAL DOMAIN
+// 2. DEFINE YOUR DOMAIN
 const BASE_URL = 'https://kaviarts.com';
 
 // 3. XML GENERATION
-// Note: 'items' should be the data you fetched from Supabase
+// Note: 'items' is the array of data you fetched from your database
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
   <url>
     <loc>${BASE_URL}/</loc>
     <lastmod>2026-01-05</lastmod>
-    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
     <loc>${BASE_URL}/category/wallpaper</loc>
     <lastmod>2026-01-05</lastmod>
-    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>${BASE_URL}/category/ringtone</loc>
     <lastmod>2026-01-05</lastmod>
-    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>${BASE_URL}/category/video</loc>
     <lastmod>2026-01-05</lastmod>
-    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 
   <url>
@@ -64,7 +63,6 @@ const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
   <url>
     <loc>${BASE_URL}/item/${item.id}/${escapeXml(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''))}</loc>
     <lastmod>${item.created_at ? item.created_at.split('T')[0] : '2026-01-05'}</lastmod>
-    <changefreq>monthly</changefreq>
     <image:image>
       <image:loc>${escapeXml(item.file_url || item.image_url)}</image:loc>
       <image:title>${escapeXml(item.title)}</image:title>
@@ -74,5 +72,6 @@ const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 
 </urlset>`;
 
-// ... Return the response (depending on your framework)
+// 4. RETURN RESPONSE
+// Use the return statement appropriate for your framework (Next.js Example below):
 // return new Response(sitemap, { headers: { 'Content-Type': 'text/xml' } });
