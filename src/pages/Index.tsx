@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { Helmet } from "react-helmet-async"; // ✅ SEO Import
 
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -222,6 +223,19 @@ const Index = () => {
 
   return (
     <div>
+      {/* ✅ SEO TAGS */}
+      <Helmet>
+        <title>KaviArts | Free 4K Wallpapers, Ringtones & Videos</title>
+        <meta 
+          name="description" 
+          content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free. No account required." 
+        />
+        <meta property="og:title" content="KaviArts | Free Media Downloads" />
+        <meta property="og:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://kaviarts.com" />
+      </Helmet>
+
       <Header />
 
       <main id="main-content">
