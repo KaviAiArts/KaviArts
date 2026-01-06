@@ -1,6 +1,14 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Download, Music, Share2, Play, Pause, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  Music,
+  Share2,
+  Play,
+  Pause,
+  CheckCircle2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -8,7 +16,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 import { Helmet } from "react-helmet-async";
-import { getOptimizedDisplayUrl, getOriginalDownloadUrl } from "@/lib/utils";
+import { getOptimizedDisplayUrl } from "@/lib/utils";
 import NotFound from "@/pages/NotFound";
 
 const makeSlug = (name: string) =>
@@ -17,14 +25,18 @@ const makeSlug = (name: string) =>
 const ItemDetails = () => {
   const { id, slug } = useParams();
   const navigate = useNavigate();
+
   const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const fetchItem = async () => {
       setLoading(true);
+
       const { data, error } = await supabase
         .from("files")
         .select("*")
@@ -54,43 +66,53 @@ const ItemDetails = () => {
   }, [id, slug, navigate]);
 
   const handleDownload = async () => {
-    // 1. Generate the Safe Download URL
-    const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
+    if (!item || downloading) return;
+    setDownloading(true);
 
-    // 2. Trigger Download using a temporary link
-    // We use target="_blank" to ensure that if the browser tries to "view" it, 
-    // it opens in a new tab and doesn't crash the current page.
     try {
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', item.file_name);
-      link.setAttribute('target', '_blank'); 
+      /* ---------- FILE DOWNLOAD ---------- */
+      const response = await fetch(item.file_url);
+      const blob = await response.blob();
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = item.file_name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (e) {
-      console.error("Download trigger failed:", e);
-      window.open(downloadUrl, '_blank');
-    }
+      window.URL.revokeObjectURL(blobUrl);
 
-    // 3. Update local state immediately (Visual confirmation)
-    setItem((prev: any) => ({
-      ...prev,
-      downloads: (prev.downloads || 0) + 1,
-    }));
+      /* ---------- ATOMIC COUNTER UPDATE ---------- */
+      const { error: rpcError } = await supabase.rpc(
+        "increment_downloads",
+        { row_id: item.id }
+      );
 
-    // 4. Track in Supabase (Background)
-    try {
-      const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
-      if (error) {
-        // Fallback if RPC is missing
+      if (rpcError) {
         await supabase
           .from("files")
-          .update({ downloads: (item.downloads || 0) + 1 })
+          .update({ downloads: supabase.rpc("increment", { x: 1 }) })
           .eq("id", item.id);
       }
+
+      /* ---------- REFRESH COUNT ---------- */
+      const { data: refreshed } = await supabase
+        .from("files")
+        .select("downloads")
+        .eq("id", item.id)
+        .single();
+
+      if (refreshed) {
+        setItem((prev: any) => ({
+          ...prev,
+          downloads: refreshed.downloads,
+        }));
+      }
     } catch (err) {
-      console.error("Error updating download count:", err);
+      console.error("Download failed:", err);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -99,20 +121,30 @@ const ItemDetails = () => {
       audioRef.current = new Audio(item.file_url);
       audioRef.current.onended = () => setIsPlaying(false);
     }
+
     isPlaying ? audioRef.current.pause() : audioRef.current.play();
     setIsPlaying(!isPlaying);
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+  if (loading)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        Loading...
+      </div>
+    );
+
   if (!item) return <NotFound />;
 
-  const seoDescription = item.description 
-    ? item.description.slice(0, 160) 
+  const seoDescription = item.description
+    ? item.description.slice(0, 160)
     : `Download ${item.file_name} for free on KaviArts.`;
 
-  const resolutionInfo = item.width && item.height 
-    ? `${item.width}x${item.height} Pixels` 
-    : item.file_type === "wallpaper" ? "High Resolution" : "HD Quality";
+  const resolutionInfo =
+    item.width && item.height
+      ? `${item.width}x${item.height} Pixels`
+      : item.file_type === "wallpaper"
+      ? "High Resolution"
+      : "HD Quality";
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,24 +153,36 @@ const ItemDetails = () => {
         <meta name="description" content={seoDescription} />
         <meta property="og:title" content={item.file_name} />
         <meta property="og:image" content={item.file_url} />
-        <link rel="canonical" href={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} />
+        <link
+          rel="canonical"
+          href={`https://kaviarts.com/item/${item.id}/${makeSlug(
+            item.file_name
+          )}`}
+        />
       </Helmet>
 
       <Header />
 
       <main className="container mx-auto px-4 py-4">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
-            <Badge className="absolute top-3 left-3 z-10 capitalize shadow-md">{item.file_type}</Badge>
-            
+            <Badge className="absolute top-3 left-3 z-10 capitalize shadow-md">
+              {item.file_type}
+            </Badge>
+
             {item.file_type === "wallpaper" && (
               <img
                 src={getOptimizedDisplayUrl(item.file_url, 1200)}
-                width={item.width} height={item.height}
+                width={item.width}
+                height={item.height}
                 alt={item.description || item.file_name}
                 className="max-w-full max-h-[70vh] object-contain shadow-md rounded"
               />
@@ -146,66 +190,90 @@ const ItemDetails = () => {
 
             {item.file_type === "ringtone" && (
               <>
-                <div className="p-8 bg-secondary rounded-full"><Music className="w-16 h-16 text-primary" /></div>
-                <Button variant="outline" onClick={togglePlay} className="rounded-full px-6 min-w-[140px]">
-                  {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                <div className="p-8 bg-secondary rounded-full">
+                  <Music className="w-16 h-16 text-primary" />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={togglePlay}
+                  className="rounded-full px-6 min-w-[140px]"
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Play className="w-4 h-4 mr-2" />
+                  )}
                   {isPlaying ? "Pause" : "Play Preview"}
                 </Button>
               </>
             )}
 
             {item.file_type === "video" && (
-              <video controls src={item.file_url} className="max-h-[70vh] rounded shadow-md w-full" />
+              <video
+                controls
+                src={item.file_url}
+                className="max-h-[70vh] rounded shadow-md w-full"
+              />
             )}
           </Card>
 
           <div className="flex flex-col h-full space-y-4">
             <div>
-                <h1 className="text-3xl font-bold leading-tight">{item.file_name}</h1>
-                
-                <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
-                  <span>{(item.downloads || 0).toLocaleString()} Downloads</span>
-                  <span>•</span>
-                  <span>{resolutionInfo}</span>
-                </div>
+              <h1 className="text-3xl font-bold leading-tight">
+                {item.file_name}
+              </h1>
+
+              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
+                <span>
+                  {(item.downloads || 0).toLocaleString()} Downloads
+                </span>
+                <span>•</span>
+                <span>{resolutionInfo}</span>
+              </div>
             </div>
 
             <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
-              <p className="whitespace-pre-wrap font-sans">{item.description || "No description available."}</p>
+              <p className="whitespace-pre-wrap font-sans">
+                {item.description || "No description available."}
+              </p>
             </div>
-
-            {item.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {item.tags.map((tag: string) => (
-                  <span key={tag} className="px-3 py-1 text-xs rounded-full bg-secondary text-secondary-foreground">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
 
             <div className="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
               <Button
-                onClick={() => navigator.share ? navigator.share({ title: item.file_name, url: window.location.href }) : navigator.clipboard.writeText(window.location.href)}
-                className="h-11 px-6 rounded-full border flex-1 sm:flex-none"
+                onClick={() =>
+                  navigator.share
+                    ? navigator.share({
+                        title: item.file_name,
+                        url: window.location.href,
+                      })
+                    : navigator.clipboard.writeText(window.location.href)
+                }
+                className="h-11 px-6 rounded-full border"
                 variant="outline"
               >
                 <Share2 className="w-4 h-4 mr-2" /> Share
               </Button>
 
-              <Button onClick={handleDownload} className="h-11 px-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 flex-1">
-                <Download className="w-4 h-4 mr-2" /> Download
+              <Button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="h-11 px-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {downloading ? "Downloading..." : "Download"}
               </Button>
             </div>
 
             <div className="pt-4 border-t mt-4 flex items-center justify-end text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                   <CheckCircle2 className="w-3 h-3 text-green-500" /> License: Free for Personal Use
-                </span>
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-green-500" />
+                License: Free for Personal Use
+              </span>
             </div>
           </div>
         </div>
       </main>
+
       <Footer />
     </div>
   );
