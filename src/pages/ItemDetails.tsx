@@ -68,7 +68,7 @@ const ItemDetails = () => {
     const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
     
     if (error) {
-        // Fallback for old method if RPC isn't set up
+        // Fallback for old method if RPC isn't set up yet
         await supabase
             .from("files")
             .update({ downloads: (item.downloads || 0) + 1 })

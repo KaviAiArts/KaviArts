@@ -28,7 +28,7 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   let attachmentFlag = "fl_attachment";
   
   if (customName) {
-    // 1. Get the REAL extension from the URL
+    // 1. Get the REAL extension from the URL (e.g. "jpg", "mp3")
     const urlParts = url.split("?")[0].split(".");
     const extension = urlParts.length > 1 ? urlParts.pop() : "";
 
@@ -38,10 +38,10 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
        baseName = customName.slice(0, -(extension.length + 1));
     }
 
-    // 3. Sanitize name (replace bad chars with underscore)
+    // 3. Sanitize name (allow letters, numbers, underscores, hyphens)
     const safeName = baseName.replace(/[^a-zA-Z0-9-_]/g, "_");
     
-    // 4. Attach extension
+    // 4. Attach extension properly
     const finalFilename = extension ? `${safeName}.${extension}` : safeName;
 
     attachmentFlag = `fl_attachment:${finalFilename}`;
