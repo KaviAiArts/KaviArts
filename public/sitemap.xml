@@ -1,48 +1,78 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+// 1. HELPER FUNCTION: Prevents XML crashes by fixing special characters
+const escapeXml = (unsafe) => {
+  if (typeof unsafe !== 'string') return unsafe;
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+    }
+  });
+}
 
-  <!-- HOME -->
-  <url>
-    <loc>https://kavi-arts.vercel.app/</loc>
-    <lastmod>2024-12-20</lastmod>
-  </url>
+// 2. DEFINE YOUR REAL DOMAIN
+const BASE_URL = 'https://kaviarts.com';
 
-  <!-- CATEGORIES -->
-  <url>
-    <loc>https://kavi-arts.vercel.app/category/wallpaper</loc>
-    <lastmod>2024-12-20</lastmod>
-  </url>
-  <url>
-    <loc>https://kavi-arts.vercel.app/category/ringtone</loc>
-    <lastmod>2024-12-20</lastmod>
-  </url>
-  <url>
-    <loc>https://kavi-arts.vercel.app/category/video</loc>
-    <lastmod>2024-12-20</lastmod>
-  </url>
+// 3. XML GENERATION
+// Note: 'items' should be the data you fetched from Supabase
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
-  <!-- STATIC PAGES -->
   <url>
-    <loc>https://kavi-arts.vercel.app/about</loc>
-    <lastmod>2024-12-20</lastmod>
-  </url>
-  <url>
-    <loc>https://kavi-arts.vercel.app/contact</loc>
-    <lastmod>2024-12-20</lastmod>
-  </url>
-  <url>
-    <loc>https://kavi-arts.vercel.app/privacy</loc>
-    <lastmod>2024-12-20</lastmod>
-  </url>
-  <url>
-    <loc>https://kavi-arts.vercel.app/terms</loc>
-    <lastmod>2024-12-20</lastmod>
+    <loc>${BASE_URL}/</loc>
+    <lastmod>2026-01-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
   </url>
 
-  <!-- ITEM PAGES -->
-  <!--
-    /item/:id/:slug
-    (should be added automatically later)
-  -->
+  <url>
+    <loc>${BASE_URL}/category/wallpaper</loc>
+    <lastmod>2026-01-05</lastmod>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>${BASE_URL}/category/ringtone</loc>
+    <lastmod>2026-01-05</lastmod>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>${BASE_URL}/category/video</loc>
+    <lastmod>2026-01-05</lastmod>
+    <changefreq>weekly</changefreq>
+  </url>
 
-</urlset>
+  <url>
+    <loc>${BASE_URL}/about</loc>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${BASE_URL}/contact</loc>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${BASE_URL}/privacy</loc>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${BASE_URL}/terms</loc>
+    <priority>0.5</priority>
+  </url>
+
+  ${items.map(item => `
+  <url>
+    <loc>${BASE_URL}/item/${item.id}/${escapeXml(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''))}</loc>
+    <lastmod>${item.created_at ? item.created_at.split('T')[0] : '2026-01-05'}</lastmod>
+    <changefreq>monthly</changefreq>
+    <image:image>
+      <image:loc>${escapeXml(item.file_url || item.image_url)}</image:loc>
+      <image:title>${escapeXml(item.title)}</image:title>
+    </image:image>
+  </url>
+  `).join('')}
+
+</urlset>`;
+
+// ... Return the response (depending on your framework)
+// return new Response(sitemap, { headers: { 'Content-Type': 'text/xml' } });
