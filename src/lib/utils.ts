@@ -39,10 +39,9 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
        baseName = customName.slice(0, -(extension.length + 1));
     }
 
-    // 3. SAFE SANITIZATION (Fixes 400 Error)
-    // We replace spaces with underscores for cleaner filenames, 
-    // but use encodeURIComponent to keep special characters safe.
-    const safeName = encodeURIComponent(baseName.replace(/\s+/g, "_"));
+    // 3. SAFE ENCODING (Fixes 400 Error for spaces/Hindi/Symbols)
+    // We use encodeURIComponent to make the name URL-safe without destroying characters.
+    const safeName = encodeURIComponent(baseName);
     
     // 4. Attach extension properly
     const finalFilename = extension ? `${safeName}.${extension}` : safeName;

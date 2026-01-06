@@ -65,11 +65,12 @@ const ItemDetails = () => {
     }));
 
     // 3. Track in Supabase (Background Process)
+    // We try the secure RPC call first. 
     supabase.rpc("increment_downloads", { row_id: item.id })
       .then(({ error }) => {
         if (error) {
           // If RPC fails (e.g. not set up), fall back to standard update
-          // This ensures backward compatibility
+          // This ensures backward compatibility if RLS is off
           supabase
             .from("files")
             .update({ downloads: (item.downloads || 0) + 1 })
@@ -95,7 +96,7 @@ const ItemDetails = () => {
     ? item.description.slice(0, 160) 
     : `Download ${item.file_name} for free on KaviArts.`;
 
-  // UI: Resolution Logic
+  // UI: Resolution Logic (Restored)
   const resolutionInfo = item.width && item.height 
     ? `${item.width}x${item.height} Pixels` 
     : item.file_type === "wallpaper" ? "High Resolution" : "HD Quality";
@@ -149,7 +150,7 @@ const ItemDetails = () => {
             <div>
                 <h1 className="text-3xl font-bold leading-tight">{item.file_name}</h1>
                 
-                {/* Downloads & Resolution UI */}
+                {/* RESTORED: Downloads & Resolution */}
                 <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
                   <span>{(item.downloads || 0).toLocaleString()} Downloads</span>
                   <span>•</span>
@@ -185,7 +186,7 @@ const ItemDetails = () => {
               </Button>
             </div>
 
-            {/* License UI */}
+            {/* RESTORED: License Label */}
             <div className="pt-4 border-t mt-4 flex items-center justify-end text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                    <CheckCircle2 className="w-3 h-3 text-green-500" /> License: Free for Personal Use
