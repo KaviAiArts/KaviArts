@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Helmet } from "react-helmet-async"; // ✅ SEO Import
+import { Helmet } from "react-helmet-async"; 
 
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -10,12 +10,6 @@ import { Button } from "@/components/ui/button";
 
 /* ✅ Lazy load heavy card component */
 const ContentItem = lazy(() => import("@/components/ContentItem"));
-
-/* ------------------------------ */
-/* CACHE CONFIGURATION            */
-/* ------------------------------ */
-const CACHE_KEY = "kaviarts_home_cache_v1";
-const CACHE_TIME = 5 * 60 * 1000; // 5 Minutes (Data stays fresh for 5 mins)
 
 /* ------------------------------ */
 /* SKELETON CARD (UI ONLY)        */
@@ -152,24 +146,7 @@ const Index = () => {
   }, []);
 
   const loadData = async () => {
-    // 1. CHECK CACHE FIRST
-    const cached = sessionStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      const isFresh = Date.now() - timestamp < CACHE_TIME;
-
-      if (isFresh) {
-        // Use cached data (INSTANT LOAD)
-        setNewest(data.newest);
-        setPopularWallpapers(data.popularWallpapers);
-        setRingtones(data.ringtones);
-        setVideos(data.videos);
-        setLoading(false);
-        return; 
-      }
-    }
-
-    // 2. IF NO CACHE, FETCH FROM DB
+    // 1. REMOVED CACHE CHECK TO FORCE FRESH DATA
     setLoading(true);
 
     const { data: newestData } = await supabase
@@ -179,11 +156,12 @@ const Index = () => {
       .order("created_at", { ascending: false })
       .limit(6);
 
+    // This sorts by DOWNLOADS. Since cache is off, it will now show changes instantly.
     const { data: popularData } = await supabase
       .from("files")
       .select("*")
       .eq("file_type", "wallpaper")
-      .order("downloads", { ascending: false })
+      .order("downloads", { ascending: false }) 
       .limit(6);
 
     const { data: ringtoneData } = await supabase
@@ -200,30 +178,16 @@ const Index = () => {
       .order("downloads", { ascending: false })
       .limit(6);
 
-    const finalData = {
-      newest: newestData || [],
-      popularWallpapers: popularData || [],
-      ringtones: ringtoneData || [],
-      videos: videoData || [],
-    };
-
-    // 3. SET STATE & SAVE TO CACHE
-    setNewest(finalData.newest);
-    setPopularWallpapers(finalData.popularWallpapers);
-    setRingtones(finalData.ringtones);
-    setVideos(finalData.videos);
+    setNewest(newestData || []);
+    setPopularWallpapers(popularData || []);
+    setRingtones(ringtoneData || []);
+    setVideos(videoData || []);
     
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-      data: finalData,
-      timestamp: Date.now()
-    }));
-
     setLoading(false);
   };
 
   return (
     <div>
-      {/* ✅ SEO TAGS */}
       <Helmet>
         <title>KaviArts | Free 4K Wallpapers, Ringtones & Videos</title>
         <meta 
