@@ -25,13 +25,13 @@ const ItemDetails = () => {
   useEffect(() => {
     const fetchItem = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("files")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error || !data) {
+      if (!data) {
         setLoading(false);
         return;
       }
@@ -54,34 +54,32 @@ const ItemDetails = () => {
   }, [id, slug, navigate]);
 
   const handleDownload = async () => {
-    // 1. Start Download IMMEDIATELY
-    const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
-    
-    // Create invisible link to force download (Better than window.location)
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = item.file_name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // 1. Start Download FIRST (Immediate feedback)
+      const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
+      window.location.href = downloadUrl;
 
-    // 2. Update local state
-    setItem((prev: any) => ({
-      ...prev,
-      downloads: (prev.downloads || 0) + 1,
-    }));
+      // 2. Update local state
+      setItem((prev: any) => ({
+        ...prev,
+        downloads: (prev.downloads || 0) + 1,
+      }));
 
-    // 3. Track in Supabase using the SECURE RPC function
-    // (Ensure you ran the SQL snippet I provided!)
-    const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
-    
-    if (error) {
-        // Fallback for old method if RPC doesn't exist yet
-        console.warn("RPC failed, trying direct update...", error);
+      // 3. Track in Database (Securely)
+      // Note: This requires the 'increment_downloads' SQL function to rely on.
+      const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
+      
+      if (error) {
+        // Fallback for when RPC is not yet set up
+        console.warn("RPC failed (SQL not run?), trying direct update...", error);
         await supabase
-            .from("files")
-            .update({ downloads: (item.downloads || 0) + 1 })
-            .eq("id", item.id);
+          .from("files")
+          .update({ downloads: (item.downloads || 0) + 1 })
+          .eq("id", item.id);
+      }
+      
+    } catch (error) {
+      console.error("Download failed:", error);
     }
   };
 
@@ -106,6 +104,10 @@ const ItemDetails = () => {
       <Helmet>
         <title>{`${item.file_name} | Download Free on KaviArts`}</title>
         <meta name="description" content={seoDescription} />
+        <meta property="og:title" content={item.file_name} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:image" content={item.file_url} />
+        <meta property="og:type" content="website" />
         <link rel="canonical" href={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} />
       </Helmet>
 
