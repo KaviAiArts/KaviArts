@@ -5,23 +5,20 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// --- NEW CLOUDINARY HELPERS ---
+// --- CLOUDINARY HELPERS ---
 
 /**
  * For viewing: Adds q_auto,f_auto,w_{width} to make images fast.
- * Default width 800px is good for most screens.
  */
 export const getOptimizedDisplayUrl = (url: string, width = 800) => {
   if (!url || !url.includes("cloudinary")) return url;
-  // If it's already a video, don't mess with it here, or handle separately if needed
-  if (url.includes("/video/upload/")) return url;
+  if (url.includes("/video/upload/")) return url; // Don't optimize videos this way
   
   return url.replace("/upload/", `/upload/w_${width},q_auto,f_auto/`);
 };
 
 /**
- * For downloading: Forces the "fl_attachment" flag and lets you rename the file.
- * We sanitize the name to ensure the URL doesn't break.
+ * For downloading: Forces "fl_attachment" and PRESERVES the correct file extension.
  */
 export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   if (!url || !url.includes("cloudinary")) return url;
@@ -32,15 +29,31 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   const baseUrl = parts[0];
   const filePart = parts[1];
   
-  // Regex to remove existing transformations (like w_500) before the version number (v123...)
+  // Clean existing transformations
   const cleanFilePart = filePart.replace(/^(?:[^/]+\/)*v/, "v"); 
 
-  // ✅ FIX: If customName exists, tell Cloudinary to rename the download
   let attachmentFlag = "fl_attachment";
+  
   if (customName) {
-    // Replace spaces with underscores and remove special chars
-    const safeName = customName.replace(/[^a-zA-Z0-9-_]/g, "_");
-    attachmentFlag = `fl_attachment:${safeName}`;
+    // 1. Extract the REAL extension from the URL (e.g. "jpg", "mp3")
+    // This is the safest source of truth.
+    const urlParts = url.split("?")[0].split(".");
+    const extension = urlParts.length > 1 ? urlParts.pop() : "";
+
+    // 2. Remove extension from customName if the user already typed it
+    // (This prevents "mysong.mp3.mp3")
+    let baseName = customName;
+    if (extension && customName.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
+       baseName = customName.slice(0, -(extension.length + 1));
+    }
+
+    // 3. Sanitize the name (Replace bad chars with _, but keep letters/numbers)
+    const safeName = baseName.replace(/[^a-zA-Z0-9-_]/g, "_");
+    
+    // 4. Re-attach the extension correctly (with a dot!)
+    const finalFilename = extension ? `${safeName}.${extension}` : safeName;
+
+    attachmentFlag = `fl_attachment:${finalFilename}`;
   }
 
   return `${baseUrl}/upload/${attachmentFlag}/${cleanFilePart}`;

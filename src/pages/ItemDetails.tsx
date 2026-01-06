@@ -8,8 +8,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 import { Helmet } from "react-helmet-async";
-import { getOptimizedDisplayUrl, getOriginalDownloadUrl } from "@/lib/utils"; // Import helpers
-import NotFound from "@/pages/NotFound"; // ✅ FIX: Import NotFound
+import { getOptimizedDisplayUrl, getOriginalDownloadUrl } from "@/lib/utils";
+import NotFound from "@/pages/NotFound";
 
 const makeSlug = (name: string) =>
   name
@@ -21,13 +21,13 @@ const ItemDetails = () => {
   const { id, slug } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState<any>(null);
-  const [loading, setLoading] = useState(true); // ✅ FIX: Add loading state
+  const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const fetchItem = async () => {
-      setLoading(true); // Start loading
+      setLoading(true);
       const { data } = await supabase
         .from("files")
         .select("*")
@@ -47,7 +47,7 @@ const ItemDetails = () => {
       }
 
       setItem(data);
-      setLoading(false); // Stop loading
+      setLoading(false);
     };
 
     fetchItem();
@@ -59,30 +59,25 @@ const ItemDetails = () => {
     };
   }, [id, slug, navigate]);
 
-  const handleDownload = async () => {
-    try {
-      // 1. Track the download in Supabase FIRST
-      const { error } = await supabase
-        .from("files")
-        .update({ downloads: (item.downloads || 0) + 1 })
-        .eq("id", item.id);
-        
-      if (error) console.error("Tracking error:", error);
+  const handleDownload = () => {
+    // 1. Start Download IMMEDIATELY (Don't wait for DB)
+    const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
+    window.location.href = downloadUrl;
 
-      // 2. Update local state immediately
-      setItem((prev: any) => ({
-        ...prev,
-        downloads: (prev.downloads || 0) + 1,
-      }));
+    // 2. Update local state immediately (Visual feedback)
+    setItem((prev: any) => ({
+      ...prev,
+      downloads: (prev.downloads || 0) + 1,
+    }));
 
-      // 3. ⚡ FIX: Pass the item.file_name as the second argument
-      const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
-      
-      window.location.href = downloadUrl;
-      
-    } catch (error) {
-      console.error("Download failed:", error);
-    }
+    // 3. Track in Supabase (Background Process)
+    supabase
+      .from("files")
+      .update({ downloads: (item.downloads || 0) + 1 })
+      .eq("id", item.id)
+      .then(({ error }) => {
+        if (error) console.error("Tracking error:", error);
+      });
   };
 
   const togglePlay = () => {
@@ -100,12 +95,10 @@ const ItemDetails = () => {
     setIsPlaying(!isPlaying);
   };
 
-  // ✅ FIX: Show Skeleton or Loading instead of null
   if (loading) {
      return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
   }
 
-  // ✅ FIX: Show proper 404 page instead of white screen
   if (!item) return <NotFound />;
 
   const seoDescription = item.description 
@@ -123,13 +116,11 @@ const ItemDetails = () => {
         <meta property="og:image" content={item.file_url} />
         <meta property="og:type" content="website" />
         
-        {/* 🔥 CANONICAL TAG: Tells Google "This is the master copy" */}
         <link 
           rel="canonical" 
           href={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} 
         />
       </Helmet>
-
 
       <Header />
 
@@ -153,8 +144,6 @@ const ItemDetails = () => {
             
             {item.file_type === "wallpaper" && (
               <img
-                // ⚡ FIX: Use optimized URL for display (w_1200 is plenty for screen)
-                // This keeps the page fast while the download button gets the 4K original
                 src={getOptimizedDisplayUrl(item.file_url, 1200)}
                 width={item.width} 
                 height={item.height}
