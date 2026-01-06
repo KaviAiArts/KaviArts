@@ -33,13 +33,13 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
     const urlParts = url.split("?")[0].split(".");
     const extension = urlParts.length > 1 ? urlParts.pop() : "";
 
-    // 2. Clean base name (remove extension if user added it)
+    // 2. Clean base name
     let baseName = customName;
     if (extension && customName.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
        baseName = customName.slice(0, -(extension.length + 1));
     }
 
-    // 3. Strict Sanitization (No special chars to prevent 400 Errors)
+    // 3. Strict Sanitization (Prevents HTTP 400 Errors)
     const safeName = baseName.replace(/[^a-zA-Z0-9]/g, "-");
     
     const finalFilename = extension ? `${safeName}.${extension}` : safeName;

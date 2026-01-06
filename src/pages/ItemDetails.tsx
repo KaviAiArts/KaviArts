@@ -20,7 +20,7 @@ const ItemDetails = () => {
   const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [downloading, setDownloading] = useState(false); // Added for UI feedback
+  const [downloading, setDownloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -59,44 +59,44 @@ const ItemDetails = () => {
     setDownloading(true);
 
     try {
-      // 1. Fetch the file as a Blob (This forces the browser to download it)
+      // 1. BLOB DOWNLOAD LOGIC (Forces the browser to save)
       const response = await fetch(item.file_url);
       if (!response.ok) throw new Error("Network response was not ok");
       
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
 
-      // 2. Create a temporary link and click it
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = item.file_name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Clean up memory
       window.URL.revokeObjectURL(blobUrl);
 
-      // 3. Update Download Count (Background)
+      // 2. UPDATE COUNTER (Database)
+      // We try RPC first (Atomic), then fallback to direct update
       const { error: rpcError } = await supabase.rpc("increment_downloads", { row_id: item.id });
 
-      // Fallback if RPC fails
       if (rpcError) {
-        await supabase
+        console.warn("RPC failed, trying direct update. (Check RLS policies if this fails).", rpcError);
+        const { error: updateError } = await supabase
           .from("files")
           .update({ downloads: (item.downloads || 0) + 1 })
           .eq("id", item.id);
+          
+        if (updateError) console.error("Database update failed completely:", updateError);
       }
 
-      // 4. Update UI immediately
+      // 3. UPDATE UI (Optimistic)
       setItem((prev: any) => ({
         ...prev,
         downloads: (prev.downloads || 0) + 1,
       }));
 
     } catch (err) {
-      console.error("Download failed:", err);
-      // Fallback: Open in new tab if blob fails
+      console.error("Download action failed:", err);
+      // Fallback to opening in new tab
       window.open(item.file_url, '_blank');
     } finally {
       setDownloading(false);
