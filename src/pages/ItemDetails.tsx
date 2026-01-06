@@ -59,7 +59,9 @@ const ItemDetails = () => {
     setDownloading(true);
 
     try {
-      // 1. BLOB DOWNLOAD LOGIC (Forces the browser to save)
+      /* ------------------------------------------------------------------
+         1. FILE DOWNLOAD LOGIC (Blob Method - Forces Browser Save)
+      ------------------------------------------------------------------ */
       const response = await fetch(item.file_url);
       if (!response.ok) throw new Error("Network response was not ok");
       
@@ -74,29 +76,25 @@ const ItemDetails = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
 
-      // 2. UPDATE COUNTER (Database)
-      // We try RPC first (Atomic), then fallback to direct update
+      /* ------------------------------------------------------------------
+         2. COUNTER UPDATE LOGIC (Database)
+      ------------------------------------------------------------------ */
+      // This calls the SQL function we fixed in Step 1
       const { error: rpcError } = await supabase.rpc("increment_downloads", { row_id: item.id });
 
       if (rpcError) {
-        console.warn("RPC failed, trying direct update. (Check RLS policies if this fails).", rpcError);
-        const { error: updateError } = await supabase
-          .from("files")
-          .update({ downloads: (item.downloads || 0) + 1 })
-          .eq("id", item.id);
-          
-        if (updateError) console.error("Database update failed completely:", updateError);
+        console.error("RPC Error:", rpcError);
+      } else {
+        // Only update the UI number if the database save was successful
+        setItem((prev: any) => ({
+          ...prev,
+          downloads: (prev.downloads || 0) + 1,
+        }));
       }
 
-      // 3. UPDATE UI (Optimistic)
-      setItem((prev: any) => ({
-        ...prev,
-        downloads: (prev.downloads || 0) + 1,
-      }));
-
     } catch (err) {
-      console.error("Download action failed:", err);
-      // Fallback to opening in new tab
+      console.error("Download failed:", err);
+      // Fallback: If blob fails, try opening in new tab
       window.open(item.file_url, '_blank');
     } finally {
       setDownloading(false);
