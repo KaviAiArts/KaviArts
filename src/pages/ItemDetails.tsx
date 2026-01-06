@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Download, Music, Share2, Play, Pause } from "lucide-react";
+import { ArrowLeft, Download, Music, Share2, Play, Pause, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -54,21 +54,21 @@ const ItemDetails = () => {
   }, [id, slug, navigate]);
 
   const handleDownload = async () => {
-    // 1. Start Download IMMEDIATELY
+    // 1. Start Download IMMEDIATELY (Don't wait for DB)
     const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
     window.location.href = downloadUrl;
 
-    // 2. Update local state
+    // 2. Update local state (Visual feedback)
     setItem((prev: any) => ({
       ...prev,
       downloads: (prev.downloads || 0) + 1,
     }));
 
-    // 3. Track in Supabase (Try secure RPC first, then fallback)
+    // 3. Track in Supabase (Secure RPC call)
     const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
     
     if (error) {
-        // Fallback for old method if RPC isn't set up yet
+        // Only if RPC fails (and RLS is off), try the old way as fallback
         await supabase
             .from("files")
             .update({ downloads: (item.downloads || 0) + 1 })
@@ -88,9 +88,15 @@ const ItemDetails = () => {
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
   if (!item) return <NotFound />;
 
+  // SEO Description
   const seoDescription = item.description 
     ? item.description.slice(0, 160) 
     : `Download ${item.file_name} for free on KaviArts.`;
+
+  // Resolution / Format string
+  const resolutionInfo = item.width && item.height 
+    ? `${item.width}x${item.height} Pixels` 
+    : item.file_type === "wallpaper" ? "High Resolution" : "HD Quality";
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,9 +104,7 @@ const ItemDetails = () => {
         <title>{`${item.file_name} | Download Free on KaviArts`}</title>
         <meta name="description" content={seoDescription} />
         <meta property="og:title" content={item.file_name} />
-        <meta property="og:description" content={seoDescription} />
         <meta property="og:image" content={item.file_url} />
-        <meta property="og:type" content="website" />
         <link rel="canonical" href={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} />
       </Helmet>
 
@@ -112,6 +116,7 @@ const ItemDetails = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* LEFT: PREVIEW CARD */}
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
             <Badge className="absolute top-3 left-3 z-10 capitalize shadow-md">{item.file_type}</Badge>
             
@@ -139,12 +144,17 @@ const ItemDetails = () => {
             )}
           </Card>
 
+          {/* RIGHT: DETAILS */}
           <div className="flex flex-col h-full space-y-4">
             <div>
                 <h1 className="text-3xl font-bold leading-tight">{item.file_name}</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                {(item.downloads || 0).toLocaleString()} Downloads
-                </p>
+                
+                {/* ✅ UI RESTORED: Downloads AND Resolution */}
+                <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
+                  <span>{(item.downloads || 0).toLocaleString()} Downloads</span>
+                  <span>•</span>
+                  <span>{resolutionInfo}</span>
+                </div>
             </div>
 
             <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
@@ -161,6 +171,7 @@ const ItemDetails = () => {
               </div>
             )}
 
+            {/* ACTION BUTTONS */}
             <div className="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
               <Button
                 onClick={() => navigator.share ? navigator.share({ title: item.file_name, url: window.location.href }) : navigator.clipboard.writeText(window.location.href)}
@@ -174,6 +185,14 @@ const ItemDetails = () => {
                 <Download className="w-4 h-4 mr-2" /> Download
               </Button>
             </div>
+
+            {/* ✅ UI RESTORED: License Info */}
+            <div className="pt-4 border-t mt-4 flex items-center justify-end text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                   <CheckCircle2 className="w-3 h-3 text-green-500" /> License: Free for Personal Use
+                </span>
+            </div>
+
           </div>
         </div>
       </main>
