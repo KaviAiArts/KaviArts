@@ -23,7 +23,6 @@ const __dirname = path.dirname(__filename);
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 
-// ⚠️ CHANGE THIS TO YOUR REAL DOMAIN WHEN YOU BUY IT (e.g., https://kaviarts.com)
 const SITE_URL = "https://kaviarts.com";
 
 /* ---------------------------------- */
@@ -35,6 +34,20 @@ const makeSlug = (text) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+// ✅ FIX: This function prevents the "xmlParseEntityRef" error
+const escapeXml = (unsafe) => {
+  if (typeof unsafe !== 'string') return unsafe;
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+    }
+  });
+}
 
 /* ---------------------------------- */
 /* Main function                       */
@@ -52,6 +65,8 @@ async function generateSitemap() {
     (route) => `
   <url>
     <loc>${SITE_URL}${route}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>`
   );
 
@@ -66,7 +81,6 @@ async function generateSitemap() {
     try {
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      // ✅ FIX: Added 'file_url' to select so we can put images in sitemap
       const { data, error } = await supabase
         .from("files")
         .select("id, file_name, created_at, file_url");
@@ -80,19 +94,18 @@ async function generateSitemap() {
       if (Array.isArray(data)) {
         dynamicUrls = data.map((item) => {
           const slug = makeSlug(item.file_name);
-          // ✅ FIX: Use 'created_at' for the last modified date
           const lastmod = item.created_at
             ? new Date(item.created_at).toISOString()
             : new Date().toISOString();
 
-          // 🔥 NEW: Add Image Sitemap tags
+          // ✅ FIX: Using escapeXml() here prevents the crash
           return `
   <url>
     <loc>${SITE_URL}/item/${item.id}/${slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <image:image>
-      <image:loc>${item.file_url}</image:loc>
-      <image:title>${item.file_name}</image:title>
+      <image:loc>${escapeXml(item.file_url)}</image:loc>
+      <image:title>${escapeXml(item.file_name)}</image:title>
     </image:image>
   </url>`;
         });
@@ -103,7 +116,6 @@ async function generateSitemap() {
   }
 
   /* ---------- Final sitemap ---------- */
-  // ✅ FIX: Added xmlns:image namespace to header
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
