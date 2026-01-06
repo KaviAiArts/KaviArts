@@ -55,7 +55,7 @@ const ItemDetails = () => {
 
   const handleDownload = async () => {
     // 1. Start Download IMMEDIATELY
-    // We do this first so the user gets the file even if the DB fails
+    // We execute this first so the user gets the file no matter what.
     const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
     window.location.href = downloadUrl;
 
@@ -65,13 +65,16 @@ const ItemDetails = () => {
       downloads: (prev.downloads || 0) + 1,
     }));
 
-    // 3. Track in Supabase securely
-    // We try the secure RPC call first. If you haven't run the SQL yet, 
-    // it simply won't count, but the download WON'T break.
+    // 3. Track in Supabase
+    // We try the Secure RPC call first. 
     const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
     
     if (error) {
-        console.warn("Counter update failed (SQL function missing?):", error.message);
+        // Fallback: Try standard update (works only if RLS is off)
+        await supabase
+            .from("files")
+            .update({ downloads: (item.downloads || 0) + 1 })
+            .eq("id", item.id);
     }
   };
 
@@ -91,6 +94,11 @@ const ItemDetails = () => {
     ? item.description.slice(0, 160) 
     : `Download ${item.file_name} for free on KaviArts.`;
 
+  // UI: Resolution Logic
+  const resolutionInfo = item.width && item.height 
+    ? `${item.width}x${item.height} Pixels` 
+    : item.file_type === "wallpaper" ? "High Resolution" : "HD Quality";
+
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
@@ -109,6 +117,7 @@ const ItemDetails = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* PREVIEW SECTION */}
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
             <Badge className="absolute top-3 left-3 z-10 capitalize shadow-md">{item.file_type}</Badge>
             
@@ -136,14 +145,17 @@ const ItemDetails = () => {
             )}
           </Card>
 
+          {/* DETAILS SECTION */}
           <div className="flex flex-col h-full space-y-4">
             <div>
                 <h1 className="text-3xl font-bold leading-tight">{item.file_name}</h1>
-                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                
+                {/* RESTORED UI: Downloads & Resolution */}
+                <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
                   <span>{(item.downloads || 0).toLocaleString()} Downloads</span>
                   <span>•</span>
-                  <span>{item.width && item.height ? `${item.width}x${item.height}` : "HD Quality"}</span>
-                </p>
+                  <span>{resolutionInfo}</span>
+                </div>
             </div>
 
             <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
@@ -174,6 +186,7 @@ const ItemDetails = () => {
               </Button>
             </div>
 
+            {/* RESTORED UI: License */}
             <div className="pt-4 border-t mt-4 flex items-center justify-end text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                    <CheckCircle2 className="w-3 h-3 text-green-500" /> License: Free for Personal Use
