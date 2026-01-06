@@ -25,13 +25,13 @@ const ItemDetails = () => {
   useEffect(() => {
     const fetchItem = async () => {
       setLoading(true);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("files")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (!data) {
+      if (error || !data) {
         setLoading(false);
         return;
       }
@@ -54,32 +54,25 @@ const ItemDetails = () => {
   }, [id, slug, navigate]);
 
   const handleDownload = async () => {
-    try {
-      // 1. Start Download FIRST (Immediate feedback)
-      const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
-      window.location.href = downloadUrl;
+    // 1. Start Download IMMEDIATELY
+    const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
+    window.location.href = downloadUrl;
 
-      // 2. Update local state
-      setItem((prev: any) => ({
-        ...prev,
-        downloads: (prev.downloads || 0) + 1,
-      }));
+    // 2. Update local state
+    setItem((prev: any) => ({
+      ...prev,
+      downloads: (prev.downloads || 0) + 1,
+    }));
 
-      // 3. Track in Database (Securely)
-      // Note: This requires the 'increment_downloads' SQL function to rely on.
-      const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
-      
-      if (error) {
-        // Fallback for when RPC is not yet set up
-        console.warn("RPC failed (SQL not run?), trying direct update...", error);
+    // 3. Track in Supabase (Try secure RPC first, then fallback)
+    const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
+    
+    if (error) {
+        // Fallback for old method if RPC isn't set up
         await supabase
-          .from("files")
-          .update({ downloads: (item.downloads || 0) + 1 })
-          .eq("id", item.id);
-      }
-      
-    } catch (error) {
-      console.error("Download failed:", error);
+            .from("files")
+            .update({ downloads: (item.downloads || 0) + 1 })
+            .eq("id", item.id);
     }
   };
 
@@ -150,13 +143,23 @@ const ItemDetails = () => {
             <div>
                 <h1 className="text-3xl font-bold leading-tight">{item.file_name}</h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                {(item.downloads || 0).toLocaleString()} Downloads • {item.file_type === "wallpaper" ? "4K" : "HD"}
+                {(item.downloads || 0).toLocaleString()} Downloads
                 </p>
             </div>
 
             <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
               <p className="whitespace-pre-wrap font-sans">{item.description || "No description available."}</p>
             </div>
+
+            {item.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {item.tags.map((tag: string) => (
+                  <span key={tag} className="px-3 py-1 text-xs rounded-full bg-secondary text-secondary-foreground">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
             <div className="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
               <Button

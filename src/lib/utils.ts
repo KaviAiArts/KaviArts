@@ -22,13 +22,13 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   const baseUrl = parts[0];
   const filePart = parts[1];
   
-  // Clean existing transformations (like w_500)
+  // Clean existing transformations
   const cleanFilePart = filePart.replace(/^(?:[^/]+\/)*v/, "v"); 
 
   let attachmentFlag = "fl_attachment";
   
   if (customName) {
-    // 1. Get the REAL extension from the URL (safest method)
+    // 1. Get the REAL extension from the URL
     const urlParts = url.split("?")[0].split(".");
     const extension = urlParts.length > 1 ? urlParts.pop() : "";
 
