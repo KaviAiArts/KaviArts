@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ContentGrid from "@/components/ContentGrid";
 import { Button } from "@/components/ui/button";
+import { Helmet } from "react-helmet-async"; // ✅ FIX: Import Helmet
 
 // ✅ 1. Define Limit per page
 const ITEMS_PER_PAGE = 12;
@@ -96,8 +97,20 @@ const CategoryView = () => {
   const isRingtone = category === "ringtone";
   const skeletonAspect = isRingtone ? "square" : "portrait";
 
+  // ✅ FIX: SEO Description logic
+  const seoDescription = `Browse and download the best free ${category}s. High quality collection updated daily.`;
+  const seoTitle = `${title} | KaviArts Free Downloads`;
+
   return (
     <div className="min-h-screen bg-background">
+      {/* ✅ FIX: Add Helmet for SEO */}
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+      </Helmet>
+
       <Header />
 
       <main className="container mx-auto px-4 py-6">

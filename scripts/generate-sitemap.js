@@ -30,13 +30,11 @@ const SITE_URL = "https://kaviarts.com";
 /* Helpers                             */
 /* ---------------------------------- */
 
-
 const makeSlug = (text) =>
   (text || "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
-
 
 /* ---------------------------------- */
 /* Main function                       */
@@ -68,19 +66,14 @@ async function generateSitemap() {
     try {
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-
-// ✅ FIX: Changed 'updated_at' to 'created_at' to match your DB
+      // ✅ FIX: Added 'file_url' to select so we can put images in sitemap
       const { data, error } = await supabase
         .from("files")
-        .select("id, file_name, created_at");
+        .select("id, file_name, created_at, file_url");
 
-      // ---> PASTE THIS LINE HERE:
-      if (data) console.log(`📊 Supabase returned ${data.length} rows.`); 
-      // <---
+      if (data) console.log(`📊 Supabase returned ${data.length} rows.`);
 
       if (error) {
-
-
         console.error("❌ Supabase error:", error.message);
       }
 
@@ -92,10 +85,15 @@ async function generateSitemap() {
             ? new Date(item.created_at).toISOString()
             : new Date().toISOString();
 
+          // 🔥 NEW: Add Image Sitemap tags
           return `
   <url>
     <loc>${SITE_URL}/item/${item.id}/${slug}</loc>
     <lastmod>${lastmod}</lastmod>
+    <image:image>
+      <image:loc>${item.file_url}</image:loc>
+      <image:title>${item.file_name}</image:title>
+    </image:image>
   </url>`;
         });
       }
@@ -105,8 +103,10 @@ async function generateSitemap() {
   }
 
   /* ---------- Final sitemap ---------- */
+  // ✅ FIX: Added xmlns:image namespace to header
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${staticUrls.join("")}
 ${dynamicUrls.join("")}
 </urlset>`.trim();

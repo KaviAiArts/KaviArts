@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 import { Helmet } from "react-helmet-async";
 import { getOptimizedDisplayUrl, getOriginalDownloadUrl } from "@/lib/utils"; // Import helpers
+import NotFound from "@/pages/NotFound"; // ✅ FIX: Import NotFound
 
 const makeSlug = (name: string) =>
   name
@@ -20,18 +21,23 @@ const ItemDetails = () => {
   const { id, slug } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true); // ✅ FIX: Add loading state
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const fetchItem = async () => {
+      setLoading(true); // Start loading
       const { data } = await supabase
         .from("files")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (!data) return;
+      if (!data) {
+        setLoading(false);
+        return;
+      }
 
       const correctSlug = makeSlug(data.file_name);
 
@@ -41,6 +47,7 @@ const ItemDetails = () => {
       }
 
       setItem(data);
+      setLoading(false); // Stop loading
     };
 
     fetchItem();
@@ -93,7 +100,13 @@ const ItemDetails = () => {
     setIsPlaying(!isPlaying);
   };
 
-  if (!item) return null;
+  // ✅ FIX: Show Skeleton or Loading instead of null
+  if (loading) {
+     return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+  }
+
+  // ✅ FIX: Show proper 404 page instead of white screen
+  if (!item) return <NotFound />;
 
   const seoDescription = item.description 
     ? item.description.slice(0, 160) 
