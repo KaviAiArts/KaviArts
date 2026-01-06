@@ -54,25 +54,27 @@ const ItemDetails = () => {
   }, [id, slug, navigate]);
 
   const handleDownload = async () => {
-    // 1. Generate the correct Cloudinary attachment URL
+    // 1. Generate the Download URL
     const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
-    
-    // 2. Start Download using a temporary anchor tag
-    // This is more reliable than window.location.href and prevents page navigation/refresh
+
+    // 2. Trigger Download Safely (The "Anchor" method)
+    // This creates a temporary link and clicks it programmatically.
+    // It works better than window.location.href because it doesn't unmount the component.
     try {
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.setAttribute('download', item.file_name);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', item.file_name); // Hint to browser to download
+      link.setAttribute('target', '_blank'); // Open in new tab if download fails to trigger inline
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (e) {
-        console.error("Download trigger failed:", e);
-        // Fallback
-        window.location.href = downloadUrl;
+      console.error("Download trigger failed:", e);
+      // Last resort fallback
+      window.open(downloadUrl, '_blank');
     }
 
-    // 3. Update local state immediately (Visual feedback)
+    // 3. Update local state IMMEDIATELY (Visual feedback)
     setItem((prev: any) => ({
       ...prev,
       downloads: (prev.downloads || 0) + 1,
@@ -80,18 +82,19 @@ const ItemDetails = () => {
 
     // 4. Track in Supabase (Background Process)
     try {
-        const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
-        
-        if (error) {
-          console.error("RPC Error, attempting fallback:", error);
-          // Fallback to standard update if RPC fails (e.g., function not defined)
-          await supabase
-            .from("files")
-            .update({ downloads: (item.downloads || 0) + 1 })
-            .eq("id", item.id);
-        }
+      // Try the secure RPC call first
+      const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
+      
+      if (error) {
+        console.warn("RPC failed, falling back to direct update:", error);
+        // Fallback: Direct update if RPC is missing/fails
+        await supabase
+          .from("files")
+          .update({ downloads: (item.downloads || 0) + 1 })
+          .eq("id", item.id);
+      }
     } catch (err) {
-        console.error("Error updating download count:", err);
+      console.error("Error updating download count:", err);
     }
   };
 
@@ -111,7 +114,6 @@ const ItemDetails = () => {
     ? item.description.slice(0, 160) 
     : `Download ${item.file_name} for free on KaviArts.`;
 
-  // UI: Resolution Logic (Restored)
   const resolutionInfo = item.width && item.height 
     ? `${item.width}x${item.height} Pixels` 
     : item.file_type === "wallpaper" ? "High Resolution" : "HD Quality";
@@ -165,7 +167,6 @@ const ItemDetails = () => {
             <div>
                 <h1 className="text-3xl font-bold leading-tight">{item.file_name}</h1>
                 
-                {/* RESTORED: Downloads & Resolution */}
                 <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
                   <span>{(item.downloads || 0).toLocaleString()} Downloads</span>
                   <span>•</span>
@@ -201,7 +202,6 @@ const ItemDetails = () => {
               </Button>
             </div>
 
-            {/* RESTORED: License Label */}
             <div className="pt-4 border-t mt-4 flex items-center justify-end text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                    <CheckCircle2 className="w-3 h-3 text-green-500" /> License: Free for Personal Use
