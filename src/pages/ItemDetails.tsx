@@ -54,40 +54,36 @@ const ItemDetails = () => {
   }, [id, slug, navigate]);
 
   const handleDownload = async () => {
-    // 1. Generate the Download URL
+    // 1. Generate the Safe Download URL
     const downloadUrl = getOriginalDownloadUrl(item.file_url, item.file_name);
 
-    // 2. Trigger Download Safely (The "Anchor" method)
-    // This creates a temporary link and clicks it programmatically.
-    // It works better than window.location.href because it doesn't unmount the component.
+    // 2. Trigger Download using a temporary link
+    // We use target="_blank" to ensure that if the browser tries to "view" it, 
+    // it opens in a new tab and doesn't crash the current page.
     try {
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.setAttribute('download', item.file_name); // Hint to browser to download
-      link.setAttribute('target', '_blank'); // Open in new tab if download fails to trigger inline
+      link.setAttribute('download', item.file_name);
+      link.setAttribute('target', '_blank'); 
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (e) {
       console.error("Download trigger failed:", e);
-      // Last resort fallback
       window.open(downloadUrl, '_blank');
     }
 
-    // 3. Update local state IMMEDIATELY (Visual feedback)
+    // 3. Update local state immediately (Visual confirmation)
     setItem((prev: any) => ({
       ...prev,
       downloads: (prev.downloads || 0) + 1,
     }));
 
-    // 4. Track in Supabase (Background Process)
+    // 4. Track in Supabase (Background)
     try {
-      // Try the secure RPC call first
       const { error } = await supabase.rpc("increment_downloads", { row_id: item.id });
-      
       if (error) {
-        console.warn("RPC failed, falling back to direct update:", error);
-        // Fallback: Direct update if RPC is missing/fails
+        // Fallback if RPC is missing
         await supabase
           .from("files")
           .update({ downloads: (item.downloads || 0) + 1 })

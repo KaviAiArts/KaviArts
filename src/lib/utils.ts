@@ -23,29 +23,32 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   const baseUrl = parts[0];
   const filePart = parts[1];
   
-  // Clean existing transformations
+  // 1. Clean existing transformations
+  // This Regex looks for "v" followed by numbers (the version), keeping it and everything after.
+  // Example: "w_500/v123/img.jpg" -> "v123/img.jpg"
   const cleanFilePart = filePart.replace(/^(?:[^/]+\/)*v/, "v"); 
 
   let attachmentFlag = "fl_attachment";
   
   if (customName) {
-    // 1. Get the REAL extension from the URL (safest method)
+    // 2. STRICT SANITIZATION (Fixes HTTP 400 Error)
+    // Instead of encoding, we simply replace unsafe characters with dashes.
+    // Cloudinary can fail with encoded % characters in this specific parameter.
+    
+    // Get the real extension
     const urlParts = url.split("?")[0].split(".");
     const extension = urlParts.length > 1 ? urlParts.pop() : "";
 
-    // 2. Remove extension from customName if user typed it
+    // Remove extension from customName if user provided it
     let baseName = customName;
     if (extension && customName.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
        baseName = customName.slice(0, -(extension.length + 1));
     }
 
-    // 3. SAFE ENCODING (Fixes 400 Error for spaces/Hindi/Symbols)
-    // We use encodeURIComponent to make the name URL-safe without destroying characters.
-    const safeName = encodeURIComponent(baseName);
+    // Replace ANY non-alphanumeric character with a dash
+    const safeName = baseName.replace(/[^a-zA-Z0-9]/g, "-");
     
-    // 4. Attach extension properly
     const finalFilename = extension ? `${safeName}.${extension}` : safeName;
-
     attachmentFlag = `fl_attachment:${finalFilename}`;
   }
 
