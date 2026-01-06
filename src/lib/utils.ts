@@ -11,7 +11,6 @@ export const getOptimizedDisplayUrl = (url: string, width = 800) => {
   if (!url || !url.includes("cloudinary")) return url;
   if (url.includes("/video/upload/")) return url;
   
-  // Basic optimization for viewing
   return url.replace("/upload/", `/upload/w_${width},q_auto,f_auto/`);
 };
 
@@ -24,7 +23,7 @@ export const getOriginalDownloadUrl = (url: string, customName?: string) => {
   const baseUrl = parts[0];
   const filePart = parts[1];
   
-  // Clean existing transformations to get the original file
+  // Clean existing transformations
   const cleanFilePart = filePart.replace(/^(?:[^/]+\/)*v/, "v"); 
 
   let attachmentFlag = "fl_attachment";
