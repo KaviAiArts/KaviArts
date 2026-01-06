@@ -114,6 +114,7 @@ const ItemDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
+
       <Helmet>
         <title>{`${item.file_name} | Download Free on KaviArts`}</title>
         <meta name="description" content={seoDescription} />
@@ -121,7 +122,14 @@ const ItemDetails = () => {
         <meta property="og:description" content={seoDescription} />
         <meta property="og:image" content={item.file_url} />
         <meta property="og:type" content="website" />
+        
+        {/* 🔥 CANONICAL TAG: Tells Google "This is the master copy" */}
+        <link 
+          rel="canonical" 
+          href={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} 
+        />
       </Helmet>
+
 
       <Header />
 
