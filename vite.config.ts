@@ -22,6 +22,11 @@ export default defineConfig(async ({ mode }) => {
   
   // Start with your static categories
   const dynamicRoutes = [
+    "/about",
+    "/terms",
+    "/privacy",
+    "/contact",
+    "/app",
     "/category/wallpaper",
     "/category/ringtone",
     "/category/video"
