@@ -123,13 +123,46 @@ const ItemDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
+
+
       <Helmet>
+        {/* 1. Basic SEO */}
         <title>{`${item.file_name} | Download Free on KaviArts`}</title>
         <meta name="description" content={seoDescription} />
-        <meta property="og:title" content={item.file_name} />
-        <meta property="og:image" content={item.file_url} />
         <link rel="canonical" href={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} />
+
+        {/* 2. Open Graph (Facebook/WhatsApp) */}
+        <meta property="og:type" content={item.file_type === 'video' ? 'video.other' : 'website'} />
+        <meta property="og:title" content={item.file_name} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:image" content={item.file_url} />
+        <meta property="og:url" content={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} />
+        <meta property="og:site_name" content="Kavi Arts" />
+
+        {/* 3. Twitter Cards (Large Image) */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={item.file_name} />
+        <meta name="twitter:description" content={seoDescription} />
+        <meta name="twitter:image" content={item.file_url} />
+
+        {/* 4. Google Schema (JSON-LD) - CRITICAL FOR RANKING */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": item.file_type === 'video' ? 'VideoObject' : 'ImageObject',
+            "name": item.file_name,
+            "description": seoDescription,
+            "contentUrl": item.file_url,
+            "thumbnailUrl": item.file_url,
+            "uploadDate": item.created_at || new Date().toISOString(),
+            "author": {
+              "@type": "Organization",
+              "name": "Kavi Arts"
+            }
+          })}
+        </script>
       </Helmet>
+
 
       <Header />
 
