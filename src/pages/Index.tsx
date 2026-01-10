@@ -204,14 +204,14 @@ const Index = () => {
         <meta property="og:title" content="KaviArts | Free Media Downloads" />
         <meta property="og:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
         {/* 👇 IMPORTANT: Replace this with a real link to a generic banner image for your site */}
-        <meta property="og:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768034307/rpqafftwhcevpt1anjce.jpg" />
+        <meta property="og:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg" />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="KaviArts | Free Media Downloads" />
         <meta name="twitter:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
         {/* 👇 IMPORTANT: Same banner image link here */}
-        <meta name="twitter:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768034307/rpqafftwhcevpt1anjce.jpg" />
+        <meta name="twitter:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg" />
 
         {/* Schema (JSON-LD) - Missing in your current file */}
         <script type="application/ld+json">
