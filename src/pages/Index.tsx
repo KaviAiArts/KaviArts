@@ -191,6 +191,7 @@ const Index = () => {
 
 
       <Helmet>
+        {/* 1. Basic SEO */}
         <title>KaviArts | Free 4K Wallpapers, Ringtones & Videos</title>
         <meta 
           name="description" 
@@ -198,32 +199,35 @@ const Index = () => {
         />
         <link rel="canonical" href="https://kaviarts.com" />
 
-        {/* Facebook / Open Graph */}
+        {/* 2. Facebook / WhatsApp / Open Graph */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://kaviarts.com" />
+        <meta property="og:site_name" content="Kavi Arts" />
         <meta property="og:title" content="KaviArts | Free Media Downloads" />
         <meta property="og:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
-        {/* 👇 IMPORTANT: Replace this with a real link to a generic banner image for your site */}
+        
+        {/* 👇 PASTE YOUR NEW IMAGE LINK HERE 👇 */}
         <meta property="og:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
 
-        {/* Twitter */}
+        {/* 3. Twitter Cards */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="KaviArts | Free Media Downloads" />
         <meta name="twitter:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
-        {/* 👇 IMPORTANT: Same banner image link here */}
         <meta name="twitter:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg" />
 
-        {/* Schema (JSON-LD) - Missing in your current file */}
+        {/* 4. Google Schema (JSON-LD) */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
-            "name": "KaviArts",
+            "name": "Kavi Arts",
             "url": "https://kaviarts.com",
             "description": "Free HD wallpapers, ringtones, and aesthetic mobile content.",
             "potentialAction": {
               "@type": "SearchAction",
-              "target": "https://kaviarts.com/search?query={search_term_string}",
+              "target": "https://kaviarts.com/search?q={search_term_string}",
               "query-input": "required name=search_term_string"
             }
           })}
