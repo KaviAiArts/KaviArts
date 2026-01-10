@@ -188,17 +188,49 @@ const Index = () => {
 
   return (
     <div>
+
+
       <Helmet>
         <title>KaviArts | Free 4K Wallpapers, Ringtones & Videos</title>
         <meta 
           name="description" 
           content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free. No account required." 
         />
+        <link rel="canonical" href="https://kaviarts.com" />
+
+        {/* Facebook / Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://kaviarts.com" />
         <meta property="og:title" content="KaviArts | Free Media Downloads" />
         <meta property="og:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
-        <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://kaviarts.com" />
+        {/* 👇 IMPORTANT: Replace this with a real link to a generic banner image for your site */}
+        <meta property="og:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768034307/rpqafftwhcevpt1anjce.jpg" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="KaviArts | Free Media Downloads" />
+        <meta name="twitter:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
+        {/* 👇 IMPORTANT: Same banner image link here */}
+        <meta name="twitter:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768034307/rpqafftwhcevpt1anjce.jpg" />
+
+        {/* Schema (JSON-LD) - Missing in your current file */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "KaviArts",
+            "url": "https://kaviarts.com",
+            "description": "Free HD wallpapers, ringtones, and aesthetic mobile content.",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://kaviarts.com/search?query={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
       </Helmet>
+
+
 
       <Header />
 
