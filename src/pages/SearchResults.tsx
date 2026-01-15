@@ -11,7 +11,7 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 18;
 
 /* ================================
    SAFE HELPERS (NO GUESSWORK)

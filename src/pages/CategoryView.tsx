@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 
 // ✅ 1. Define Limit per page
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 18;
 
 /* Skeleton Loader Component */
 const SkeletonCard = ({ aspect = "portrait" }: { aspect?: "portrait" | "square" }) => {
