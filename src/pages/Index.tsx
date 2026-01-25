@@ -197,7 +197,7 @@ const Index = () => {
           name="description" 
           content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free. No account required." 
         />
-        <link rel="canonical" href="https://kaviarts.com" />
+        <link rel="canonical" href="https://kaviarts.com/" />
 
         {/* 2. Facebook / WhatsApp / Open Graph */}
         <meta property="og:type" content="website" />
