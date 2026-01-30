@@ -9,11 +9,17 @@ const getVideoThumbnail = (url: string) =>
     .replace("/video/upload/", "/video/upload/so_0/")
     .replace(/\.(mp4|webm|mov)$/i, ".jpg");
 
-const makeSlug = (name: string) =>
-  name
+// ✅ UPDATED CLEAN SLUG FUNCTION
+const makeSlug = (text: string) => {
+  if (!text) return "";
+  return text
+    .toString()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+    .trim()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w\-]+/g, '') // Remove all non-word chars (like ')
+    .replace(/\-\-+/g, '-');  // Replace multiple - with single -
+};
 
 const getAltText = (item: any) =>
   item.description

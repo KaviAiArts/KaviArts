@@ -11,8 +11,25 @@ import { Helmet } from "react-helmet-async";
 import { getOptimizedDisplayUrl } from "@/lib/utils";
 import NotFound from "@/pages/NotFound";
 
-const makeSlug = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+// ✅ UPDATED CLEAN SLUG FUNCTION
+const makeSlug = (text: string) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w\-]+/g, '') // Remove all non-word chars (like ')
+    .replace(/\-\-+/g, '-');  // Replace multiple - with single -
+};
+
+// ✅ HELPER: Generates a JPG thumbnail from the Cloudinary Video URL
+const getVideoThumbnail = (url: string) => {
+  if (!url) return "";
+  return url
+    .replace("/video/upload/", "/video/upload/so_0/")
+    .replace(/\.(mp4|webm|mov)$/i, ".jpg");
+};
 
 const ItemDetails = () => {
   const { id, slug } = useParams();
@@ -153,7 +170,9 @@ const ItemDetails = () => {
             "name": item.file_name,
             "description": seoDescription,
             "contentUrl": item.file_url,
-            "thumbnailUrl": item.file_url,
+
+            "thumbnailUrl": item.file_type === 'video' ? getVideoThumbnail(item.file_url) : item.file_url,
+
             "uploadDate": item.created_at || new Date().toISOString(),
             "author": {
               "@type": "Organization",
