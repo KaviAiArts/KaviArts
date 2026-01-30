@@ -81,17 +81,17 @@ const ContentSection = ({
                     <SkeletonCard aspect={skeletonAspect} />
                   </div>
                 ))
-              : items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex-shrink-0"
-                    style={{ width: "42vw", maxWidth: "190px" }}
-                  >
-                    <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
-                      <ContentItem item={item} />
-                    </Suspense>
-                  </div>
-                ))}
+             : items.map((item, index) => (
+    <div
+      key={item.id}
+      className="flex-shrink-0"
+      style={{ width: "42vw", maxWidth: "190px" }}
+    >
+      <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
+        <ContentItem item={item} priority={index < 2} />
+      </Suspense>
+    </div>
+  ))}
           </div>
         </div>
       </section>
@@ -115,14 +115,14 @@ const ContentSection = ({
               ? Array.from({ length: skeletonCount }).map((_, i) => (
                   <SkeletonCard key={i} aspect={skeletonAspect} />
                 ))
-              : items.map((item) => (
-                  <Suspense
-                    key={item.id}
-                    fallback={<SkeletonCard aspect={skeletonAspect} />}
-                  >
-                    <ContentItem item={item} />
-                  </Suspense>
-                ))}
+              : items.map((item, index) => (
+    <Suspense
+      key={item.id}
+      fallback={<SkeletonCard aspect={skeletonAspect} />}
+    >
+      <ContentItem item={item} priority={index < 6} />
+    </Suspense>
+  ))}
           </div>
         </div>
       </section>

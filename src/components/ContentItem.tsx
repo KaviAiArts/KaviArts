@@ -26,7 +26,7 @@ const getAltText = (item: any) =>
     ? item.description.split(".")[0]
     : `${item.file_name} ${item.file_type}`;
 
-const ContentItem = ({ item }: { item: any }) => {
+const ContentItem = ({ item, priority = false }: { item: any, priority?: boolean }) => {
   // ✅ SEO FIX: Pre-calculate the URL
   const slug = makeSlug(item.file_name);
   const itemUrl = `/item/${item.id}/${slug}`;
@@ -49,24 +49,27 @@ const ContentItem = ({ item }: { item: any }) => {
         <div className={`relative ${aspect} overflow-hidden`}>
           {item.file_type === "wallpaper" && (
             <img
-              // ⚡ FIX: Optimize grid images to 500px width for speed
-              src={getOptimizedDisplayUrl(item.file_url, 500)}
-              alt={getAltText(item)}
-              loading="lazy"
-              decoding="async"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-            />
+  src={getOptimizedDisplayUrl(item.file_url, 500)}
+  alt={getAltText(item)}
+  loading={priority ? "eager" : "lazy"}
+  // @ts-ignore
+  fetchPriority={priority ? "high" : "auto"}
+  decoding="async"
+  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+/>
           )}
 
           {item.file_type === "video" && (
             <>
               <img
-                src={getVideoThumbnail(item.file_url)}
-                alt={`${item.file_name} video thumbnail`}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover"
-              />
+  src={getVideoThumbnail(item.file_url)}
+  alt={`${item.file_name} video thumbnail`}
+  loading={priority ? "eager" : "lazy"}
+  // @ts-ignore
+  fetchPriority={priority ? "high" : "auto"}
+  decoding="async"
+  className="w-full h-full object-cover"
+/>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-black/50 rounded-full p-3">
                   <Play

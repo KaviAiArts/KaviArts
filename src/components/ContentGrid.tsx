@@ -10,11 +10,15 @@ const ContentGrid = ({ items = [] }: { items?: any[] }) => {
   }
 
   return (
-    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-      {items.map((item) => (
-        <ContentItem key={item.id} item={item} />
-      ))}
-    </div>
+ <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+  {items.map((item, index) => (
+    <ContentItem 
+      key={item.id} 
+      item={item} 
+      priority={index < 6} 
+    />
+  ))}
+</div>
   );
 };
 
