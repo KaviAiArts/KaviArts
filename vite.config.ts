@@ -77,7 +77,7 @@ export default defineConfig(async ({ mode }) => {
       Sitemap({
         hostname: "https://kaviarts.com",
         dynamicRoutes: dynamicRoutes,
-        generateRobotsTxt: true,
+        generateRobotsTxt: false,
         // Optional: Ensure clean XML formatting
         readable: true, 
       }),
