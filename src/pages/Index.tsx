@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Helmet } from "react-helmet-async"; 
+import { Helmet } from "react-helmet-async";
 
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -16,8 +16,7 @@ const ContentItem = lazy(() => import("@/components/ContentItem"));
 /* ------------------------------ */
 
 const SkeletonCard = ({ aspect = "portrait" }: { aspect?: "portrait" | "square" }) => {
-  const ratio =
-    aspect === "square" ? "aspect-square" : "aspect-[9/16]";
+  const ratio = aspect === "square" ? "aspect-square" : "aspect-[9/16]";
 
   return (
     <div className="glass-card overflow-hidden animate-pulse">
@@ -51,8 +50,7 @@ const ContentSection = ({
   skeletonAspect?: "portrait" | "square";
 }) => {
   const targetUrl =
-    `/category/${category}` +
-    (view ? `?view=${view}&from=section` : "");
+    `/category/${category}` + (view ? `?view=${view}&from=section` : "");
 
   return (
     <>
@@ -60,12 +58,13 @@ const ContentSection = ({
       <section className="md:hidden py-4">
         <div className="px-4 flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold">{title}</h2>
-          <button
-            className="border rounded px-3 py-1 text-sm"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => (window.location.href = targetUrl)}
           >
             View All
-          </button>
+          </Button>
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
@@ -87,6 +86,7 @@ const ContentSection = ({
                     style={{ width: "42vw", maxWidth: "190px" }}
                   >
                     {index < 2 ? (
+                      // 🔥 LCP-safe: render immediately
                       <ContentItem item={item} priority />
                     ) : (
                       <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
@@ -104,12 +104,13 @@ const ContentSection = ({
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">{title}</h2>
-            <button
-              className="border rounded px-3 py-1 text-sm"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => (window.location.href = targetUrl)}
             >
               View All
-            </button>
+            </Button>
           </div>
 
           <div className="grid grid-cols-6 gap-3">
@@ -119,6 +120,7 @@ const ContentSection = ({
                 ))
               : items.map((item, index) =>
                   index < 2 ? (
+                    // 🔥 LCP-safe items
                     <ContentItem key={item.id} item={item} priority />
                   ) : (
                     <Suspense
@@ -136,8 +138,6 @@ const ContentSection = ({
   );
 };
 
-
-
 /* ------------------------------ */
 /* MAIN HOMEPAGE                  */
 /* ------------------------------ */
@@ -154,7 +154,6 @@ const Index = () => {
   }, []);
 
   const loadData = async () => {
-    // 1. REMOVED CACHE CHECK TO FORCE FRESH DATA
     setLoading(true);
 
     const { data: newestData } = await supabase
@@ -164,12 +163,11 @@ const Index = () => {
       .order("created_at", { ascending: false })
       .limit(6);
 
-    // This sorts by DOWNLOADS. Since cache is off, it will now show changes instantly.
     const { data: popularData } = await supabase
       .from("files")
       .select("*")
       .eq("file_type", "wallpaper")
-      .order("downloads", { ascending: false }) 
+      .order("downloads", { ascending: false })
       .limit(6);
 
     const { data: ringtoneData } = await supabase
@@ -190,59 +188,34 @@ const Index = () => {
     setPopularWallpapers(popularData || []);
     setRingtones(ringtoneData || []);
     setVideos(videoData || []);
-    
     setLoading(false);
   };
 
   return (
     <div>
-
-
       <Helmet>
-        {/* 1. Basic SEO */}
         <title>KaviArts | Free 4K Wallpapers, Ringtones & Videos</title>
-        <meta 
-          name="description" 
-          content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free. No account required." 
+        <meta
+          name="description"
+          content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free. No account required."
         />
         <link rel="canonical" href="https://kaviarts.com/" />
 
-        {/* 2. Facebook / WhatsApp / Open Graph */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://kaviarts.com" />
         <meta property="og:site_name" content="Kavi Arts" />
         <meta property="og:title" content="KaviArts | Free Media Downloads" />
-        <meta property="og:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
-        
-        {/* 👇 PASTE YOUR NEW IMAGE LINK HERE 👇 */}
-        <meta property="og:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
+        <meta
+          property="og:description"
+          content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free."
+        />
+        <meta
+          property="og:image"
+          content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg"
+        />
 
-        {/* 3. Twitter Cards */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="KaviArts | Free Media Downloads" />
-        <meta name="twitter:description" content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free." />
-        <meta name="twitter:image" content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg" />
-
-        {/* 4. Google Schema (JSON-LD) */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": "Kavi Arts",
-            "url": "https://kaviarts.com",
-            "description": "Free HD wallpapers, ringtones, and aesthetic mobile content.",
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": "https://kaviarts.com/search?q={search_term_string}",
-              "query-input": "required name=search_term_string"
-            }
-          })}
-        </script>
       </Helmet>
-
-
 
       <Header />
 
