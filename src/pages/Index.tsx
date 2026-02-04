@@ -60,13 +60,12 @@ const ContentSection = ({
       <section className="md:hidden py-4">
         <div className="px-4 flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold">{title}</h2>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="border rounded px-3 py-1 text-sm"
             onClick={() => (window.location.href = targetUrl)}
           >
             View All
-          </Button>
+          </button>
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
@@ -81,17 +80,21 @@ const ContentSection = ({
                     <SkeletonCard aspect={skeletonAspect} />
                   </div>
                 ))
-             : items.map((item, index) => (
-    <div
-      key={item.id}
-      className="flex-shrink-0"
-      style={{ width: "42vw", maxWidth: "190px" }}
-    >
-      <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
-        <ContentItem item={item} priority={index < 2} />
-      </Suspense>
-    </div>
-  ))}
+              : items.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="flex-shrink-0"
+                    style={{ width: "42vw", maxWidth: "190px" }}
+                  >
+                    {index < 2 ? (
+                      <ContentItem item={item} priority />
+                    ) : (
+                      <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
+                        <ContentItem item={item} />
+                      </Suspense>
+                    )}
+                  </div>
+                ))}
           </div>
         </div>
       </section>
@@ -101,13 +104,12 @@ const ContentSection = ({
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">{title}</h2>
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="border rounded px-3 py-1 text-sm"
               onClick={() => (window.location.href = targetUrl)}
             >
               View All
-            </Button>
+            </button>
           </div>
 
           <div className="grid grid-cols-6 gap-3">
@@ -115,20 +117,26 @@ const ContentSection = ({
               ? Array.from({ length: skeletonCount }).map((_, i) => (
                   <SkeletonCard key={i} aspect={skeletonAspect} />
                 ))
-              : items.map((item, index) => (
-    <Suspense
-      key={item.id}
-      fallback={<SkeletonCard aspect={skeletonAspect} />}
-    >
-      <ContentItem item={item} priority={index < 6} />
-    </Suspense>
-  ))}
+              : items.map((item, index) =>
+                  index < 2 ? (
+                    <ContentItem key={item.id} item={item} priority />
+                  ) : (
+                    <Suspense
+                      key={item.id}
+                      fallback={<SkeletonCard aspect={skeletonAspect} />}
+                    >
+                      <ContentItem item={item} />
+                    </Suspense>
+                  )
+                )}
           </div>
         </div>
       </section>
     </>
   );
 };
+
+
 
 /* ------------------------------ */
 /* MAIN HOMEPAGE                  */
