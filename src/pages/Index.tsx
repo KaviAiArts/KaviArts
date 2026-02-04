@@ -56,79 +56,89 @@ const ContentSection = ({
 
   return (
     <>
-      {/* MOBILE */}
-      <section className="md:hidden py-4">
-        <div className="px-4 flex justify-between items-center mb-3">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => (window.location.href = targetUrl)}
-          >
-            View All
-          </Button>
-        </div>
 
-        <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-3 px-4 w-max">
-            {loading
-              ? Array.from({ length: skeletonCount }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex-shrink-0"
-                    style={{ width: "42vw", maxWidth: "190px" }}
-                  >
-                    <SkeletonCard aspect={skeletonAspect} />
-                  </div>
-                ))
-             : items.map((item, index) => (
-    <div
-      key={item.id}
-      className="flex-shrink-0"
-      style={{ width: "42vw", maxWidth: "190px" }}
+{/* MOBILE */}
+<section className="md:hidden py-4">
+  <div className="px-4 flex justify-between items-center mb-3">
+    <h2 className="text-xl font-semibold">{title}</h2>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => (window.location.href = targetUrl)}
     >
-      <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
-        <ContentItem item={item} priority={index < 2} />
-      </Suspense>
-    </div>
-  ))}
-          </div>
-        </div>
-      </section>
+      View All
+    </Button>
+  </div>
 
-      {/* DESKTOP */}
-      <section className="hidden md:block py-4">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-xl font-semibold">{title}</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => (window.location.href = targetUrl)}
+  <div className="overflow-x-auto scrollbar-hide">
+    <div className="flex gap-3 px-4 w-max">
+      {loading
+        ? Array.from({ length: skeletonCount }).map((_, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0"
+              style={{ width: "42vw", maxWidth: "190px" }}
             >
-              View All
-            </Button>
-          </div>
+              <SkeletonCard aspect={skeletonAspect} />
+            </div>
+          ))
+        : items.map((item, index) => (
+            <div
+              key={item.id}
+              className="flex-shrink-0"
+              style={{ width: "42vw", maxWidth: "190px" }}
+            >
+              {index < 2 ? (
+                // 🔥 LCP-safe: render immediately (no Suspense)
+                <ContentItem item={item} priority />
+              ) : (
+                <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
+                  <ContentItem item={item} />
+                </Suspense>
+              )}
+            </div>
+          ))}
+    </div>
+  </div>
+</section>
 
-          <div className="grid grid-cols-6 gap-3">
-            {loading
-              ? Array.from({ length: skeletonCount }).map((_, i) => (
-                  <SkeletonCard key={i} aspect={skeletonAspect} />
-                ))
-              : items.map((item, index) => (
-    <Suspense
-      key={item.id}
-      fallback={<SkeletonCard aspect={skeletonAspect} />}
-    >
-      <ContentItem item={item} priority={index < 6} />
-    </Suspense>
-  ))}
-          </div>
-        </div>
-      </section>
-    </>
-  );
-};
+
+     {/* DESKTOP */}
+<section className="hidden md:block py-4">
+  <div className="container mx-auto px-4">
+    <div className="flex justify-between items-center mb-3">
+      <h2 className="text-xl font-semibold">{title}</h2>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => (window.location.href = targetUrl)}
+      >
+        View All
+      </Button>
+    </div>
+
+    <div className="grid grid-cols-6 gap-3">
+      {loading
+        ? Array.from({ length: skeletonCount }).map((_, i) => (
+            <SkeletonCard key={i} aspect={skeletonAspect} />
+          ))
+        : items.map((item, index) =>
+            index < 2 ? (
+              // 🔥 LCP-safe items (no Suspense)
+              <ContentItem key={item.id} item={item} priority />
+            ) : (
+              <Suspense
+                key={item.id}
+                fallback={<SkeletonCard aspect={skeletonAspect} />}
+              >
+                <ContentItem item={item} />
+              </Suspense>
+            )
+          )}
+    </div>
+  </div>
+</section>
+
 
 /* ------------------------------ */
 /* MAIN HOMEPAGE                  */
