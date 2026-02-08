@@ -5,7 +5,7 @@ import {
   PawPrint,
   UserRound,
   Wand2,
-  Bot,
+  Paintbrush,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,7 +15,7 @@ const categories = [
   { label: "Animals", value: "animal", icon: PawPrint },
   { label: "Characters", value: "character", icon: UserRound },
   { label: "Fantasy", value: "fantasy", icon: Wand2 },
-  { label: "Technology", value: "technology", icon: Bot },
+  { label: "Art", value: "art", icon: Paintbrush },
 ];
 
 const CategoryNav = () => {
