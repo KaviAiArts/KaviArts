@@ -5,15 +5,13 @@ import SEO from "@/components/SEO";
 const Privacy = () => (
   <>
     <SEO
-      <title>Privacy Policy | Kavi Arts</title>
-      <meta
-        name="description"
-        content="Privacy Policy for Kavi Arts. Learn how we collect and protect your data."
-      />
-      <meta name="robots" content="noindex, follow" />
+      title="Privacy Policy"
+      description="Privacy Policy for Kavi Arts. Learn how we collect and protect your data."
+      url="https://kaviarts.com/privacy"
     />
 
     <Header />
+
     <main className="container mx-auto px-4 py-10 max-w-3xl">
       <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
 
@@ -50,8 +48,7 @@ const Privacy = () => (
             Third-Party Services
           </h2>
           <p className="leading-relaxed">
-            Third-party services (such as analytics tools or advertising
-            partners) may use cookies in accordance with their own privacy
+            Third-party services may use cookies according to their own privacy
             policies.
           </p>
         </div>
@@ -59,12 +56,11 @@ const Privacy = () => (
         <p className="text-sm border-t pt-4 mt-8">
           By using this website, you consent to this privacy policy.
           <br />
-          <span className="opacity-70">
-            Last Updated: December 2025
-          </span>
+          <span className="opacity-70">Last Updated: December 2025</span>
         </p>
       </section>
     </main>
+
     <Footer />
   </>
 );
