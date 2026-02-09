@@ -73,6 +73,7 @@ export default defineConfig(async ({ mode }) => {
         hostname: "https://kaviarts.com",
         dynamicRoutes: sitemapRoutes,
         readable: true,
+generateRobotsTxt: false
       }),
     ],
 
