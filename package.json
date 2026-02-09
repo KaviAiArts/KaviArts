@@ -3,11 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-
   "engines": {
     "node": ">=20 <21"
   },
-
   "scripts": {
     "dev": "vite",
     "build": "vite-ssg build",
@@ -68,6 +66,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "vite-plugin-ssg": "^0.1.0",
+    "vite-ssg": "^28.3.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
