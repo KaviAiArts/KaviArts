@@ -1,9 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-<<<<<<< HEAD
-import { Helmet } from "react-helmet-async";
-=======
->>>>>>> node20-upgrade
 
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -73,25 +69,13 @@ const ContentSection = ({
           <div className="flex gap-3 px-4 w-max">
             {loading
               ? Array.from({ length: skeletonCount }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex-shrink-0"
-                    style={{ width: "42vw", maxWidth: "190px" }}
-                  >
+                  <div key={i} className="flex-shrink-0" style={{ width: "42vw", maxWidth: "190px" }}>
                     <SkeletonCard aspect={skeletonAspect} />
                   </div>
                 ))
               : items.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="flex-shrink-0"
-                    style={{ width: "42vw", maxWidth: "190px" }}
-                  >
+                  <div key={item.id} className="flex-shrink-0" style={{ width: "42vw", maxWidth: "190px" }}>
                     {index < 2 ? (
-<<<<<<< HEAD
-                      // 🔥 LCP-safe: render immediately
-=======
->>>>>>> node20-upgrade
                       <ContentItem item={item} priority />
                     ) : (
                       <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
@@ -124,19 +108,9 @@ const ContentSection = ({
                 ))
               : items.map((item, index) =>
                   index < 2 ? (
-<<<<<<< HEAD
-                    // 🔥 LCP-safe items
-                    <ContentItem key={item.id} item={item} priority />
-                  ) : (
-                    <Suspense
-                      key={item.id}
-                      fallback={<SkeletonCard aspect={skeletonAspect} />}
-                    >
-=======
                     <ContentItem key={item.id} item={item} priority />
                   ) : (
                     <Suspense key={item.id} fallback={<SkeletonCard aspect={skeletonAspect} />}>
->>>>>>> node20-upgrade
                       <ContentItem item={item} />
                     </Suspense>
                   )
@@ -203,31 +177,6 @@ const Index = () => {
 
   return (
     <div>
-<<<<<<< HEAD
-      <Helmet>
-        <title>KaviArts | Free 4K Wallpapers, Ringtones & Videos</title>
-        <meta
-          name="description"
-          content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free. No account required."
-        />
-        <link rel="canonical" href="https://kaviarts.com/" />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://kaviarts.com" />
-        <meta property="og:site_name" content="Kavi Arts" />
-        <meta property="og:title" content="KaviArts | Free Media Downloads" />
-        <meta
-          property="og:description"
-          content="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free."
-        />
-        <meta
-          property="og:image"
-          content="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg"
-        />
-
-        <meta name="twitter:card" content="summary_large_image" />
-      </Helmet>
-=======
       {/* ✅ HOMEPAGE SEO */}
       <SEO
         title="Free 4K Wallpapers, Ringtones & Videos"
@@ -235,7 +184,6 @@ const Index = () => {
         url="https://kaviarts.com/"
         image="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg"
       />
->>>>>>> node20-upgrade
 
       <Header />
 
