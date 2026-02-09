@@ -1,12 +1,15 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+<<<<<<< HEAD
 import { Helmet } from "react-helmet-async";
+=======
+>>>>>>> node20-upgrade
 
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 
 /* ✅ Lazy load heavy card component */
 const ContentItem = lazy(() => import("@/components/ContentItem"));
@@ -58,13 +61,12 @@ const ContentSection = ({
       <section className="md:hidden py-4">
         <div className="px-4 flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold">{title}</h2>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="border rounded px-3 py-1 text-sm"
             onClick={() => (window.location.href = targetUrl)}
           >
             View All
-          </Button>
+          </button>
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
@@ -86,7 +88,10 @@ const ContentSection = ({
                     style={{ width: "42vw", maxWidth: "190px" }}
                   >
                     {index < 2 ? (
+<<<<<<< HEAD
                       // 🔥 LCP-safe: render immediately
+=======
+>>>>>>> node20-upgrade
                       <ContentItem item={item} priority />
                     ) : (
                       <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
@@ -104,13 +109,12 @@ const ContentSection = ({
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">{title}</h2>
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="border rounded px-3 py-1 text-sm"
               onClick={() => (window.location.href = targetUrl)}
             >
               View All
-            </Button>
+            </button>
           </div>
 
           <div className="grid grid-cols-6 gap-3">
@@ -120,6 +124,7 @@ const ContentSection = ({
                 ))
               : items.map((item, index) =>
                   index < 2 ? (
+<<<<<<< HEAD
                     // 🔥 LCP-safe items
                     <ContentItem key={item.id} item={item} priority />
                   ) : (
@@ -127,6 +132,11 @@ const ContentSection = ({
                       key={item.id}
                       fallback={<SkeletonCard aspect={skeletonAspect} />}
                     >
+=======
+                    <ContentItem key={item.id} item={item} priority />
+                  ) : (
+                    <Suspense key={item.id} fallback={<SkeletonCard aspect={skeletonAspect} />}>
+>>>>>>> node20-upgrade
                       <ContentItem item={item} />
                     </Suspense>
                   )
@@ -193,6 +203,7 @@ const Index = () => {
 
   return (
     <div>
+<<<<<<< HEAD
       <Helmet>
         <title>KaviArts | Free 4K Wallpapers, Ringtones & Videos</title>
         <meta
@@ -216,6 +227,15 @@ const Index = () => {
 
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
+=======
+      {/* ✅ HOMEPAGE SEO */}
+      <SEO
+        title="Free 4K Wallpapers, Ringtones & Videos"
+        description="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free. No account required."
+        url="https://kaviarts.com/"
+        image="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg"
+      />
+>>>>>>> node20-upgrade
 
       <Header />
 

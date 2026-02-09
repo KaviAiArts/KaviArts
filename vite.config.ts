@@ -4,24 +4,14 @@ import path from "path";
 import Sitemap from "vite-plugin-sitemap";
 import { createClient } from "@supabase/supabase-js";
 
-// Helper to match your SEO URL structure (e.g., "It Will Be Okay" -> "it-will-be-okay")
-const slugify = (text: string) => {
-  if (!text) return "";
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')     // Replace spaces with -
-    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-    .replace(/\-\-+/g, '-');  // Replace multiple - with single -
-};
-
 export default defineConfig(async ({ mode }) => {
-  // 1. Load environment variables to connect to Supabase
-  const env = loadEnv(mode, process.cwd(), '');
-  
-  // Start with your static categories
-  const dynamicRoutes = [
+  const env = loadEnv(mode, process.cwd(), "");
+
+  // ------------------------------
+  // STATIC ROUTES (SAFE FOR SSG)
+  // ------------------------------
+  const staticRoutes = [
+    "/",
     "/about",
     "/terms",
     "/privacy",
@@ -29,41 +19,44 @@ export default defineConfig(async ({ mode }) => {
     "/app",
     "/category/wallpaper",
     "/category/ringtone",
-    "/category/video"
+    "/category/video",
   ];
 
-  // 2. Connect to Supabase to fetch your FILES
-  console.log("Generatig Sitemap: Connecting to Supabase...");
-  
+  // ------------------------------
+  // SITEMAP ROUTES
+  // ------------------------------
+  const sitemapRoutes: string[] = [...staticRoutes];
+
+  console.log("📦 Sitemap: Fetching Supabase items…");
+
   try {
     if (env.VITE_SUPABASE_URL && env.VITE_SUPABASE_ANON_KEY) {
-      const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+      const supabase = createClient(
+        env.VITE_SUPABASE_URL,
+        env.VITE_SUPABASE_ANON_KEY
+      );
 
-      // ✅ FIX: Using your exact schema table 'files' and column 'file_name'
-      // We also check public_id to ensure we only list valid files
-      const { data: files, error } = await supabase
-        .from('files') 
-        .select('id, file_name')
-        .order('id', { ascending: false }); // Get newest files first
+      const { data } = await supabase
+        .from("files")
+        .select("id, file_name")
+        .order("id", { ascending: false });
 
-      if (!error && files) {
-        // 3. Convert database files into Sitemap URLs
-        // Format: /item/ID/SLUG
-        const itemRoutes = files.map((file) => {
-          const slug = slugify(file.file_name);
-          return `/item/${file.id}/${slug}`;
+      if (data) {
+        data.forEach((item) => {
+          const slug = item.file_name
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w\-]+/g, "")
+            .replace(/\-\-+/g, "-");
+
+          sitemapRoutes.push(`/item/${item.id}/${slug}`);
         });
-        
-        dynamicRoutes.push(...itemRoutes);
-        console.log(`✅ Successfully added ${itemRoutes.length} items to sitemap from 'files' table.`);
-      } else {
-        console.error("⚠️ Supabase Error:", error?.message);
+
+        console.log(`✅ Sitemap: ${data.length} item URLs added`);
       }
-    } else {
-      console.warn("⚠️ SKIPPING SITEMAP DB FETCH: VITE_SUPABASE_URL or ANON_KEY missing in Environment Variables.");
     }
   } catch (e) {
-    console.error("⚠️ Failed to fetch from Supabase:", e);
+    console.warn("⚠️ Sitemap Supabase fetch skipped:", e);
   }
 
   return {
@@ -74,12 +67,12 @@ export default defineConfig(async ({ mode }) => {
 
     plugins: [
       react(),
+
+      // ✅ SITEMAP (SAFE)
       Sitemap({
         hostname: "https://kaviarts.com",
-        dynamicRoutes: dynamicRoutes,
-        generateRobotsTxt: false,
-        // Optional: Ensure clean XML formatting
-        readable: true, 
+        dynamicRoutes: sitemapRoutes,
+        readable: true,
       }),
     ],
 
@@ -89,23 +82,9 @@ export default defineConfig(async ({ mode }) => {
       },
     },
 
-    optimizeDeps: {
-      include: ["fuse.js"],
-    },
-
     build: {
       cssCodeSplit: true,
       sourcemap: false,
-
-      rollupOptions: {
-        external: [],
-        output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom'],
-            ui: ['@radix-ui/react-slot', 'lucide-react', 'clsx', 'tailwind-merge']
-          },
-        },
-      },
     },
   };
 });
