@@ -68,12 +68,11 @@ export default defineConfig(async ({ mode }) => {
     plugins: [
       react(),
 
-      // ✅ SITEMAP (SAFE)
       Sitemap({
         hostname: "https://kaviarts.com",
         dynamicRoutes: sitemapRoutes,
         readable: true,
-generateRobotsTxt: false
+        generateRobotsTxt: false,
       }),
     ],
 
@@ -86,6 +85,16 @@ generateRobotsTxt: false
     build: {
       cssCodeSplit: true,
       sourcemap: false,
+
+      // ✅ REQUIRED for Cloudflare Pages (sharp is native)
+      rollupOptions: {
+        external: ["sharp"],
+      },
+    },
+
+    // ✅ REQUIRED for vite-ssg SSR phase
+    ssr: {
+      external: ["sharp"],
     },
   };
 });
