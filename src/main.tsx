@@ -1,21 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { ViteSSG } from "vite-plugin-ssg";
+import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 
-export const createApp = ViteSSG(
-  App,
-  { routes: [] },
-  ({ app }) => {
-    // no helmet provider – SSR safe
-  }
-);
-
-if (typeof window !== "undefined") {
-  ReactDOM.createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <BrowserRouter>
       <App />
-    </React.StrictMode>
-  );
-}
+    </BrowserRouter>
+  </React.StrictMode>
+);
