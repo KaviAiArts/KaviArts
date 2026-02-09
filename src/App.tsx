@@ -29,35 +29,25 @@ const ScrollToTop = () => {
 
 const App = () => {
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
-      
-      {/* ⚡ SUSPENSE WRAPPER (Required for Lazy Loading) */}
+
       <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
         <Routes>
-          {/* HOME */}
           <Route path="/" element={<Index />} />
-
-          {/* SEO-friendly item URL */}
           <Route path="/item/:id/:slug?" element={<ItemDetails />} />
-
-          {/* CORE ROUTES */}
           <Route path="/category/:category" element={<CategoryView />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/kavi-control-99" element={<Admin />} />
-
-          {/* SUPPORT ROUTES */}
           <Route path="/about" element={<About />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/app" element={<GetApp />} />
-
-          {/* FALLBACK */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </>
   );
 };
 
