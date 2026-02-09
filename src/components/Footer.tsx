@@ -160,7 +160,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-border mt-10 pt-6 text-center text-sm text-muted-foreground">
-          © 2025 KaviArts. All rights reserved.
+          © 2026 KaviArts. All rights reserved.
         </div>
       </div>
     </footer>

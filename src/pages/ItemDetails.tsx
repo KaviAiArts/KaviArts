@@ -6,24 +6,27 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { supabase } from "@/lib/supabaseClient";
-import { Helmet } from "react-helmet-async";
 import { getOptimizedDisplayUrl } from "@/lib/utils";
 import NotFound from "@/pages/NotFound";
 
-// ✅ UPDATED CLEAN SLUG FUNCTION
+/* ------------------------------ */
+/* SLUG HELPER                    */
+/* ------------------------------ */
 const makeSlug = (text: string) => {
   if (!text) return "";
   return text
-    .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')     // Replace spaces with -
-    .replace(/[^\w\-]+/g, '') // Remove all non-word chars (like ')
-    .replace(/\-\-+/g, '-');  // Replace multiple - with single -
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
 };
 
-// ✅ HELPER: Generates a JPG thumbnail from the Cloudinary Video URL
+/* ------------------------------ */
+/* VIDEO THUMBNAIL HELPER         */
+/* ------------------------------ */
 const getVideoThumbnail = (url: string) => {
   if (!url) return "";
   return url
@@ -34,6 +37,7 @@ const getVideoThumbnail = (url: string) => {
 const ItemDetails = () => {
   const { id, slug } = useParams();
   const navigate = useNavigate();
+
   const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -43,6 +47,7 @@ const ItemDetails = () => {
   useEffect(() => {
     const fetchItem = async () => {
       setLoading(true);
+
       const { data, error } = await supabase
         .from("files")
         .select("*")
@@ -76,14 +81,11 @@ const ItemDetails = () => {
     setDownloading(true);
 
     try {
-      /* ------------------------------------------------------------------
-         1. FILE DOWNLOAD LOGIC (Blob Method - Forces Browser Save)
-      ------------------------------------------------------------------ */
       const response = await fetch(item.file_url);
-      if (!response.ok) throw new Error("Network response was not ok");
-      
+      if (!response.ok) throw new Error("Download failed");
+
       const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -91,28 +93,21 @@ const ItemDetails = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      URL.revokeObjectURL(blobUrl);
 
-      /* ------------------------------------------------------------------
-         2. COUNTER UPDATE LOGIC (Database)
-      ------------------------------------------------------------------ */
-      // This calls the SQL function we fixed in Step 1
-      const { error: rpcError } = await supabase.rpc("increment_downloads", { row_id: item.id });
+      const { error } = await supabase.rpc("increment_downloads", {
+        row_id: item.id,
+      });
 
-      if (rpcError) {
-        console.error("RPC Error:", rpcError);
-      } else {
-        // Only update the UI number if the database save was successful
+      if (!error) {
         setItem((prev: any) => ({
           ...prev,
           downloads: (prev.downloads || 0) + 1,
         }));
       }
-
     } catch (err) {
-      console.error("Download failed:", err);
-      // Fallback: If blob fails, try opening in new tab
-      window.open(item.file_url, '_blank');
+      console.error(err);
+      window.open(item.file_url, "_blank");
     } finally {
       setDownloading(false);
     }
@@ -127,61 +122,43 @@ const ItemDetails = () => {
     setIsPlaying(!isPlaying);
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
   if (!item) return <NotFound />;
 
-  const seoDescription = item.description 
-    ? item.description.slice(0, 160) 
-    : `Download ${item.file_name} for free on KaviArts.`;
+  const canonicalUrl = `https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`;
 
-  const resolutionInfo = item.width && item.height 
-    ? `${item.width}x${item.height} Pixels` 
-    : item.file_type === "wallpaper" ? "High Resolution" : "HD Quality";
+  const seoDescription =
+    item.description?.slice(0, 160) ||
+    `Download ${item.file_name} for free on KaviArts.`;
+
+  const resolutionInfo =
+    item.width && item.height
+      ? `${item.width}x${item.height} Pixels`
+      : item.file_type === "wallpaper"
+      ? "High Resolution"
+      : "HD Quality";
 
   return (
     <div className="min-h-screen bg-background">
-
-
-      <Helmet>
-        {/* 1. Basic SEO */}
-        <title>{`${item.file_name} | Download Free on KaviArts`}</title>
-        <meta name="description" content={seoDescription} />
-        <link rel="canonical" href={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} />
-
-        {/* 2. Open Graph (Facebook/WhatsApp) */}
-        <meta property="og:type" content={item.file_type === 'video' ? 'video.other' : 'website'} />
-        <meta property="og:title" content={item.file_name} />
-        <meta property="og:description" content={seoDescription} />
-        <meta property="og:image" content={item.file_url} />
-        <meta property="og:url" content={`https://kaviarts.com/item/${item.id}/${makeSlug(item.file_name)}`} />
-        <meta property="og:site_name" content="Kavi Arts" />
-
-        {/* 3. Twitter Cards (Large Image) */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={item.file_name} />
-        <meta name="twitter:description" content={seoDescription} />
-        <meta name="twitter:image" content={item.file_url} />
-
-        {/* 4. Google Schema (JSON-LD) - CRITICAL FOR RANKING */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": item.file_type === 'video' ? 'VideoObject' : 'ImageObject',
-            "name": item.file_name,
-            "description": seoDescription,
-            "contentUrl": item.file_url,
-
-            "thumbnailUrl": item.file_type === 'video' ? getVideoThumbnail(item.file_url) : item.file_url,
-
-            "uploadDate": item.created_at || new Date().toISOString(),
-            "author": {
-              "@type": "Organization",
-              "name": "Kavi Arts"
-            }
-          })}
-        </script>
-      </Helmet>
-
+      {/* ✅ ITEM PAGE SEO */}
+      <SEO
+        title={item.file_name}
+        description={seoDescription}
+        url={canonicalUrl}
+        image={
+          item.file_type === "video"
+            ? getVideoThumbnail(item.file_url)
+            : item.file_url
+        }
+        type={item.file_type === "video" ? "video.other" : "website"}
+      />
 
       <Header />
 
@@ -192,21 +169,26 @@ const ItemDetails = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
-            <Badge className="absolute top-3 left-3 z-10 capitalize shadow-md">{item.file_type}</Badge>
-            
+            <Badge className="absolute top-3 left-3 capitalize shadow-md">
+              {item.file_type}
+            </Badge>
+
             {item.file_type === "wallpaper" && (
               <img
                 src={getOptimizedDisplayUrl(item.file_url, 1200)}
-                width={item.width} height={item.height}
+                width={item.width}
+                height={item.height}
                 alt={item.description || item.file_name}
-                className="max-w-full max-h-[70vh] object-contain shadow-md rounded"
+                className="max-w-full max-h-[70vh] object-contain rounded shadow-md"
               />
             )}
 
             {item.file_type === "ringtone" && (
               <>
-                <div className="p-8 bg-secondary rounded-full"><Music className="w-16 h-16 text-primary" /></div>
-                <Button variant="outline" onClick={togglePlay} className="rounded-full px-6 min-w-[140px]">
+                <div className="p-8 bg-secondary rounded-full">
+                  <Music className="w-16 h-16 text-primary" />
+                </div>
+                <Button onClick={togglePlay} variant="outline" className="rounded-full px-6">
                   {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
                   {isPlaying ? "Pause" : "Play Preview"}
                 </Button>
@@ -214,62 +196,58 @@ const ItemDetails = () => {
             )}
 
             {item.file_type === "video" && (
-              <video controls src={item.file_url} className="max-h-[70vh] rounded shadow-md w-full" />
+              <video
+                controls
+                src={item.file_url}
+                className="max-h-[70vh] rounded shadow-md w-full"
+              />
             )}
           </Card>
 
-          <div className="flex flex-col h-full space-y-4">
+          <div className="flex flex-col space-y-4">
             <div>
-                <h1 className="text-3xl font-bold leading-tight">{item.file_name}</h1>
-                
-                <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
-                  <span>{(item.downloads || 0).toLocaleString()} Downloads</span>
-                  <span>•</span>
-                  <span>{resolutionInfo}</span>
-                </div>
-            </div>
-
-            <div className="prose prose-sm dark:prose-invert text-muted-foreground leading-relaxed">
-              <p className="whitespace-pre-wrap font-sans">{item.description || "No description available."}</p>
-            </div>
-
-            {item.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {item.tags.map((tag: string) => (
-                  <span key={tag} className="px-3 py-1 text-xs rounded-full bg-secondary text-secondary-foreground">
-                    #{tag}
-                  </span>
-                ))}
+              <h1 className="text-3xl font-bold">{item.file_name}</h1>
+              <div className="text-sm text-muted-foreground mt-2 flex gap-2">
+                <span>{item.downloads || 0} Downloads</span>
+                <span>•</span>
+                <span>{resolutionInfo}</span>
               </div>
-            )}
+            </div>
+
+            <p className="text-muted-foreground whitespace-pre-wrap">
+              {item.description || "No description available."}
+            </p>
 
             <div className="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
               <Button
-                onClick={() => navigator.share ? navigator.share({ title: item.file_name, url: window.location.href }) : navigator.clipboard.writeText(window.location.href)}
-                className="h-11 px-6 rounded-full border flex-1 sm:flex-none"
                 variant="outline"
+                onClick={() =>
+                  navigator.share
+                    ? navigator.share({ title: item.file_name, url: canonicalUrl })
+                    : navigator.clipboard.writeText(canonicalUrl)
+                }
               >
                 <Share2 className="w-4 h-4 mr-2" /> Share
               </Button>
 
-              <Button 
-                onClick={handleDownload} 
+              <Button
+                onClick={handleDownload}
                 disabled={downloading}
-                className="h-11 px-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
+                className="bg-primary text-primary-foreground"
               >
-                <Download className="w-4 h-4 mr-2" /> 
+                <Download className="w-4 h-4 mr-2" />
                 {downloading ? "Downloading..." : "Download"}
               </Button>
             </div>
 
-            <div className="pt-4 border-t mt-4 flex items-center justify-end text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                   <CheckCircle2 className="w-3 h-3 text-green-500" /> License: Free for Personal Use
-                </span>
+            <div className="pt-4 border-t text-xs text-muted-foreground flex justify-end">
+              <CheckCircle2 className="w-3 h-3 mr-1 text-green-500" />
+              Free for Personal Use
             </div>
           </div>
         </div>
       </main>
+
       <Footer />
     </div>
   );
