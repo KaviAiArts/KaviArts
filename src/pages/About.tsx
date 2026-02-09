@@ -1,17 +1,21 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Helmet } from "react-helmet-async";
+import SEO from "@/components/SEO";
 
 const About = () => (
   <>
     {/* ✅ SEO METADATA (VITE + REACT ROUTER) */}
-    <Helmet>
+
+
+    <SEO
       <title>About Us | Kavi Arts - Wallpapers & Ringtones</title>
       <meta
         name="description"
         content="Learn about Kavi Arts, your source for high-quality, aesthetic wallpapers, ringtones, and creative media for device customization."
       />
-    </Helmet>
+    />
+
+
 
     <Header />
 

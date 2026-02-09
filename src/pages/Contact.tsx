@@ -1,17 +1,20 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Helmet } from "react-helmet-async";
+import SEO from "@/components/SEO";
 
 const Contact = () => (
   <>
     {/* ✅ SEO METADATA (VITE SAFE) */}
-    <Helmet>
+
+
+    <SEO
       <title>Contact Us | Kavi Arts - Get In Touch</title>
       <meta
         name="description"
         content="Reach out to Kavi Arts for feedback, content inquiries, technical support, or copyright removal requests."
       />
-    </Helmet>
+    />
+
 
     <Header />
 

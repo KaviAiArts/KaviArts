@@ -1,17 +1,17 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Helmet } from "react-helmet-async";
+import SEO from "@/components/SEO";
 
 const Privacy = () => (
   <>
-    <Helmet>
+    <SEO
       <title>Privacy Policy | Kavi Arts</title>
       <meta
         name="description"
         content="Privacy Policy for Kavi Arts. Learn how we collect and protect your data."
       />
       <meta name="robots" content="noindex, follow" />
-    </Helmet>
+    />
 
     <Header />
     <main className="container mx-auto px-4 py-10 max-w-3xl">

@@ -1,17 +1,18 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Helmet } from "react-helmet-async";
+import SEO from "@/components/SEO";
 
 const Terms = () => (
   <>
     {/* ✅ SEO METADATA (VITE + REACT ROUTER) */}
-    <Helmet>
+
+    <SEO
       <title>Terms & Conditions | Kavi Arts</title>
       <meta
         name="description"
         content="Terms of Service for Kavi Arts. Read our policies regarding content usage, downloads, and user responsibilities."
       />
-    </Helmet>
+  />
 
     <Header />
 

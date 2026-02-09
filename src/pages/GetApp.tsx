@@ -1,17 +1,19 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Helmet } from "react-helmet-async";
+import SEO from "@/components/SEO";
 
 const GetApp = () => (
   <>
     {/* ✅ SEO METADATA */}
-    <Helmet>
+
+
+   <SEO
       <title>Download App | Kavi Arts - Wallpapers & Ringtones</title>
       <meta
         name="description"
         content="The Kavi Arts mobile app is coming soon. Get ready for exclusive 4K wallpapers, live loops, and custom ringtones directly on your device."
       />
-    </Helmet>
+   />
 
     <Header />
 
