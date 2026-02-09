@@ -1,12 +1,14 @@
-import { ViteSSG } from "vite-plugin-ssg";
+import { ViteSSG } from "vite-ssg";
 import App from "./App";
-import routes from "./routes"; // your react-router config
-import { HelmetProvider } from "react-helmet-async";
+import "./index.css";
 
 export const createApp = ViteSSG(
   App,
-  { routes },
+  {
+    routes: [],
+  },
   ({ app }) => {
-    app.use(HelmetProvider);
+    // ✅ NO HelmetProvider
+    // ✅ NO SSR-unsafe libraries
   }
 );
