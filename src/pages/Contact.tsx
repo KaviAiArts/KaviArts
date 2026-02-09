@@ -4,17 +4,12 @@ import SEO from "@/components/SEO";
 
 const Contact = () => (
   <>
-    {/* ✅ SEO METADATA (VITE SAFE) */}
-
-
+    {/* ✅ SEO METADATA (PROPS-ONLY, SSG SAFE) */}
     <SEO
-      <title>Contact Us | Kavi Arts - Get In Touch</title>
-      <meta
-        name="description"
-        content="Reach out to Kavi Arts for feedback, content inquiries, technical support, or copyright removal requests."
-      />
+      title="Contact Us"
+      description="Reach out to Kavi Arts for feedback, content inquiries, technical support, or copyright removal requests."
+      url="https://kaviarts.com/contact"
     />
-
 
     <Header />
 
@@ -23,7 +18,6 @@ const Contact = () => (
       <h1 className="text-3xl font-bold mb-6">Contact Us</h1>
 
       <section className="space-y-6 text-muted-foreground">
-
         <p className="leading-relaxed">
           We appreciate your interest in Kavi Arts. Whether you have feedback,
           a content request, or a critical inquiry, we're here to help.
@@ -44,7 +38,7 @@ const Contact = () => (
           <p className="mt-2 font-bold text-lg text-primary">
             Email:{" "}
             <a
-              href="mailto:tunezkavi@gmail.com"
+              href="mailto:kavitunez@gmail.com"
               className="underline hover:opacity-80"
             >
               kavitunez@gmail.com
@@ -59,7 +53,8 @@ const Contact = () => (
           </h2>
 
           <p className="leading-relaxed">
-            For <strong>DMCA takedown notices</strong>, <strong>copyright removal</strong>,
+            For <strong>DMCA takedown notices</strong>,{" "}
+            <strong>copyright removal</strong>,
             or official legal inquiries, please include the following details in your email:
           </p>
 
@@ -91,7 +86,7 @@ const Contact = () => (
             </a>
 
             <a
-              href="https://youtube.com/@kavitunez?si=jA1hrHFJsU0WhPf3"
+              href="https://youtube.com/@kavitunez"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
@@ -100,7 +95,6 @@ const Contact = () => (
             </a>
           </p>
         </div>
-
       </section>
     </main>
 

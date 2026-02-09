@@ -4,15 +4,12 @@ import SEO from "@/components/SEO";
 
 const Terms = () => (
   <>
-    {/* ✅ SEO METADATA (VITE + REACT ROUTER) */}
-
+    {/* ✅ SEO METADATA (PROPS-ONLY, SSG SAFE) */}
     <SEO
-      <title>Terms & Conditions | Kavi Arts</title>
-      <meta
-        name="description"
-        content="Terms of Service for Kavi Arts. Read our policies regarding content usage, downloads, and user responsibilities."
-      />
-  />
+      title="Terms & Conditions"
+      description="Terms of Service for Kavi Arts. Read our policies regarding content usage, downloads, and user responsibilities."
+      url="https://kaviarts.com/terms"
+    />
 
     <Header />
 
@@ -20,7 +17,6 @@ const Terms = () => (
       <h1 className="text-3xl font-bold mb-6">Terms & Conditions</h1>
 
       <section className="space-y-6 text-muted-foreground">
-        
         <p className="leading-relaxed text-lg">
           Welcome to Kavi Arts. By accessing this website, you agree to be bound
           by the following terms and conditions. Please read them carefully.
@@ -88,7 +84,6 @@ const Terms = () => (
             </span>
           </p>
         </div>
-
       </section>
     </main>
 

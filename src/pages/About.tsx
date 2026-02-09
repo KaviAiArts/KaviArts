@@ -4,18 +4,12 @@ import SEO from "@/components/SEO";
 
 const About = () => (
   <>
-    {/* ✅ SEO METADATA (VITE + REACT ROUTER) */}
-
-
+    {/* ✅ SEO METADATA (PROPS-ONLY, SSG SAFE) */}
     <SEO
-      <title>About Us | Kavi Arts - Wallpapers & Ringtones</title>
-      <meta
-        name="description"
-        content="Learn about Kavi Arts, your source for high-quality, aesthetic wallpapers, ringtones, and creative media for device customization."
-      />
+      title="About Us"
+      description="Learn about Kavi Arts, your source for high-quality, aesthetic wallpapers, ringtones, and creative media for device customization."
+      url="https://kaviarts.com/about"
     />
-
-
 
     <Header />
 
@@ -24,7 +18,6 @@ const About = () => (
       <h1 className="text-3xl font-bold mb-6">About Kavi Arts</h1>
 
       <section className="space-y-8 text-muted-foreground">
-        
         {/* Intro */}
         <div className="space-y-3">
           <p className="leading-relaxed text-lg">
