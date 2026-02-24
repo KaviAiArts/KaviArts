@@ -45,8 +45,7 @@ const tagMatch = (tags: string[] | null, word: string) => {
 
 const SearchResults = () => {
   const queryParams = useQuery();
-  const rawQuery = queryParams.get("query") || "";
-  const searchWord = normalize(rawQuery);
+const rawQuery = queryParams.get("q") || queryParams.get("query") || "";  const searchWord = normalize(rawQuery);
   const type = queryParams.get("type");
   const customTitle = queryParams.get("title");
 
@@ -105,13 +104,14 @@ const SearchResults = () => {
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => window.history.back()}
-            className="font-semibold"
-          >
-            ← Back
-          </Button>
+         <Button
+  variant="custom"
+  size="sm"
+  onClick={() => window.history.back()}
+  className="neon-btn btn-back"
+>
+  ← Back
+</Button>
 
           <h1 className="text-3xl font-bold">
             {customTitle || `Search results for: ${rawQuery}`}
@@ -131,13 +131,17 @@ const SearchResults = () => {
           <>
             <ContentGrid items={visibleResults} />
 
-            {visibleResults.length < results.length && (
-              <div className="text-center mt-10">
-                <Button variant="outline" onClick={loadMore}>
-                  Load More
-                </Button>
-              </div>
-            )}
+           {visibleResults.length < results.length && (
+  <div className="text-center mt-10">
+    <Button
+      variant="custom"
+className="neon-btn btn-loadmore min-w-[150px]"
+      onClick={loadMore}
+    >
+      Load More
+    </Button>
+  </div>
+)}
           </>
         )}
       </main>

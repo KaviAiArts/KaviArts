@@ -100,15 +100,16 @@ const Header = () => {
         <div className="flex items-center justify-between">
 
           {/* Logo already had aria-label, keeping it */}
+
           <h1
-            onClick={() => navigate("/")}
-            className="text-xl font-bold gradient-text cursor-pointer"
-            role="link"
-            aria-label="Go to homepage"
-            tabIndex={0}
-          >
-            KaviArts
-          </h1>
+  onClick={() => navigate("/")}
+className="site-logo gradient-text cursor-pointer" 
+ role="link"
+  aria-label="Go to homepage"
+  tabIndex={0}
+>
+  KaviArts
+</h1>
 
           <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
             <Input
@@ -120,14 +121,13 @@ const Header = () => {
               onKeyDown={handleKeyDown}
               onFocus={() => query.trim() && setShowDropdown(true)}
               placeholder="Search wallpapers, ringtones..."
-              className="h-12 pr-12 bg-secondary border-border"
+className="h-12 pr-12 bg-secondary border-border header-search focus:outline-none focus:ring-0"
             />
 
             {/* FIX 1: Added aria-label to Desktop Search Button */}
             <button
               onClick={() => performFullSearch()}
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
-              type="button"
+className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border header-search-btn"              type="button"
               aria-label="Search content"
             >
               <Search className="w-4 h-4" />
@@ -144,37 +144,37 @@ const Header = () => {
             />
           </div>
 
-          <nav className="flex items-center gap-2">
-            {/* FIX 2: Added aria-labels to Category Buttons 
-               (Because the text span is hidden on mobile, these become icon-only buttons there) */}
-            
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/category/wallpaper")}
-              aria-label="View Wallpapers"
-            >
-              <Smartphone className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Wallpapers</span>
-            </Button>
+    <nav className="flex items-center gap-2">
+  <Button 
+    variant="custom"
+    onClick={() => navigate("/category/wallpaper")}
+    aria-label="View Wallpapers"
+    className="neon-btn btn-wallpapers" // <-- Add this
+  >
+    <Smartphone className="w-4 h-4" />
+    <span className="hidden md:inline ml-2">Wallpapers</span>
+  </Button>
 
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/category/ringtone")}
-              aria-label="View Ringtones"
-            >
-              <Music className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Ringtones</span>
-            </Button>
+  <Button 
+    variant="custom" 
+    onClick={() => navigate("/category/ringtone")}
+    aria-label="View Ringtones"
+    className="neon-btn btn-ringtones" // <-- Add this
+  >
+    <Music className="w-4 h-4" />
+    <span className="hidden md:inline ml-2">Ringtones</span>
+  </Button>
 
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/category/video")}
-              aria-label="View Videos"
-            >
-              <Video className="w-4 h-4" />
-              <span className="hidden md:inline ml-2">Videos</span>
-            </Button>
-          </nav>
+  <Button 
+    variant="custom"
+    onClick={() => navigate("/category/video")}
+    aria-label="View Videos"
+    className="neon-btn btn-videos" // <-- Add this
+  >
+    <Video className="w-4 h-4" />
+    <span className="hidden md:inline ml-2">Videos</span>
+  </Button>
+</nav>
         </div>
 
         <div className="md:hidden mt-4 relative">
@@ -187,14 +187,13 @@ const Header = () => {
             onKeyDown={handleKeyDown}
             onFocus={() => query.trim() && setShowDropdown(true)}
             placeholder="Search found here..."
-            className="h-12 pr-12 bg-secondary border-border"
+className="h-12 pr-12 bg-secondary border-border header-search focus:outline-none focus:ring-0"
           />
 
           {/* FIX 3: Added aria-label to Mobile Search Button */}
           <button
             onClick={() => performFullSearch()}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border"
-            type="button"
+className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md flex items-center justify-center bg-secondary border border-border header-search-btn"            type="button"
             aria-label="Search content"
           >
             <Search className="w-4 h-4" />

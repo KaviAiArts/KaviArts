@@ -49,69 +49,85 @@ const Footer = () => {
               inspire.
             </p>
 
-            {/* SOCIAL ICONS */}
-            <div className="flex flex-wrap gap-6" aria-label="Social links">
-              <a
-                href="https://www.instagram.com/kavitunez/"
-                target="_blank"
-                className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition"
-                aria-label="KaviArts on Instagram"
-                title="Instagram"
-              >
-                <Instagram className="w-6 h-6 mb-1" aria-hidden="true" />
-                <span className="text-xs">Instagram</span>
-              </a>
+           {/* SOCIAL ICONS */}
+<div className="grid grid-cols-5 text-center gap-2 md:flex md:gap-6">
+  {/* Instagram */}
+  <a
+    href="https://www.instagram.com/kavi_pics/"
+    target="_blank"
+    className="footer-social instagram flex flex-col items-center"
+    aria-label="KaviArts on Instagram"
+    title="Instagram"
+  >
+    <div className="footer-social-circle">
+      <Instagram className="w-5 h-5" aria-hidden="true" />
+    </div>
+    <span className="text-xs">Instagram</span>
+  </a>
 
-              <a
-                href="https://youtube.com/@kavitunez?si=QrbqS0Y9ibD7Cm43"
-                target="_blank"
-                className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition"
-                aria-label="KaviArts on YouTube"
-                title="YouTube"
-              >
-                <Youtube className="w-6 h-6 mb-1" aria-hidden="true" />
-                <span className="text-xs">YouTube</span>
-              </a>
+  {/* YouTube */}
+  <a
+    href="https://youtube.com/@kavitunez?si=QrbqS0Y9ibD7Cm43"
+    target="_blank"
+    className="footer-social youtube flex flex-col items-center"
+    aria-label="KaviArts on YouTube"
+    title="YouTube"
+  >
+    <div className="footer-social-circle">
+      <Youtube className="w-5 h-5" aria-hidden="true" />
+    </div>
+    <span className="text-xs">YouTube</span>
+  </a>
 
-              <a
-                href="https://in.pinterest.com/Kavi_Pics/"
-                target="_blank"
-                className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition"
-                aria-label="KaviArts on Pinterest"
-                title="Pinterest"
-              >
-                <PinterestIcon />
-                <span className="text-xs">Pinterest</span>
-              </a>
+  {/* Pinterest */}
+  <a
+    href="https://in.pinterest.com/Kavi_Pics/"
+    target="_blank"
+    className="footer-social pinterest flex flex-col items-center"
+    aria-label="KaviArts on Pinterest"
+    title="Pinterest"
+  >
+    <div className="footer-social-circle">
+      <PinterestIcon />
+    </div>
+    <span className="text-xs">Pinterest</span>
+  </a>
 
-              <a
-                href="https://open.spotify.com/artist/2Yn6quG4CSQl01LcLPU4yu"
-                target="_blank"
-                className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition"
-                aria-label="Kavi Tunez on Spotify"
-                title="Spotify"
-              >
-                <Music className="w-6 h-6 mb-1" aria-hidden="true" />
-                <span className="text-xs">Spotify</span>
-              </a>
+  {/* Spotify */}
+  <a
+    href="https://open.spotify.com/artist/2Yn6quG4CSQl01LcLPU4yu"
+    target="_blank"
+    className="footer-social spotify flex flex-col items-center"
+    aria-label="Kavi Tunez on Spotify"
+    title="Spotify"
+  >
+    <div className="footer-social-circle">
+      <Music className="w-5 h-5" aria-hidden="true" />
+    </div>
+    <span className="text-xs">Spotify</span>
+  </a>
 
-              <a
-                href="https://music.apple.com/us/artist/kavi-tunez/1826128201"
-                target="_blank"
-                className="flex flex-col items-center text-muted-foreground hover:text-foreground hover:font-semibold transition"
-                aria-label="Kavi Tunez on Apple Music"
-                title="Apple Music"
-              >
-                <Music2 className="w-6 h-6 mb-1" aria-hidden="true" />
-                <span className="text-xs">Apple Music</span>
-              </a>
-            </div>
-          </div>
+  {/* Apple Music */}
+  <a
+    href="https://music.apple.com/us/artist/kavi-tunez/1826128201"
+    target="_blank"
+    className="footer-social apple flex flex-col items-center"
+    aria-label="Kavi Tunez on Apple Music"
+    title="Apple Music"
+  >
+    <div className="footer-social-circle">
+      <Music2 className="w-5 h-5" aria-hidden="true" />
+    </div>
+    <span className="text-xs">Apple Music</span>
+  </a>
+
+</div>
+</div>
 
           {/* POPULAR CATEGORIES */}
           <div>
             <h4 className="font-semibold mb-4">Popular Categories</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground mb-4">
+<ul className="footer-links space-y-2 text-sm mb-4">
               <li>
                 <a href="/search?query=nature&type=wallpaper&title=Nature%20Wallpapers">
                   Nature Wallpapers
@@ -136,7 +152,7 @@ const Footer = () => {
 
             <button
               onClick={scrollToTop}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:font-semibold transition"
+className="footer-back-top flex items-center gap-2 text-sm"
               aria-label="Scroll back to top"
               title="Back to top"
               type="button"
@@ -149,7 +165,7 @@ const Footer = () => {
           {/* SUPPORT */}
           <div>
             <h4 className="font-semibold mb-4">Support</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+<ul className="footer-links space-y-2 text-sm">
               <li><a href="/about">About Us</a></li>
               <li><a href="/terms">Terms & Conditions</a></li>
               <li><a href="/privacy">Privacy Policy</a></li>

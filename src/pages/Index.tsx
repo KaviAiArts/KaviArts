@@ -8,7 +8,8 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 
 /* ✅ Lazy load heavy card component */
-const ContentItem = lazy(() => import("@/components/ContentItem"));
+const ContentItemImport = import("@/components/ContentItem");
+const ContentItem = lazy(() => ContentItemImport);
 
 /* ------------------------------ */
 /* SKELETON CARD (UI ONLY)        */
@@ -58,7 +59,7 @@ const ContentSection = ({
         <div className="px-4 flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold">{title}</h2>
           <button
-            className="border rounded px-3 py-1 text-sm"
+            className="neon-btn btn-viewall border-2 rounded px-3 py-1 text-sm"
             onClick={() => (window.location.href = targetUrl)}
           >
             View All
@@ -73,20 +74,26 @@ const ContentSection = ({
                     <SkeletonCard aspect={skeletonAspect} />
                   </div>
                 ))
+
+
               : items.map((item, index) => (
                   <div key={item.id} className="flex-shrink-0" style={{ width: "42vw", maxWidth: "190px" }}>
-                    {index < 2 ? (
-                      <ContentItem item={item} priority />
-                    ) : (
-                      <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
-                        <ContentItem item={item} />
-                      </Suspense>
-                    )}
+{index === 0 && title === "Newest Wallpapers" ? (
+  <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
+    <ContentItem item={item} priority />
+  </Suspense>
+) : (
+  <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
+    <ContentItem item={item} />
+  </Suspense>
+)}
                   </div>
-                ))}
+                ))
+}
           </div>
         </div>
       </section>
+
 
       {/* DESKTOP */}
       <section className="hidden md:block py-4">
@@ -94,7 +101,7 @@ const ContentSection = ({
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">{title}</h2>
             <button
-              className="border rounded px-3 py-1 text-sm"
+              className="neon-btn btn-viewall border-2 rounded px-3 py-1 text-sm"
               onClick={() => (window.location.href = targetUrl)}
             >
               View All
@@ -106,7 +113,7 @@ const ContentSection = ({
               ? Array.from({ length: skeletonCount }).map((_, i) => (
                   <SkeletonCard key={i} aspect={skeletonAspect} />
                 ))
-              : items.map((item, index) =>
+: (category === "ringtone" ? items : items.slice(0, 6)).map((item, index) =>
                   index < 2 ? (
                     <ContentItem key={item.id} item={item} priority />
                   ) : (
@@ -114,7 +121,8 @@ const ContentSection = ({
                       <ContentItem item={item} />
                     </Suspense>
                   )
-                )}
+                )
+		}
           </div>
         </div>
       </section>
@@ -133,9 +141,15 @@ const Index = () => {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+const lcpImage =
+  newest.length > 0
+    ? newest[0]?.file_url
+    : undefined;
+
+useEffect(() => {
+  ContentItemImport; // preload component
+  loadData();
+}, []);
 
   const loadData = async () => {
     setLoading(true);
@@ -145,14 +159,14 @@ const Index = () => {
       .select("*")
       .eq("file_type", "wallpaper")
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(12);
 
     const { data: popularData } = await supabase
       .from("files")
       .select("*")
       .eq("file_type", "wallpaper")
       .order("downloads", { ascending: false })
-      .limit(6);
+      .limit(12);
 
     const { data: ringtoneData } = await supabase
       .from("files")
@@ -166,7 +180,7 @@ const Index = () => {
       .select("*")
       .eq("file_type", "video")
       .order("downloads", { ascending: false })
-      .limit(6);
+      .limit(12);
 
     setNewest(newestData || []);
     setPopularWallpapers(popularData || []);
@@ -176,30 +190,33 @@ const Index = () => {
   };
 
   return (
-    <div>
+    <div className="home-page">
       {/* ✅ HOMEPAGE SEO */}
       <SEO
         title="Free 4K Wallpapers, Ringtones & Videos"
         description="Download high-quality 4K wallpapers, trending ringtones, and stock videos for free. No account required."
         url="https://kaviarts.com/"
-        image="https://res.cloudinary.com/dbrhsfdle/image/upload/v1768036035/bzptb3m7zdahlmtesvix.jpg"
+image={lcpImage}
       />
 
       <Header />
 
       <main id="main-content">
-        <Hero />
-        <CategoryNav />
+  <div className="hidden md:block">
+    <Hero />
+  </div>
 
-        <ContentSection
-          title="Newest Wallpapers"
-          items={newest}
-          category="wallpaper"
-          view="newest"
-          loading={loading}
-          skeletonCount={6}
-          skeletonAspect="portrait"
-        />
+  <CategoryNav />
+
+<ContentSection
+  title="Newest Wallpapers"
+  items={newest}
+  category="wallpaper"
+  view="newest"
+  loading={loading}
+  skeletonCount={6}
+  skeletonAspect="portrait"
+/>
 
         <ContentSection
           title="Popular Wallpapers"

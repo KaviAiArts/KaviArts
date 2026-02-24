@@ -50,10 +50,11 @@ const CategoryView = () => {
     // Reset page on new category load
     setPage(1); 
 
-    let query = supabase
-      .from("files")
-      .select("*")
-      .eq("file_type", category);
+let query = supabase
+  .from("files")
+  .select("*")
+  .eq("file_type", category)
+  .eq("is_published", true);
 
     // SORTING LOGIC
     if (view === "newest") {
@@ -92,6 +93,29 @@ const CategoryView = () => {
       ? `Popular ${capitalize(category)}s`
       : `${capitalize(category)}s`;
 
+// ✅ Special Section Word Buttons
+const showSpecialWords = from === "section";
+
+let specialWords: string[] = [];
+
+if (showSpecialWords) {
+  if (category === "wallpaper" && view === "newest") {
+    specialWords = ["Minimal", "Aesthetic", "Spiritual", "Flowers"];
+  }
+
+  if (category === "wallpaper" && view === "popular") {
+    specialWords = ["Anime", "Festival", "Design", "3D"];
+  }
+
+  if (category === "ringtone" && view === "popular") {
+    specialWords = ["Love", "Sad", "BGM", "Lofi"];
+  }
+
+  if (category === "video" && view === "popular") {
+    specialWords = ["cinematic", "loop", "status", "animation"];
+  }
+}
+
   const showFilters = from !== "section";
 
   // Determine skeleton shape based on category
@@ -112,45 +136,82 @@ const CategoryView = () => {
   url={`https://kaviarts.com/category/${category}`}
 />
 
+<Header />
 
-
-
-      <Header />
 
       <main className="container mx-auto px-4 py-6">
+
+
+
+<div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+
+  {/* LEFT SIDE */}
+  <div className="flex items-center gap-4">
+    <Button
+      variant="custom"
+      size="sm"
+      onClick={() => navigate(-1)}
+      className="neon-btn btn-back"
+    >
+      <ArrowLeft className="w-4 h-4 mr-2" />
+      Back
+    </Button>
+
+    <h1 className="text-3xl font-bold">{title}</h1>
+  </div>
+
+  {/* RIGHT SIDE */}
+  <div className="flex flex-wrap gap-2">
+
+    {/* Default Newest / Popular */}
+    {showFilters && (
+      <>
         <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4 font-semibold"
+          variant="custom"
+          size="sm"
+          className="neon-btn btn-filter"
+          onClick={() =>
+            navigate(`/category/${category}?view=newest`)
+          }
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
+          Newest
         </Button>
 
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">{title}</h1>
+        <Button
+          variant="custom"
+          size="sm"
+          className="neon-btn btn-filter"
+          onClick={() =>
+            navigate(`/category/${category}?view=popular`)
+          }
+        >
+          Popular
+        </Button>
+      </>
+    )}
 
-          {showFilters && (
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  navigate(`/category/${category}?view=newest`)
-                }
-              >
-                Newest
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  navigate(`/category/${category}?view=popular`)
-                }
-              >
-                Popular
-              </Button>
-            </div>
-          )}
-        </div>
+    {/* Special Word Buttons */}
+    {showSpecialWords &&
+      specialWords.map((word, index) => (
+        <Button
+          key={index}
+          variant="custom"
+          size="sm"
+          className="neon-btn btn-filter"
+          onClick={() =>
+            navigate(
+              `/search?q=${word}&type=${category}&title=${word} ${capitalize(category)}s`
+            )
+          }
+        >
+          {word}
+        </Button>
+      ))}
+
+  </div>
+</div>
+
+
 
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -166,13 +227,13 @@ const CategoryView = () => {
             {/* ✅ 5. Render Load More Button if there are more items hidden */}
             {visibleItems.length < allItems.length && (
               <div className="text-center mt-10">
-                <Button 
-                  variant="outline" 
-                  onClick={loadMore}
-                  className="min-w-[150px]"
-                >
-                  Load More
-                </Button>
+                <Button
+  variant="custom"
+  onClick={loadMore}
+  className="neon-btn btn-loadmore min-w-[150px]"
+>
+  Load More
+</Button>
               </div>
             )}
 

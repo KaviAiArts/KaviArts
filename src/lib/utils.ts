@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 // --- CLOUDINARY HELPERS ---
 
-export const getOptimizedDisplayUrl = (url: string, width = 800) => {
+export const getOptimizedDisplayUrl = (url: string, width = 500) => {
   if (!url || !url.includes("cloudinary")) return url;
   if (url.includes("/video/upload/")) return url;
   

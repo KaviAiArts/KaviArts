@@ -1,8 +1,32 @@
 import { Card } from "@/components/ui/card";
-import { Download, Play, Music } from "lucide-react";
+import { Download, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom"; // ✅ Changed: We use Link instead of useNavigate for SEO
 import { getOptimizedDisplayUrl } from "@/lib/utils";
+
+const ringtoneThumbnails = [
+  "/ringtone-thumbs/1.jpg",
+  "/ringtone-thumbs/2.jpg",
+  "/ringtone-thumbs/3.jpg",
+  "/ringtone-thumbs/4.jpg",
+  "/ringtone-thumbs/5.jpg",
+  "/ringtone-thumbs/6.jpg",
+  "/ringtone-thumbs/7.jpg",
+  "/ringtone-thumbs/8.jpg",
+  "/ringtone-thumbs/9.jpg",
+  "/ringtone-thumbs/10.jpg",
+  "/ringtone-thumbs/11.jpg",
+  "/ringtone-thumbs/12.jpg",
+];
+
+const getThumbnailIndex = (id: number | string) => {
+  const str = id.toString();
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % ringtoneThumbnails.length;
+};
 
 const getVideoThumbnail = (url: string) =>
   url
@@ -48,8 +72,12 @@ const ContentItem = ({ item, priority = false }: { item: any, priority?: boolean
       >
         <div className={`relative ${aspect} overflow-hidden`}>
           {item.file_type === "wallpaper" && (
-            <img
-  src={getOptimizedDisplayUrl(item.file_url, 500)}
+    
+<img
+src={getOptimizedDisplayUrl(item.file_url, priority ? 400 : 500)}
+  width="500"
+  height="888"
+
   alt={getAltText(item)}
   loading={priority ? "eager" : "lazy"}
   // @ts-ignore
@@ -70,44 +98,42 @@ const ContentItem = ({ item, priority = false }: { item: any, priority?: boolean
   decoding="async"
   className="w-full h-full object-cover"
 />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-black/50 rounded-full p-3">
-                  <Play
-                    className="w-8 h-8 text-white fill-white"
-                    aria-hidden="true"
-                  />
-                </div>
-              </div>
+            
             </>
           )}
 
-          {item.file_type === "ringtone" && (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-              <Music
-                className="w-12 h-12 text-primary/80"
-                aria-hidden="true"
-              />
-            </div>
-          )}
+        {item.file_type === "ringtone" && (
+  <img
+    src={ringtoneThumbnails[getThumbnailIndex(item.id)]}
+    alt={`${item.file_name} ringtone thumbnail`}
+    loading={priority ? "eager" : "lazy"}
+    decoding="async"
+    className="w-full h-full object-cover"
+  />
+)}
 
           {/* Hover overlay — unfocusable button */}
           <div
-            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
             aria-hidden="true"
           >
             <Button
               size="sm"
-              className="bg-gradient-primary text-white pointer-events-none" // pointer-events-none prevents button conflict
+className="bg-transparent border border-white text-white hover:bg-white/10 transition-all duration-300 pointer-events-none"
               tabIndex={-1}
             >
-              {item.file_type === "video" ? "Watch" : "Download"}
+{item.file_type === "video"
+  ? "Watch"
+  : item.file_type === "ringtone"
+  ? "Listen"
+  : "Download"}
             </Button>
           </div>
 
           {/* Badge with translucent contrast layer */}
           <div className="absolute top-2 left-2">
             <span
-              className="bg-black/60 text-white text-xs px-2 py-1 rounded-full"
+              className="bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full"
               aria-hidden="true"
             >
               {item.file_type}

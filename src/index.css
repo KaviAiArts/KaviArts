@@ -12,7 +12,6 @@
   }
 
   :root {
-    /* Dark theme base colors */
     --background: 220 20% 8%;
     --foreground: 220 10% 95%;
 
@@ -22,7 +21,6 @@
     --popover: 220 18% 12%;
     --popover-foreground: 220 10% 95%;
 
-    /* Brand colors - Purple/Blue gradient theme */
     --primary: 260 75% 65%;
     --primary-foreground: 220 10% 98%;
     --primary-glow: 280 85% 75%;
@@ -45,71 +43,36 @@
 
     --radius: 0.75rem;
 
-    /* Custom design tokens */
     --gradient-primary: linear-gradient(
       135deg,
       hsl(var(--primary)),
       hsl(var(--primary-glow))
     );
+
     --gradient-card: linear-gradient(
       145deg,
       hsl(var(--card)),
       hsl(220 15% 12%)
     );
+
     --shadow-glow: 0 0 40px hsl(var(--primary) / 0.3);
     --shadow-card: 0 8px 32px hsl(220 20% 5% / 0.4);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    /* Animations */
-    --animate-float: float 6s ease-in-out infinite;
-    --animate-glow: glow 2s ease-in-out infinite alternate;
   }
 
   * {
     @apply border-border;
   }
 
+  body {
+    @apply bg-background text-foreground font-sans;
+    min-height: 100vh;
 
-
-body {
-  @apply bg-background text-foreground font-sans;
-  min-height: 100vh;
-
-  background-image:
-    radial-gradient(
-      circle at 20% 80%,
-      hsl(var(--primary) / 0.15) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 20%,
-      hsl(var(--primary-glow) / 0.15) 0%,
-      transparent 50%
-    );
-}
-
-
-
-  /* Animations */
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
+    background-image:
+      radial-gradient(circle at 20% 80%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, hsl(var(--primary-glow) / 0.15) 0%, transparent 50%);
   }
 
-  @keyframes glow {
-    0% {
-      box-shadow: var(--shadow-glow);
-    }
-    100% {
-      box-shadow: 0 0 60px hsl(var(--primary) / 0.4);
-    }
-  }
-
-  /* Utility styles */
   .gradient-text {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
@@ -122,25 +85,552 @@ body {
     backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--border) / 0.5);
   }
-
-  .hover-lift {
-    transition: var(--transition-smooth);
-  }
-
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-card);
-  }
 }
 
 /* ============================= */
 /* SCROLLBAR FIX                 */
 /* ============================= */
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ===================================================== */
+/* ================= ADMIN STYLES ====================== */
+/* ===================================================== */
+
+.admin-panel input {
+  background: rgba(15,23,42,0.9);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: white;
+}
+.admin-panel input:focus {
+  border: 1px solid #00ffff;
+  box-shadow: 0 0 8px rgba(0,255,255,0.7);
+}
+
+.admin-wallpaper-btn {
+  background: linear-gradient(135deg,#7c3aed,#a855f7) !important;
+  color: white !important;
+  border: 2px solid transparent;
+}
+.admin-wallpaper-btn:hover {
+  border: 2px solid #d580ff;
+  box-shadow: 0 0 10px #d580ff;
+}
+
+.admin-ringtone-btn {
+  background: linear-gradient(135deg,#4f46e5,#9333ea) !important;
+  color: white !important;
+  border: 2px solid transparent;
+}
+.admin-ringtone-btn:hover {
+  border: 2px solid #ff69b4;
+  box-shadow: 0 0 10px #ff69b4;
+}
+
+.admin-video-btn {
+  background: linear-gradient(135deg,#0066cc,#00aaff) !important;
+  color: white !important;
+  border: 2px solid transparent;
+}
+.admin-video-btn:hover {
+  border: 2px solid #66ccff;
+  box-shadow: 0 0 10px #66ccff;
+}
+
+.admin-logout-btn {
+  background: rgba(120,0,0,0.5) !important;
+  border: 1px solid rgba(255,0,0,0.4) !important;
+  color: white !important;
+}
+.admin-logout-btn:hover {
+  border: 1px solid #ff4d4d !important;
+  box-shadow: 0 0 10px rgba(255,77,77,0.8);
+}
+
+.admin-folder {
+  background: rgba(15,23,42,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: 0.25s ease;
+}
+.admin-folder:hover {
+  border: 1px solid #00ffff;
+  box-shadow: 0 0 8px rgba(0,255,255,0.6);
+  transform: translateY(-3px);
+}
+
+/* ===================================================== */
+/* HOMEPAGE SOLID NEON SYSTEM (TIGHT RING STYLE) */
+/* ===================================================== */
+
+ .neon-btn {
+  border: none !important;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  position: relative;
+}
+
+ .neon-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* ===================================================== */
+/* HEADER BUTTONS */
+/* ===================================================== */
+
+ .btn-wallpapers {
+  background: #6a1fb0 !important;
+  color: white !important;
+}
+ .btn-wallpapers:hover {
+  box-shadow:
+    0 0 0 1.5px #d580ff,
+    0 0 18px rgba(213,128,255,0.6),
+    0 0 35px rgba(213,128,255,0.7);
+}
+
+ .btn-ringtones {
+  background: #c026d3 !important;
+  color: white !important;
+}
+ .btn-ringtones:hover {
+  box-shadow:
+    0 0 0 1.5px #ff69b4,
+    0 0 18px rgba(255,105,180,0.6),
+    0 0 35px rgba(255,105,180,0.7);
+}
+
+ .btn-videos {
+  background: #0066cc !important;
+  color: white !important;
+}
+ .btn-videos:hover {
+  box-shadow:
+    0 0 0 1.5px #66ccff,
+    0 0 18px rgba(102,204,255,0.6),
+    0 0 35px rgba(102,204,255,0.7);
+}
+
+/* ===================================================== */
+/* CATEGORY BUTTONS */
+/* ===================================================== */
+
+ .btn-typography {
+  background: #9333ea !important;
+  color: white !important;
+}
+ .btn-typography:hover {
+  box-shadow:
+    0 0 0 1.5px #d8b4fe,
+    0 0 18px rgba(216,180,254,0.6),
+    0 0 35px rgba(216,180,254,0.7);
+}
+
+ .btn-nature {
+  background: #16a34a !important;
+  color: white !important;
+}
+ .btn-nature:hover {
+  box-shadow:
+    0 0 0 1.5px #22c55e,
+    0 0 18px rgba(34,197,94,0.6),
+    0 0 35px rgba(34,197,94,0.7);
+}
+
+ .btn-animal {
+  background: #f59e0b !important;
+  color: white !important;
+}
+ .btn-animal:hover {
+  box-shadow:
+    0 0 0 1.5px #facc15,
+    0 0 18px rgba(250,204,21,0.6),
+    0 0 35px rgba(250,204,21,0.7);
+}
+
+ .btn-character {
+  background: #e11d48 !important;
+  color: white !important;
+}
+ .btn-character:hover {
+  box-shadow:
+    0 0 0 1.5px #fb7185,
+    0 0 18px rgba(251,113,133,0.6),
+    0 0 35px rgba(251,113,133,0.7);
+}
+
+ .btn-fantasy {
+  background: #2563eb !important;
+  color: white !important;
+}
+ .btn-fantasy:hover {
+  box-shadow:
+    0 0 0 1.5px #60a5fa,
+    0 0 18px rgba(96,165,250,0.6),
+    0 0 35px rgba(96,165,250,0.7);
+}
+
+ .btn-artistic {
+  background: #0f766e !important;
+  color: white !important;
+}
+ .btn-artistic:hover {
+  box-shadow:
+    0 0 0 1.5px #2dd4bf,
+    0 0 18px rgba(45,212,191,0.6),
+    0 0 35px rgba(45,212,191,0.7);
+}
+
+/* ===================================================== */
+/* UTILITY BUTTONS */
+/* ===================================================== */
+
+ .btn-viewall {
+  background: #0ea5e9 !important;
+  color: white !important;
+}
+ .btn-viewall:hover {
+  box-shadow:
+    0 0 0 1.5px #38bdf8,
+    0 0 18px rgba(56,189,248,0.6),
+    0 0 35px rgba(56,189,248,0.7);
+}
+
+/* ===================================================== */
+/* SOLID NEON SYSTEM (ALL PAGES) */
+/* ===================================================== */
+
+.neon-btn {
+  border-radius: 999px;
+  transition: all 0.25s ease;
+  color: white;
+}
+
+/* FILTER BUTTONS - Blue */
+.btn-filter {
+  background: #2563eb; /* Solid blue */
+  border: none;
+}
+
+.btn-filter:hover {
+  box-shadow:
+    0 0 0 2px #93c5fd,
+    0 0 20px rgba(37,99,235,0.6),
+    0 0 40px rgba(37,99,235,0.8);
+}
+
+/* LOAD MORE - Green */
+.btn-loadmore {
+  background: #16a34a; /* Solid green */
+  border: none;
+}
+
+.btn-loadmore:hover {
+  box-shadow:
+    0 0 0 2px #86efac,
+    0 0 20px rgba(22,163,74,0.6),
+    0 0 40px rgba(22,163,74,0.8);
+}
+
+/* BACK - Blue */
+.btn-back {
+  background: #2563eb; /* Solid blue */
+  border: none;
+}
+
+.btn-back:hover {
+  box-shadow:
+    0 0 0 2px #93c5fd,
+    0 0 20px rgba(37,99,235,0.6),
+    0 0 40px rgba(37,99,235,0.8);
+}
+
+/* SHARE - Amber */
+.btn-share {
+  background: #f59e0b;
+  border: none;
+}
+
+.btn-share:hover {
+  box-shadow:
+    0 0 0 2px #fcd34d,
+    0 0 20px rgba(245,158,11,0.6),
+    0 0 40px rgba(245,158,11,0.8);
+}
+
+/* DOWNLOAD - Blue */
+.btn-download {
+  background: #2563eb; /* Solid blue */
+  border: none;
+}
+
+.btn-download:hover {
+  box-shadow:
+    0 0 0 2px #93c5fd,
+    0 0 20px rgba(37,99,235,0.6),
+    0 0 40px rgba(37,99,235,0.8);
+}
+
+/* ===================================================== */
+/* FOOTER - BACK TO TOP NEON BUTTON */
+/* ===================================================== */
+
+.footer-back-top {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: transparent;
+  color: rgba(255,255,255,0.75);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.footer-back-top:hover {
+  color: #60a5fa;
+  border: 1px solid #60a5fa;
+  box-shadow:
+    0 0 0 1.5px #60a5fa,
+    0 0 18px rgba(96,165,250,0.6),
+    0 0 35px rgba(96,165,250,0.7);
+  transform: translateY(-2px);
+}
+
+/* ===================================================== */
+/* FOOTER LINKS - SHARP GLOW TEXT */
+/* ===================================================== */
+
+.footer-links a {
+  color: rgba(255,255,255,0.7);
+  transition: all 0.25s ease;
+}
+
+.footer-links a:hover {
+  color: #60a5fa;
+  text-shadow: 0 0 2px #60a5fa;
+}
+
+/* ===================================================== */
+/* HOMEPAGE HEADER SEARCH - MATCH ADMIN STYLE */
+/* ===================================================== */
+
+ .header-search {
+  background: rgba(15,23,42,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  color: white !important;
+  border-radius: 999px !important;
+  transition: all 0.25s ease !important;
+}
+
+ .header-search:hover,
+ .header-search:focus {
+  border: 1px solid #00ffff !important;
+  box-shadow: 0 0 8px rgba(0,255,255,0.7) !important;
+  outline: none !important;
+}
+
+ .header-search-btn:hover {
+  border: 1px solid #00ffff !important;
+  box-shadow: 0 0 8px rgba(0,255,255,0.7) !important;
+}
+
+/* ===================================================== */
+/* HOMEPAGE LOGO - FIXED GRADIENT TEXT */
+/* ===================================================== */
+
+.site-logo {
+  font-size: 1.7rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  line-height: 1.2;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.25);
+  display: inline-block;
+  position: relative;
+  transition: all 0.3s ease;
+
+  /* Keep your gradient text */
+  background-image: var(--gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+
+  /* Permanent INNER edge glow */
+  box-shadow: inset 0 0 14px rgba(255, 0, 255, 0.6);
+
+  background-color: rgba(255,255,255,0.05);
+}
+
+/* Hover ring glow */
+.site-logo:hover {
+  border-color: #ff00ff;
+  box-shadow:
+    inset 0 0 20px rgba(255, 0, 255, 0.9),
+    0 0 14px rgba(0, 255, 255, 0.7);
+}
+
+/* ===================================================== */
+/* FOOTER SOCIAL ICONS - FIXED VERSION */
+/* ===================================================== */
+
+.footer-social {
+  text-decoration: none;
+  transition: all 0.25s ease;
+  color: rgba(255,255,255,0.7);
+}
+
+.footer-social-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.footer-social span {
+  margin-top: 6px;
+  font-size: 12px;
+  transition: all 0.25s ease;
+}
+
+/* ===================================================== */
+/* DIFFERENT BRAND COLORS */
+/* ===================================================== */
+
+/* Instagram */
+.footer-social.instagram:hover .footer-social-circle {
+  border-color: #e1306c;
+  box-shadow:
+    0 0 0 1px #e1306c,
+    0 0 12px rgba(225,48,108,0.6);
+}
+.footer-social.instagram:hover span {
+  color: #e1306c;
+}
+
+/* YouTube */
+.footer-social.youtube:hover .footer-social-circle {
+  border-color: #ff0000;
+  box-shadow:
+    0 0 0 1px #ff0000,
+    0 0 12px rgba(255,0,0,0.6);
+}
+.footer-social.youtube:hover span {
+  color: #ff0000;
+}
+
+/* Pinterest */
+.footer-social.pinterest:hover .footer-social-circle {
+  border-color: #bd081c;
+  box-shadow:
+    0 0 0 1px #bd081c,
+    0 0 12px rgba(189,8,28,0.6);
+}
+.footer-social.pinterest:hover span {
+  color: #bd081c;
+}
+
+/* Spotify */
+.footer-social.spotify:hover .footer-social-circle {
+  border-color: #1db954;
+  box-shadow:
+    0 0 0 1px #1db954,
+    0 0 12px rgba(29,185,84,0.6);
+}
+.footer-social.spotify:hover span {
+  color: #1db954;
+}
+
+/* Apple */
+.footer-social.apple:hover .footer-social-circle {
+  border-color: #ffffff;
+  box-shadow:
+    0 0 0 1px #ffffff,
+    0 0 12px rgba(255,255,255,0.5);
+}
+.footer-social.apple:hover span {
+  color: #ffffff;
+}
+
+.hero-box {
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 0; /* square */
+  padding: 12px 30px;
+  transition: all 0.25s ease;
+}
+
+.hero-box:hover {
+  border: 1px solid #00ffff;
+  box-shadow: 0 0 15px rgba(0,255,255,0.7);
+}
+
+.btn-preview {
+  background: #06b6d4; /* cyan */
+  border: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+.btn-preview:hover {
+  box-shadow:
+    0 0 0 3px #67e8f9,
+    0 0 25px rgba(6,182,212,0.9),
+    0 0 50px rgba(6,182,212,1);
+}
+
+/* ================= ADMIN LOGIN CARD ================= */
+
+.admin-login-card {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: 16px !important;
+  transition: all 0.25s ease !important;
+}
+
+/* Hover + Focus Glow */
+.admin-login-card:hover,
+.admin-login-card:focus-within {
+  border: 1px solid #00ffff !important;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.7) !important;
+}
+
+/* ================= ADMIN LOGIN INPUT ================= */
+
+.admin-login-input {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  color: white !important;
+  border-radius: 999px !important;
+  transition: all 0.25s ease !important;
+}
+
+.admin-login-input:hover,
+.admin-login-input:focus {
+  border: 1px solid #00ffff !important;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.7) !important;
+  outline: none !important;
+}
+
+/* ================= ADMIN LOGIN BUTTON ================= */
+
+.admin-login-btn {
+  background: linear-gradient(90deg, #7c3aed, #8b5cf6);
+  border: none;
+  color: white;
+  transition: all 0.25s ease;
+}
+
+/* Cyan Glow Hover */
+.admin-login-btn:hover {
+  box-shadow:
+    0 0 0 2px #00ffff,
+    0 0 20px rgba(0,255,255,0.6),
+    0 0 40px rgba(0,255,255,0.8);
 }

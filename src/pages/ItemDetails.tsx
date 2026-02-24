@@ -10,6 +10,31 @@ import SEO from "@/components/SEO";
 import { supabase } from "@/lib/supabaseClient";
 import { getOptimizedDisplayUrl } from "@/lib/utils";
 import NotFound from "@/pages/NotFound";
+import ContentGrid from "@/components/ContentGrid";
+
+const ringtoneThumbnails = [
+  "/ringtone-thumbs/1.jpg",
+  "/ringtone-thumbs/2.jpg",
+  "/ringtone-thumbs/3.jpg",
+  "/ringtone-thumbs/4.jpg",
+  "/ringtone-thumbs/5.jpg",
+  "/ringtone-thumbs/6.jpg",
+  "/ringtone-thumbs/7.jpg",
+  "/ringtone-thumbs/8.jpg",
+  "/ringtone-thumbs/9.jpg",
+  "/ringtone-thumbs/10.jpg",
+  "/ringtone-thumbs/11.jpg",
+  "/ringtone-thumbs/12.jpg",
+];
+
+const getThumbnailIndex = (id: number | string) => {
+  const str = id.toString();
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % ringtoneThumbnails.length;
+};
 
 /* ------------------------------ */
 /* SLUG HELPER                    */
@@ -41,8 +66,48 @@ const ItemDetails = () => {
   const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+const [isVideoReady, setIsVideoReady] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+const [similarItems, setSimilarItems] = useState<any[]>([]);
+const [similarPage, setSimilarPage] = useState(0);
+const [hasMoreSimilar, setHasMoreSimilar] = useState(true);
+
+const SIMILAR_LIMIT = 6;
+
+const fetchSimilarItems = async (currentItem: any, page = 0) => {
+  const from = page * SIMILAR_LIMIT;
+  const to = from + SIMILAR_LIMIT - 1;
+
+ let query = supabase
+  .from("files")
+  .select("*")
+  .neq("id", currentItem.id)
+  .eq("file_type", currentItem.file_type) // 🔥 ADD THIS LINE
+  .range(from, to);
+
+  if (Array.isArray(currentItem.tags) && currentItem.tags.length > 0) {
+    query = query.overlaps("tags", currentItem.tags);
+  } else if (currentItem.category) {
+    query = query.eq("category", currentItem.category);
+  }
+
+  const { data } = await query;
+
+  if (data) {
+    if (data.length < SIMILAR_LIMIT) {
+      setHasMoreSimilar(false);
+    }
+
+    if (page === 0) {
+      setSimilarItems(data);
+    } else {
+      setSimilarItems((prev) => [...prev, ...data]);
+    }
+  }
+};
+
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -66,6 +131,14 @@ const ItemDetails = () => {
       }
 
       setItem(data);
+
+setIsVideoPlaying(false);
+setIsVideoReady(false);
+
+setSimilarPage(0);
+setHasMoreSimilar(true);
+await fetchSimilarItems(data, 0);
+
       setLoading(false);
     };
 
@@ -145,6 +218,14 @@ const ItemDetails = () => {
       ? "High Resolution"
       : "HD Quality";
 
+const uploadedDate = item.created_at
+  ? new Date(item.created_at).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+  : null;
+
   return (
     <div className="min-h-screen bg-background">
       {/* ✅ ITEM PAGE SEO */}
@@ -163,9 +244,15 @@ const ItemDetails = () => {
       <Header />
 
       <main className="container mx-auto px-4 py-4">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back
-        </Button>
+        <Button
+  variant="custom"
+size="sm"
+  onClick={() => navigate(-1)}
+  className="neon-btn btn-back mb-4"
+>
+  <ArrowLeft className="w-4 h-4 mr-2" />
+  Back
+</Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
@@ -183,69 +270,174 @@ const ItemDetails = () => {
               />
             )}
 
-            {item.file_type === "ringtone" && (
-              <>
-                <div className="p-8 bg-secondary rounded-full">
-                  <Music className="w-16 h-16 text-primary" />
-                </div>
-                <Button onClick={togglePlay} variant="outline" className="rounded-full px-6">
-                  {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                  {isPlaying ? "Pause" : "Play Preview"}
-                </Button>
-              </>
-            )}
 
-            {item.file_type === "video" && (
-              <video
-                controls
-                src={item.file_url}
-                className="max-h-[70vh] rounded shadow-md w-full"
-              />
-            )}
+{item.file_type === "ringtone" && (
+  <div className="relative w-full max-w-md">
+    <img
+      src={ringtoneThumbnails[getThumbnailIndex(item.id)]}
+      alt={`${item.file_name} ringtone thumbnail`}
+      className="w-full rounded shadow-md"
+    />
+
+    <div className="absolute inset-0 flex items-center justify-center">
+      <Button
+        variant="custom"
+        onClick={togglePlay}
+        className="neon-btn btn-preview relative"
+      >
+        {isPlaying ? (
+          <Pause className="w-4 h-4 mr-2" />
+        ) : (
+          <Play className="w-4 h-4 mr-2" />
+        )}
+        {isPlaying ? "Pause" : "Play Preview"}
+      </Button>
+    </div>
+  </div>
+)}
+
+{item.file_type === "video" && (
+  <div className="relative w-full flex items-center justify-center min-h-[260px]">
+
+    <div className="relative max-h-[70vh]">
+
+      {/* Thumbnail */}
+      <img
+        src={getVideoThumbnail(item.file_url)}
+        alt={`${item.file_name} video thumbnail`}
+        className={`max-h-[70vh] object-contain rounded shadow-md transition-opacity duration-300 ${
+          isVideoPlaying ? "opacity-0" : "opacity-100"
+        }`}
+      />
+
+      {/* Play Button */}
+      {!isVideoPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Button
+            variant="custom"
+            onClick={() => setIsVideoPlaying(true)}
+            className="neon-btn btn-preview"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Play Video
+          </Button>
+        </div>
+      )}
+
+      {/* Video (absolute, prevents layout shift) */}
+      {isVideoPlaying && (
+        <video
+          controls
+          autoPlay
+          preload="metadata"
+          src={item.file_url}
+          className="absolute inset-0 max-h-[70vh] w-full object-contain rounded shadow-md"
+        />
+      )}
+
+    </div>
+  </div>
+)}
           </Card>
 
           <div className="flex flex-col space-y-4">
             <div>
               <h1 className="text-3xl font-bold">{item.file_name}</h1>
-              <div className="text-sm text-muted-foreground mt-2 flex gap-2">
-                <span>{item.downloads || 0} Downloads</span>
-                <span>•</span>
-                <span>{resolutionInfo}</span>
-              </div>
+
+              <div className="text-sm text-muted-foreground mt-2 flex items-center">
+  <span>{item.downloads || 0} Downloads</span>
+  <span className="mx-2">•</span>
+  <span>{resolutionInfo}</span>
+
+  {uploadedDate && (
+    <span className="ml-auto">
+      Uploaded {uploadedDate}
+    </span>
+  )}
+</div>
             </div>
 
             <p className="text-muted-foreground whitespace-pre-wrap">
               {item.description || "No description available."}
             </p>
 
+{Array.isArray(item.tags) && item.tags.length > 0 && (
+  <div className="flex flex-wrap gap-2 pt-3">
+    {item.tags.map((tag: string) => (
+      <Badge
+        key={tag}
+        variant="secondary"
+        className="cursor-pointer hover:scale-105 hover:bg-primary hover:text-primary-foreground transition-all"
+        onClick={() => navigate(`/search?q=${encodeURIComponent(tag)}`)}
+      >
+        #{tag}
+      </Badge>
+    ))}
+  </div>
+)}
+
             <div className="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  navigator.share
-                    ? navigator.share({ title: item.file_name, url: canonicalUrl })
-                    : navigator.clipboard.writeText(canonicalUrl)
-                }
-              >
-                <Share2 className="w-4 h-4 mr-2" /> Share
-              </Button>
+<Button
+  variant="custom"
+  className="neon-btn btn-share"
+  onClick={() =>
+    navigator.share
+      ? navigator.share({ title: item.file_name, url: canonicalUrl })
+      : navigator.clipboard.writeText(canonicalUrl)
+  }
+>
+  <Share2 className="w-4 h-4 mr-2" />
+  Share
+</Button>
 
-              <Button
-                onClick={handleDownload}
-                disabled={downloading}
-                className="bg-primary text-primary-foreground"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {downloading ? "Downloading..." : "Download"}
-              </Button>
+             <Button
+  variant="custom"
+  onClick={handleDownload}
+  disabled={downloading}
+  className="neon-btn btn-download"
+>
+  <Download className="w-4 h-4 mr-2" />
+  {downloading ? "Downloading..." : "Download"}
+</Button>
             </div>
 
-            <div className="pt-4 border-t text-xs text-muted-foreground flex justify-end">
-              <CheckCircle2 className="w-3 h-3 mr-1 text-green-500" />
-              Free for Personal Use
-            </div>
+           <div className="pt-4 border-t text-sm md:text-base text-muted-foreground flex justify-end items-center gap-2">
+  <CheckCircle2 className="w-4 h-4 text-green-500" />
+  <span>
+    Free for personal and social media use with credit. Commercial use requires a license
+  </span>
+</div>
+
           </div>
         </div>
+
+{/* 🔥 SIMILAR ITEMS */}
+{similarItems.length > 0 && (
+  <div className="mt-4">
+    <h2 className="text-2xl font-bold mb-4">
+      Similar Items
+    </h2>
+
+    <ContentGrid items={similarItems} />
+
+    {hasMoreSimilar && (
+      <div className="text-center mt-8">
+        <Button
+  variant="custom"
+className="neon-btn btn-loadmore min-w-[150px]"
+          onClick={async () => {
+            const nextPage = similarPage + 1;
+            setSimilarPage(nextPage);
+            await fetchSimilarItems(item, nextPage);
+          }}
+        >
+          Load More
+        </Button>
+      </div>
+    )}
+  </div>
+)}
+
       </main>
 
       <Footer />

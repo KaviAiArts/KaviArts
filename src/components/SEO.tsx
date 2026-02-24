@@ -64,6 +64,24 @@ export default function SEO({
     }
     canonical.href = url;
 
+// -----------------------------
+// PRELOAD LCP IMAGE
+// -----------------------------
+if (image) {
+  let preload = document.querySelector(
+    'link[rel="preload"][as="image"]'
+  ) as HTMLLinkElement | null;
+
+  if (!preload) {
+    preload = document.createElement("link");
+    preload.rel = "preload";
+    preload.as = "image";
+    document.head.appendChild(preload);
+  }
+
+  preload.href = image;
+}
+
     // -----------------------------
     // OPEN GRAPH
     // -----------------------------
@@ -105,6 +123,31 @@ export default function SEO({
     }
 
     schemaScript.textContent = JSON.stringify(schemaData);
+
+// -----------------------------
+// CLOUDINARY PRECONNECT (LCP boost)
+// -----------------------------
+const addLink = (rel: string, href: string) => {
+  let link = document.querySelector(
+    `link[rel="${rel}"][href="${href}"]`
+  ) as HTMLLinkElement | null;
+
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = rel;
+    link.href = href;
+
+    if (rel === "preconnect") {
+      link.crossOrigin = "anonymous";
+    }
+
+    document.head.appendChild(link);
+  }
+};
+
+addLink("preconnect", "https://res.cloudinary.com");
+addLink("dns-prefetch", "https://res.cloudinary.com");
+
   }, [fullTitle, description, image, url, type]);
 
   return null;
