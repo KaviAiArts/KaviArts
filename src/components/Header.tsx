@@ -36,13 +36,14 @@ const Header = () => {
 
     const q = text.toLowerCase();
 
-    const { data } = await supabase
-      .from("files")
-      .select("*")
-      .or(
-        `file_name.ilike.%${q}%,description.ilike.%${q}%,tags.cs.{${q}}`
-      )
-      .limit(20);
+const { data } = await supabase
+  .from("files")
+  .select("*")
+  .eq("is_published", true)
+  .or(
+    `file_name.ilike.%${q}%,description.ilike.%${q}%,tags.cs.{${q}}`
+  )
+  .limit(20);
 
     let results = data || [];
 

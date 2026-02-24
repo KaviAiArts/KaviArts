@@ -80,11 +80,12 @@ const fetchSimilarItems = async (currentItem: any, page = 0) => {
   const from = page * SIMILAR_LIMIT;
   const to = from + SIMILAR_LIMIT - 1;
 
- let query = supabase
+let query = supabase
   .from("files")
   .select("*")
+  .eq("is_published", true)
   .neq("id", currentItem.id)
-  .eq("file_type", currentItem.file_type) // 🔥 ADD THIS LINE
+  .eq("file_type", currentItem.file_type)
   .range(from, to);
 
   if (Array.isArray(currentItem.tags) && currentItem.tags.length > 0) {
@@ -113,11 +114,12 @@ const fetchSimilarItems = async (currentItem: any, page = 0) => {
     const fetchItem = async () => {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from("files")
-        .select("*")
-        .eq("id", id)
-        .single();
+const { data, error } = await supabase
+  .from("files")
+  .select("*")
+  .eq("id", id)
+  .eq("is_published", true)
+  .single();
 
       if (error || !data) {
         setLoading(false);
