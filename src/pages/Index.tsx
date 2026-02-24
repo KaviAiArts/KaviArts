@@ -158,6 +158,7 @@ useEffect(() => {
       .from("files")
       .select("*")
       .eq("file_type", "wallpaper")
+.eq("is_published", true)
       .order("created_at", { ascending: false })
       .limit(12);
 
@@ -165,6 +166,7 @@ useEffect(() => {
       .from("files")
       .select("*")
       .eq("file_type", "wallpaper")
+.eq("is_published", true)
       .order("downloads", { ascending: false })
       .limit(12);
 
@@ -172,6 +174,7 @@ useEffect(() => {
       .from("files")
       .select("*")
       .eq("file_type", "ringtone")
+.eq("is_published", true)
       .order("downloads", { ascending: false })
       .limit(12);
 
@@ -179,6 +182,7 @@ useEffect(() => {
       .from("files")
       .select("*")
       .eq("file_type", "video")
+.eq("is_published", true)
       .order("downloads", { ascending: false })
       .limit(12);
 
