@@ -143,10 +143,10 @@ if (showSpecialWords) {
 
 
 
-<div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+<div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
 
   {/* LEFT SIDE */}
-  <div className="flex items-center gap-4">
+<div className="flex items-center gap-3 w-full md:w-auto min-w-0">
     <Button
       variant="custom"
       size="sm"
@@ -157,11 +157,14 @@ if (showSpecialWords) {
       Back
     </Button>
 
-    <h1 className="text-3xl font-bold">{title}</h1>
+<h1 className="text-2xl md:text-3xl font-bold whitespace-nowrap overflow-hidden text-ellipsis flex-1">
+  {title}
+</h1>
+
   </div>
 
   {/* RIGHT SIDE */}
-  <div className="flex flex-wrap gap-2">
+<div className="flex flex-wrap gap-2 justify-end w-full md:w-auto">
 
     {/* Default Newest / Popular */}
     {showFilters && (
