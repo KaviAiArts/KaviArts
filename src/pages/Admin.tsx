@@ -205,6 +205,7 @@ const handleLogout = async () => {
             tags,
             file_type: finalType,
             category: finalType,
+is_published: true,
             width: pendingUpload.width ?? null,
             height: pendingUpload.height ?? null,
             format: pendingUpload.format ?? null,
