@@ -30,6 +30,19 @@ const Admin = () => {
   const [pendingUpload, setPendingUpload] = useState<any>(null);
   const [pendingType, setPendingType] = useState<"wallpaper" | "ringtone" | "video" | null>(null);
 
+
+const getImageSize = (file: File) =>
+  new Promise<{ width: number; height: number }>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({
+        width: img.width,
+        height: img.height,
+      });
+    };
+    img.src = URL.createObjectURL(file);
+  });
+
   /* ---------------- AUTH CHECK ---------------- */
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -85,168 +98,317 @@ const handleLogout = async () => {
   window.location.reload();
 };
 
-  /* ---------------- UPLOAD (NEW ITEM) ---------------- */
-  const upload = (preset: string, type: any) => {
-    const widget = (window as any).cloudinary.createUploadWidget(
-      {
-        cloudName: CLOUD_NAME,
-        uploadPreset: preset,
-        multiple: false,
-        resourceType: "auto",
+
+
+/* ---------------- UPLOAD (NEW ITEM - R2) ---------------- */
+
+const uploadToR2 = async (file: File, folder: string) => {
+  const sessionData = await supabase.auth.getSession();
+  const accessToken = sessionData.data.session?.access_token;
+
+  if (!accessToken) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(
+    "https://pmmclhouqwddlcustncs.supabase.co/functions/v1/generate-upload-url",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
       },
-      (error: any, result: any) => {
-        if (!error && result && result.event === "success") {
-          console.log("Upload Info:", result.info);
-          setPendingUpload(result.info);
-          setPendingType(type);
-          setEditItem(null);
-          setModalOpen(true);
-        }
-      }
-    );
-    widget.open();
+      body: JSON.stringify({
+        fileName: file.name,
+        folder,
+        contentType: file.type,
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText);
+  }
+
+  const { signedUrl, key } = await res.json();
+
+  const uploadRes = await fetch(signedUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": file.type,
+    },
+    body: file,
+  });
+
+  if (!uploadRes.ok) {
+    throw new Error("R2 upload failed");
+  }
+
+  return {
+    url: `https://cdn.kaviarts.com/${key}`,
+    key,
   };
+};
+
+
+
+const upload = async (type: "wallpaper" | "ringtone" | "video") => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept =
+    type === "wallpaper"
+      ? "image/*"
+      : type === "video"
+      ? "video/*"
+      : "audio/*";
+
+  input.onchange = () => {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    setPendingUpload({
+      fileObject: file,
+      original_filename: file.name.split(".")[0],
+      format: file.type.split("/")[1],
+      resource_type:
+        type === "video"
+          ? "video"
+          : type === "ringtone"
+          ? "audio"
+          : "image",
+      is_audio: type === "ringtone",
+    });
+
+    setPendingType(type);
+    setEditItem(null);
+    setModalOpen(true);
+  };
+
+  input.click();
+};
+
+
 
   /* ---------------- REPLACE FILE (NEW LOGIC) ---------------- */
-  const replaceFile = (item: any) => {
-    // Select correct preset
-    let preset = PRESET_WALLPAPERS;
-    if (item.file_type === "ringtone") preset = PRESET_RINGTONES;
-    if (item.file_type === "video") preset = PRESET_VIDEOS;
+const replaceFile = async (item: any) => {
+  const input = document.createElement("input");
 
-    const widget = (window as any).cloudinary.createUploadWidget(
-      {
-        cloudName: CLOUD_NAME,
-        uploadPreset: preset,
-        multiple: false,
-        resourceType: "auto",
-      },
-      async (error: any, result: any) => {
-        if (!error && result && result.event === "success") {
-          const info = result.info;
-          try {
-            // Update Supabase immediately
-            const { error: dbError } = await supabase
-              .from("files")
+  input.type = "file";
+  input.accept =
+    item.file_type === "wallpaper"
+      ? "image/*"
+      : item.file_type === "video"
+      ? "video/*"
+      : "audio/*";
 
-  .update({
-  file_name,
-  description,
-  tags,
-  file_type: finalType,
-  category: finalType,
-  is_published: true, // 👈 ADD
-  width: pendingUpload.width ?? null,
-  height: pendingUpload.height ?? null,
-  format: pendingUpload.format ?? null,
-  duration: pendingUpload.duration ?? null,
-})
-
-              .eq("id", item.id);
-
-            if (dbError) throw dbError;
-            alert("File replaced successfully!");
-            fetchFiles();
-          } catch (err: any) {
-            console.error(err);
-            alert("Error replacing file: " + err.message);
-          }
-        }
-      }
-    );
-    widget.open();
-  };
-
-  /* ---------------- SAVE (YOUR ORIGINAL LOGIC RESTORED) ---------------- */
-  const saveItem = async ({ file_name, description, tags }: any) => {
+  input.onchange = async () => {
     try {
-      // CASE 1: Editing an existing item text
-      if (editItem) {
-        const { error } = await supabase
-          .from("files")
-          .update({ file_name, description, tags })
-          .eq("id", editItem.id);
+      const file = input.files?.[0];
+      if (!file) return;
 
-        if (error) throw error;
-        closeAndReset();
-        fetchFiles();
-        return;
-      }
+      let detectedWidth: number | null = null;
+      let detectedHeight: number | null = null;
+      let detectedDuration: number | null = null;
 
-      // CASE 2: Saving a new upload
-      if (!pendingUpload) {
-        alert("No upload found to save.");
-        return;
-      }
-
-      // Your Logic: Determine correct type (Fixing Ringtone/Video issue)
-      const isAudio =
-        pendingType === "ringtone" ||
-        pendingUpload.format === "mp3" ||
-        pendingUpload.is_audio === true ||
-        pendingUpload.audio_codec;
-
-      const finalType = isAudio ? "ringtone" : pendingType;
-
-      // Your Logic: Smart Save (Check Webhook)
-      const { data: existing } = await supabase
-        .from("files")
-        .select("id")
-        .eq("public_id", pendingUpload.public_id)
-        .maybeSingle();
-
-      if (existing) {
-        // UPDATE existing record
-        const { error } = await supabase
-          .from("files")
-          .update({
-            file_name,
-            description,
-            tags,
-            file_type: finalType,
-            category: finalType,
-is_published: true,
-            width: pendingUpload.width ?? null,
-            height: pendingUpload.height ?? null,
-            format: pendingUpload.format ?? null,
-            duration: pendingUpload.duration ?? null,
-          })
-          .eq("id", existing.id);
-
-        if (error) throw error;
-      } else {
-        // INSERT new record
-        const { error } = await supabase.from("files").insert({
-          file_name,
-          description,
-          tags,
-          file_url: pendingUpload.secure_url,
-          public_id: pendingUpload.public_id,
-          file_type: finalType,
-          category: finalType,
-          downloads: 0,
-is_published: true,
-          width: pendingUpload.width ?? null,
-          height: pendingUpload.height ?? null,
-          format: pendingUpload.format ?? null,
-          duration: pendingUpload.duration ?? null,
+      if (file.type.startsWith("image/")) {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        await new Promise<void>((resolve) => {
+          img.onload = () => {
+            detectedWidth = img.naturalWidth;
+            detectedHeight = img.naturalHeight;
+            resolve();
+          };
         });
-
-        if (error) throw error;
       }
 
-      closeAndReset();
+      if (file.type.startsWith("video/")) {
+        const video = document.createElement("video");
+        video.src = URL.createObjectURL(file);
+        await new Promise<void>((resolve) => {
+          video.onloadedmetadata = () => {
+            detectedWidth = video.videoWidth;
+            detectedHeight = video.videoHeight;
+            detectedDuration = video.duration;
+            resolve();
+          };
+        });
+      }
+
+      const upload = await uploadToR2(
+        file,
+        `${item.file_type}s/original`
+      );
+
+      const { error } = await supabase
+        .from("files")
+        .update({
+          file_url: upload.url,
+          file_path_original: upload.key,
+          width: detectedWidth,
+          height: detectedHeight,
+          duration: detectedDuration,
+          format: file.type.split("/")[1],
+        })
+        .eq("id", item.id);
+
+      if (error) throw error;
+
+      toast.success("File replaced successfully ✅");
       fetchFiles();
-    } catch (err: any) {
-      console.error("Save Error:", err);
-      alert("Error saving: " + err.message);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Replace failed ❌");
     }
   };
 
+  input.click();
+};
+
+
+
+  /* ---------------- SAVE (YOUR ORIGINAL LOGIC RESTORED) ---------------- */
+const saveItem = async ({
+  file_name,
+  description,
+  tags,
+  thumbnailFile,
+}: any) => {
+  try {
+
+
+if (editItem) {
+  let thumbKey = editItem.file_path_thumb || null;
+
+  // If new thumbnail selected → upload it
+  if (thumbnailFile) {
+    const upload = await uploadToR2(
+      thumbnailFile,
+      `${editItem.file_type}s/thumb`
+    );
+
+    thumbKey = upload.key;
+  }
+
+  const { error } = await supabase
+    .from("files")
+    .update({
+      file_name,
+      description,
+      tags,
+      file_path_thumb: thumbKey,
+    })
+    .eq("id", editItem.id);
+
+  if (error) throw error;
+
+  toast.success("Item updated successfully ✅");
+
+  closeAndReset();
+  fetchFiles();
+  return;
+}
+
+
+    if (!pendingUpload) {
+      alert("No upload found.");
+      return;
+    }
+
+    const finalType = pendingType;
+
+    // -------- AUTO DETECT WIDTH / HEIGHT / DURATION --------
+    let detectedWidth: number | null = null;
+    let detectedHeight: number | null = null;
+    let detectedDuration: number | null = null;
+
+    const file = pendingUpload.fileObject;
+
+if (file?.type?.startsWith("image/")) {
+  const img = new Image();
+  const objectUrl = URL.createObjectURL(file);
+
+  img.src = objectUrl;
+
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => {
+      detectedWidth = img.naturalWidth;
+      detectedHeight = img.naturalHeight;
+      URL.revokeObjectURL(objectUrl);
+      resolve();
+    };
+    img.onerror = reject;
+  });
+}
+
+    if (file?.type?.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.src = URL.createObjectURL(file);
+      await new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          detectedDuration = video.duration;
+          detectedWidth = video.videoWidth;
+          detectedHeight = video.videoHeight;
+          resolve(true);
+        };
+      });
+    }
+
+    // -------- UPLOAD ORIGINAL --------
+    const originalUpload = await uploadToR2(
+      pendingUpload.fileObject,
+      `${finalType}s/original`
+    );
+
+    // -------- UPLOAD THUMB (optional) --------
+    let thumbUpload = null;
+
+    if (thumbnailFile) {
+      thumbUpload = await uploadToR2(
+        thumbnailFile,
+        `${finalType}s/thumb`
+      );
+    }
+
+    // -------- INSERT DATABASE --------
+    const { error } = await supabase.from("files").insert({
+      file_name,
+      description,
+      tags,
+      file_type: finalType,
+      category: finalType,
+      downloads: 0,
+      is_published: true,
+
+      file_url: originalUpload.url,
+
+      file_path_original: originalUpload.key,
+      file_path_thumb: thumbUpload?.key ?? null,
+
+      width: detectedWidth,
+      height: detectedHeight,
+      duration: detectedDuration,
+      format: file?.type?.split("/")[1] ?? null,
+    });
+
+    if (error) throw error;
+
+    closeAndReset();
+    fetchFiles();
+  } catch (err: any) {
+    console.error("Save Error:", err);
+    alert("Error saving: " + err.message);
+  }
+};
+
+
   /* ---------------- CANCEL / DELETE ---------------- */
   const handleCancelUpload = async () => {
-    if (pendingUpload?.public_id) {
-      await supabase.from("files").delete().eq("public_id", pendingUpload.public_id);
+if (pendingUpload?.original_key)
+{
+await supabase.from("files").delete().eq("file_path_original", pendingUpload.original_key);
       fetchFiles();
     }
     closeAndReset();
@@ -372,21 +534,21 @@ return (
 
   <Button
     className="w-full admin-wallpaper-btn"
-    onClick={() => upload(PRESET_WALLPAPERS, "wallpaper")}
+    onClick={() => upload("wallpaper")}
   >
     Wallpaper
   </Button>
 
   <Button
     className="w-full admin-ringtone-btn"
-    onClick={() => upload(PRESET_RINGTONES, "ringtone")}
+    onClick={() => upload("ringtone")}
   >
     Ringtone
   </Button>
 
   <Button
     className="w-full admin-video-btn"
-    onClick={() => upload(PRESET_VIDEOS, "video")}
+    onClick={() => upload("video")}
   >
     Video
   </Button>

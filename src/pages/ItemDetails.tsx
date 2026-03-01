@@ -54,9 +54,16 @@ const makeSlug = (text: string) => {
 /* ------------------------------ */
 const getVideoThumbnail = (url: string) => {
   if (!url) return "";
-  return url
-    .replace("/video/upload/", "/video/upload/so_0/")
-    .replace(/\.(mp4|webm|mov)$/i, ".jpg");
+
+  // Cloudinary
+  if (url.includes("cloudinary.com")) {
+    return url
+      .replace("/video/upload/", "/video/upload/so_0/")
+      .replace(/\.(mp4|webm|mov)$/i, ".jpg");
+  }
+
+  // R2 → use stored thumbnail path if exists
+  return url; // fallback
 };
 
 const ItemDetails = () => {
@@ -151,42 +158,40 @@ await fetchSimilarItems(data, 0);
     };
   }, [id, slug, navigate]);
 
-  const handleDownload = async () => {
-    if (!item || downloading) return;
-    setDownloading(true);
 
-    try {
-      const response = await fetch(item.file_url);
-      if (!response.ok) throw new Error("Download failed");
 
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
+const handleDownload = async () => {
+  if (!item || downloading) return;
+  setDownloading(true);
 
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = item.file_name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+  try {
+    const link = document.createElement("a");
+    link.href = item.file_url;
+    link.download =
+      item.file_name +
+      (item.format ? "." + item.format : "");
 
-      const { error } = await supabase.rpc("increment_downloads", {
-        row_id: item.id,
-      });
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-      if (!error) {
-        setItem((prev: any) => ({
-          ...prev,
-          downloads: (prev.downloads || 0) + 1,
-        }));
-      }
-    } catch (err) {
-      console.error(err);
-      window.open(item.file_url, "_blank");
-    } finally {
-      setDownloading(false);
-    }
-  };
+    await supabase.rpc("increment_downloads", {
+      row_id: item.id,
+    });
+
+    setItem((prev: any) => ({
+      ...prev,
+      downloads: (prev.downloads || 0) + 1,
+    }));
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setDownloading(false);
+  }
+};
+
+
 
   const togglePlay = () => {
     if (!audioRef.current) {
@@ -264,7 +269,11 @@ size="sm"
 
             {item.file_type === "wallpaper" && (
               <img
-                src={getOptimizedDisplayUrl(item.file_url, 1200)}
+src={
+  item.file_path_thumb
+    ? `https://cdn.kaviarts.com/${item.file_path_thumb}`
+    : getOptimizedDisplayUrl(item.file_url, 1200)
+}
                 width={item.width}
                 height={item.height}
                 alt={item.description || item.file_name}
@@ -305,7 +314,11 @@ size="sm"
 
       {/* Thumbnail */}
       <img
-        src={getVideoThumbnail(item.file_url)}
+src={
+  item.file_path_thumb
+    ? `https://cdn.kaviarts.com/${item.file_path_thumb}`
+    : getVideoThumbnail(item.file_url)
+}
         alt={`${item.file_name} video thumbnail`}
         className={`max-h-[70vh] object-contain rounded shadow-md transition-opacity duration-300 ${
           isVideoPlaying ? "opacity-0" : "opacity-100"
