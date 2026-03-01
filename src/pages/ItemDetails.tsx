@@ -161,34 +161,72 @@ await fetchSimilarItems(data, 0);
 
 
 const handleDownload = async () => {
-  if (!item || downloading) return;
-  setDownloading(true);
+    if (!item || downloading) return;
+    setDownloading(true);
 
-  try {
-    await supabase.rpc("increment_downloads", {
-      row_id: item.id,
-    });
+    try {
+      // 1. Maintain zero-loss for your database stats
+      await supabase.rpc("increment_downloads", {
+        row_id: item.id,
+      });
 
-    setItem((prev: any) => ({
-      ...prev,
-      downloads: (prev.downloads || 0) + 1,
-    }));
+      setItem((prev: any) => ({
+        ...prev,
+        downloads: (prev.downloads || 0) + 1,
+      }));
 
-    // 🔥 FORCE DOWNLOAD USING CONTENT-DISPOSITION TRICK
-    const link = document.createElement("a");
-    link.href = item.file_url;
-    link.setAttribute("download", item.file_name);
-    link.setAttribute("target", "_self");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // 2. Identify storage location
+      const isCloudinary = item.file_url?.includes("cloudinary.com");
 
-  } catch (err) {
-    console.error("Download failed:", err);
-  } finally {
-    setDownloading(false);
-  }
-};
+      if (isCloudinary) {
+        // ☁️ CLOUDINARY LOGIC (Exactly as it was - Zero Loss)
+        const link = document.createElement("a");
+        link.href = getOriginalDownloadUrl(item.file_url, item.file_name);
+        link.download = item.file_name + (item.format ? "." + item.format : "");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // 🟧 CLOUDFLARE R2 LOGIC
+        // THE FIX: Add a unique timestamp so Cloudflare doesn't serve the cached, non-CORS version
+        const cacheBuster = `?t=${new Date().getTime()}`;
+        const fetchUrl = item.file_url.includes('?') 
+          ? `${item.file_url}&t=${new Date().getTime()}`
+          : `${item.file_url}${cacheBuster}`;
+
+        const response = await fetch(fetchUrl, {
+          method: 'GET',
+          headers: {
+            // Force the request to bypass local browser cache as well
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+           throw new Error("Network response failed.");
+        }
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = item.file_name + (item.format ? "." + item.format : "");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      }
+
+    } catch (err) {
+      console.error("Download failed:", err);
+      // Failsafe: if it fails, open in new tab
+      window.open(item.file_url, '_blank');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
 
 
