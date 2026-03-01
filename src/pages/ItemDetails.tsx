@@ -165,16 +165,6 @@ const handleDownload = async () => {
   setDownloading(true);
 
   try {
-    const link = document.createElement("a");
-    link.href = item.file_url;
-    link.download =
-      item.file_name +
-      (item.format ? "." + item.format : "");
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
     await supabase.rpc("increment_downloads", {
       row_id: item.id,
     });
@@ -184,8 +174,17 @@ const handleDownload = async () => {
       downloads: (prev.downloads || 0) + 1,
     }));
 
+    // 🔥 FORCE DOWNLOAD USING CONTENT-DISPOSITION TRICK
+    const link = document.createElement("a");
+    link.href = item.file_url;
+    link.setAttribute("download", item.file_name);
+    link.setAttribute("target", "_self");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
   } catch (err) {
-    console.error(err);
+    console.error("Download failed:", err);
   } finally {
     setDownloading(false);
   }

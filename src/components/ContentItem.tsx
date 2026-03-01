@@ -28,10 +28,24 @@ const getThumbnailIndex = (id: number | string) => {
   return Math.abs(hash) % ringtoneThumbnails.length;
 };
 
-const getVideoThumbnail = (url: string) =>
-  url
-    .replace("/video/upload/", "/video/upload/so_0/")
-    .replace(/\.(mp4|webm|mov)$/i, ".jpg");
+const getVideoThumbnail = (url: string) => {
+  if (!url) return "";
+  // Only apply Cloudinary transformations to Cloudinary URLs
+  if (url.includes("cloudinary.com")) {
+    return url
+      .replace("/video/upload/", "/video/upload/so_0/")
+      .replace(/\.(mp4|webm|mov)$/i, ".jpg");
+  }
+  return url; // Return as-is if it's R2, so it doesn't break
+};
+
+// Helper to safely format the thumbnail URL
+const getSafeThumbnailUrl = (thumbPath: string | null | undefined) => {
+  if (!thumbPath) return null;
+  // If the path already has http in it, use it directly to avoid double URLs
+  if (thumbPath.startsWith("http")) return thumbPath;
+  return `https://cdn.kaviarts.com/${thumbPath}`;
+};
 
 // ✅ UPDATED CLEAN SLUG FUNCTION
 const makeSlug = (text: string) => {
@@ -71,36 +85,44 @@ const ContentItem = ({ item, priority = false }: { item: any, priority?: boolean
         // Removed onClick, role, and tabIndex because Link handles them now
       >
         <div className={`relative ${aspect} overflow-hidden`}>
-          {item.file_type === "wallpaper" && (
-    
-<img
-src={getOptimizedDisplayUrl(item.file_url, priority ? 400 : 500)}
-  width="500"
-  height="888"
 
-  alt={getAltText(item)}
-  loading={priority ? "eager" : "lazy"}
-  // @ts-ignore
-  fetchPriority={priority ? "high" : "auto"}
-  decoding="async"
-  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-/>
+
+
+{item.file_type === "wallpaper" && (
+            <img
+              src={
+                getSafeThumbnailUrl(item.file_path_thumb) || 
+                getOptimizedDisplayUrl(item.file_url, priority ? 400 : 500)
+              }
+              width="500"
+              height="888"
+              alt={getAltText(item)}
+              loading={priority ? "eager" : "lazy"}
+              // @ts-ignore
+              fetchPriority={priority ? "high" : "auto"}
+              decoding="async"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            />
           )}
 
           {item.file_type === "video" && (
             <>
               <img
-  src={getVideoThumbnail(item.file_url)}
-  alt={`${item.file_name} video thumbnail`}
-  loading={priority ? "eager" : "lazy"}
-  // @ts-ignore
-  fetchPriority={priority ? "high" : "auto"}
-  decoding="async"
-  className="w-full h-full object-cover"
-/>
-            
+                src={
+                  getSafeThumbnailUrl(item.file_path_thumb) || 
+                  getVideoThumbnail(item.file_url)
+                }
+                alt={`${item.file_name} video thumbnail`}
+                loading={priority ? "eager" : "lazy"}
+                // @ts-ignore
+                fetchPriority={priority ? "high" : "auto"}
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
             </>
           )}
+
+
 
         {item.file_type === "ringtone" && (
   <img
