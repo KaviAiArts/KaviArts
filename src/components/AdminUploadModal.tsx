@@ -1,8 +1,8 @@
-// AdminUploadModal.tsx
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -32,6 +32,8 @@ const AdminUploadModal = ({
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -46,13 +48,24 @@ const AdminUploadModal = ({
       }
 
       setThumbnailFile(null);
+      setThumbnailPreview(null);
+      setSaving(false);
     }
   }, [open, initialData, pendingUpload]);
 
   if (!open) return null;
 
-  const handleLocalSave = () => {
-    onSave({
+  const isFormValid =
+    title.trim() !== "" &&
+    description.trim() !== "" &&
+    tags.trim() !== "";
+
+  const handleLocalSave = async () => {
+    if (!isFormValid || saving) return;
+
+    setSaving(true);
+
+    await onSave({
       file_name:
         title.trim() || pendingUpload?.original_filename || "Untitled",
       description: description.trim(),
@@ -62,18 +75,21 @@ const AdminUploadModal = ({
         .filter(Boolean),
       thumbnailFile,
     });
+
+    setSaving(false);
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <Card className="p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <Card className="glass-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl rounded-2xl border border-white/10">
+
         <h2 className="text-xl font-bold mb-4">
           {initialData ? "Edit Item" : "Add Details"}
         </h2>
 
-        {/* Preview */}
+        {/* ORIGINAL FILE PREVIEW */}
         {pendingUpload && (
-          <div className="mb-4 rounded-lg overflow-hidden bg-secondary/50 flex items-center justify-center min-h-[150px] border">
+          <div className="mb-4 rounded-xl overflow-hidden bg-muted/40 flex items-center justify-center min-h-[150px] border border-white/10">
             {pendingUpload.resource_type === "image" ? (
               <img
                 src={pendingUpload.secure_url}
@@ -95,52 +111,91 @@ const AdminUploadModal = ({
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-4">
+
+          {/* TITLE */}
           <Input
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            className="admin-login-input"
           />
 
+          {/* TAGS */}
           <Input
             placeholder="Tags (comma separated)"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
+            className="admin-login-input"
           />
 
+          {/* DESCRIPTION (UPDATED STYLING) */}
           <textarea
-className="w-full min-h-[120px] rounded-md border border-gray-300 bg-white text-black px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             placeholder="Description..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            className="w-full min-h-[130px] rounded-xl bg-[rgba(15,23,42,0.9)] border border-white/40 text-white px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,255,255,0.7)]"
           />
 
-          {/* Thumbnail Upload (not for audio) */}
+          {/* THUMBNAIL SECTION */}
           {pendingUpload?.resource_type !== "audio" && (
             <div className="space-y-2">
               <p className="text-sm font-medium">
                 Thumbnail (optional)
               </p>
+
               <Input
                 type="file"
                 accept="image/*"
+                className="admin-login-input"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    setThumbnailFile(e.target.files[0]);
+                    const file = e.target.files[0];
+                    setThumbnailFile(file);
+                    setThumbnailPreview(URL.createObjectURL(file));
                   }
                 }}
               />
+
+              {thumbnailPreview && (
+                <div className="rounded-xl overflow-hidden border border-white/10 mt-2">
+                  <img
+                    src={thumbnailPreview}
+                    alt="Thumbnail Preview"
+                    className="max-h-40 object-contain w-full"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
 
+        {/* ACTION BUTTONS */}
         <div className="flex justify-between mt-6">
-          <Button variant="ghost" onClick={onCancel}>
-            Cancel Upload
+
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            className="rounded-full border border-white/30 hover:border-red-400 hover:shadow-[0_0_10px_rgba(255,77,77,0.8)] transition-all"
+          >
+            Cancel
           </Button>
-          <Button onClick={handleLocalSave}>
-            Save
+
+          <Button
+            onClick={handleLocalSave}
+            disabled={!isFormValid || saving}
+            className="neon-btn btn-download min-w-[110px]"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save"
+            )}
           </Button>
+
         </div>
       </Card>
     </div>
