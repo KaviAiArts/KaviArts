@@ -12,6 +12,27 @@ import { getOptimizedDisplayUrl } from "@/lib/utils";
 import NotFound from "@/pages/NotFound";
 import ContentGrid from "@/components/ContentGrid";
 
+/* ------------------------------ */
+/* ZERO-LOSS STORAGE HELPERS      */
+/* ------------------------------ */
+
+// 1. Forces Cloudinary to trigger a download header
+const getCloudinaryDownloadUrl = (url: string) => {
+  if (!url.includes("cloudinary.com")) return url;
+  return url.replace("/upload/", "/upload/fl_attachment/");
+};
+
+// 2. Returns a playable URL (Public CDN for R2, Direct for Cloudinary)
+const getStreamingUrl = (item: any) => {
+  if (!item) return "";
+  // If R2 path exists, use your public CDN
+  if (item.file_path) {
+    return `https://cdn.kaviarts.com/${item.file_path}`;
+  }
+  // Fallback to the old file_url (Cloudinary)
+  return item.file_url;
+};
+
 const ringtoneThumbnails = [
   "/ringtone-thumbs/1.jpg",
   "/ringtone-thumbs/2.jpg",
@@ -161,83 +182,72 @@ await fetchSimilarItems(data, 0);
 
 
 const handleDownload = async () => {
-    if (!item || downloading) return;
-    setDownloading(true);
+  if (!item || downloading) return;
+  setDownloading(true);
 
-    try {
-      // 1. Maintain zero-loss for your database stats
-      await supabase.rpc("increment_downloads", {
-        row_id: item.id,
+  try {
+    // 1. Database Update (Zero Loss stats)
+    await supabase.rpc("increment_downloads", { row_id: item.id });
+    setItem((prev: any) => ({
+      ...prev,
+      downloads: (prev.downloads || 0) + 1,
+    }));
+
+    const isCloudinary = item.file_url?.includes("cloudinary.com");
+
+    if (isCloudinary) {
+      // ☁️ STRATEGY: CLOUDINARY (Zero Loss SEO)
+      const downloadUrl = getCloudinaryDownloadUrl(item.file_url);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.setAttribute("download", item.file_name);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // 🟧 STRATEGY: CLOUDFLARE R2
+      // Using the Edge Function to get a fresh signed URL for the download
+      const { data, error } = await supabase.functions.invoke('generate-upload-url', {
+        body: { 
+          fileName: item.file_path, 
+          action: 'download' 
+        }
       });
 
-      setItem((prev: any) => ({
-        ...prev,
-        downloads: (prev.downloads || 0) + 1,
-      }));
+      if (error) throw error;
 
-      // 2. Identify storage location
-      const isCloudinary = item.file_url?.includes("cloudinary.com");
+      const response = await fetch(data.url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
 
-      if (isCloudinary) {
-        // ☁️ CLOUDINARY LOGIC (Exactly as it was - Zero Loss)
-        const link = document.createElement("a");
-        link.href = getOriginalDownloadUrl(item.file_url, item.file_name);
-        link.download = item.file_name + (item.format ? "." + item.format : "");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        // 🟧 CLOUDFLARE R2 LOGIC
-        // THE FIX: Add a unique timestamp so Cloudflare doesn't serve the cached, non-CORS version
-        const cacheBuster = `?t=${new Date().getTime()}`;
-        const fetchUrl = item.file_url.includes('?') 
-          ? `${item.file_url}&t=${new Date().getTime()}`
-          : `${item.file_url}${cacheBuster}`;
-
-        const response = await fetch(fetchUrl, {
-          method: 'GET',
-          headers: {
-            // Force the request to bypass local browser cache as well
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        if (!response.ok) {
-           throw new Error("Network response failed.");
-        }
-
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = item.file_name + (item.format ? "." + item.format : "");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-      }
-
-    } catch (err) {
-      console.error("Download failed:", err);
-      // Failsafe: if it fails, open in new tab
-      window.open(item.file_url, '_blank');
-    } finally {
-      setDownloading(false);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = item.file_name + (item.format ? "." + item.format : "");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     }
-  };
+  } catch (err) {
+    console.error("Download failed:", err);
+    window.open(item.file_url, '_blank');
+  } finally {
+    setDownloading(false);
+  }
+};
 
 
 
-  const togglePlay = () => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio(item.file_url);
-      audioRef.current.onended = () => setIsPlaying(false);
-    }
-    isPlaying ? audioRef.current.pause() : audioRef.current.play();
-    setIsPlaying(!isPlaying);
-  };
+const togglePlay = () => {
+  if (!audioRef.current) {
+    // Use the streaming helper
+    audioRef.current = new Audio(getStreamingUrl(item)); 
+    audioRef.current.onended = () => setIsPlaying(false);
+  }
+  isPlaying ? audioRef.current.pause() : audioRef.current.play();
+  setIsPlaying(!isPlaying);
+};
 
   if (loading) {
     return (
@@ -377,15 +387,15 @@ src={
       )}
 
       {/* Video (absolute, prevents layout shift) */}
-      {isVideoPlaying && (
-        <video
-          controls
-          autoPlay
-          preload="metadata"
-          src={item.file_url}
-          className="absolute inset-0 max-h-[70vh] w-full object-contain rounded shadow-md"
-        />
-      )}
+{isVideoPlaying && (
+  <video
+    controls
+    autoPlay
+    preload="metadata"
+    src={getStreamingUrl(item)} // Use the streaming helper
+    className="absolute inset-0 max-h-[70vh] w-full object-contain rounded shadow-md"
+  />
+)}
 
     </div>
   </div>
