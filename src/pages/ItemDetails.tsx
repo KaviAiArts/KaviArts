@@ -314,9 +314,11 @@ const ItemDetails = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
-            <Badge className="absolute top-3 left-3 capitalize shadow-md">
-              {item.file_type}
-            </Badge>
+<Badge className="absolute top-3 left-3 capitalize shadow-md 
+                   z-50 md:z-10 
+                   pointer-events-none">
+  {item.file_type}
+</Badge>
 
             {item.file_type === "wallpaper" && (
               <img
@@ -329,7 +331,7 @@ const ItemDetails = () => {
                 width={item.width}
                 height={item.height}
                 alt={item.description || item.file_name}
-                className="max-w-full max-h-[70vh] object-contain rounded shadow-md"
+className="relative z-0 md:z-auto max-w-full max-h-[70vh] object-contain rounded shadow-md"
               />
             )}
 
@@ -338,7 +340,7 @@ const ItemDetails = () => {
                 <img
                   src={ringtoneThumbnails[getThumbnailIndex(item.id)]}
                   alt={`${item.file_name} ringtone thumbnail`}
-                  className="w-full rounded shadow-md"
+className="relative z-0 md:z-auto w-full rounded shadow-md"
                 />
 
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -372,9 +374,9 @@ const ItemDetails = () => {
                         : getVideoThumbnail(item.file_url)
                     }
                     alt={`${item.file_name} video thumbnail`}
-                    className={`max-h-[70vh] object-contain rounded shadow-md transition-opacity duration-300 ${
-                      isVideoPlaying ? "opacity-0" : "opacity-100"
-                    }`}
+className={`relative z-0 md:z-auto max-h-[70vh] object-contain rounded shadow-md transition-opacity duration-300 ${
+  isVideoPlaying ? "opacity-0" : "opacity-100"
+}`}
                   />
 
                   {/* Play Button */}
