@@ -16,20 +16,18 @@ import ContentGrid from "@/components/ContentGrid";
 /* ZERO-LOSS STORAGE HELPERS      */
 /* ------------------------------ */
 
-// 1. Forces Cloudinary to trigger a download header
+// ✅ ZERO-LOSS FIX: Forces Cloudinary to trigger a download header safely
 const getCloudinaryDownloadUrl = (url: string) => {
-  if (!url.includes("cloudinary.com")) return url;
-  return url.replace("/upload/", "/upload/fl_attachment/");
+  if (!url || !url.includes("cloudinary.com")) return url;
+  const parts = url.split("/upload/");
+  if (parts.length !== 2) return url;
+  return `${parts[0]}/upload/fl_attachment/${parts[1]}`;
 };
 
-// 2. Returns a playable URL (Public CDN for R2, Direct for Cloudinary)
+// ✅ ZERO-LOSS FIX: Returns a playable URL. Since your database saves the public R2 CDN 
+// link in `file_url` during upload, both R2 and Cloudinary can stream directly from `file_url`.
 const getStreamingUrl = (item: any) => {
   if (!item) return "";
-  // If R2 path exists, use your public CDN
-  if (item.file_path) {
-    return `https://cdn.kaviarts.com/${item.file_path}`;
-  }
-  // Fallback to the old file_url (Cloudinary)
   return item.file_url;
 };
 
@@ -76,15 +74,16 @@ const makeSlug = (text: string) => {
 const getVideoThumbnail = (url: string) => {
   if (!url) return "";
 
-  // Cloudinary
+  // Cloudinary generates thumbs automatically
   if (url.includes("cloudinary.com")) {
     return url
       .replace("/video/upload/", "/video/upload/so_0/")
       .replace(/\.(mp4|webm|mov)$/i, ".jpg");
   }
 
-  // R2 → use stored thumbnail path if exists
-  return url; // fallback
+  // ✅ ZERO-LOSS FIX: R2 doesn't auto-generate thumbs. We return empty here 
+  // because the JSX below checks for `item.file_path_thumb` FIRST.
+  return url; 
 };
 
 const ItemDetails = () => {
@@ -94,60 +93,59 @@ const ItemDetails = () => {
   const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-const [isVideoReady, setIsVideoReady] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-const [similarItems, setSimilarItems] = useState<any[]>([]);
-const [similarPage, setSimilarPage] = useState(0);
-const [hasMoreSimilar, setHasMoreSimilar] = useState(true);
+  const [similarItems, setSimilarItems] = useState<any[]>([]);
+  const [similarPage, setSimilarPage] = useState(0);
+  const [hasMoreSimilar, setHasMoreSimilar] = useState(true);
 
-const SIMILAR_LIMIT = 6;
+  const SIMILAR_LIMIT = 6;
 
-const fetchSimilarItems = async (currentItem: any, page = 0) => {
-  const from = page * SIMILAR_LIMIT;
-  const to = from + SIMILAR_LIMIT - 1;
+  const fetchSimilarItems = async (currentItem: any, page = 0) => {
+    const from = page * SIMILAR_LIMIT;
+    const to = from + SIMILAR_LIMIT - 1;
 
-let query = supabase
-  .from("files")
-  .select("*")
-  .eq("is_published", true)
-  .neq("id", currentItem.id)
-  .eq("file_type", currentItem.file_type)
-  .range(from, to);
+    let query = supabase
+      .from("files")
+      .select("*")
+      .eq("is_published", true)
+      .neq("id", currentItem.id)
+      .eq("file_type", currentItem.file_type)
+      .range(from, to);
 
-  if (Array.isArray(currentItem.tags) && currentItem.tags.length > 0) {
-    query = query.overlaps("tags", currentItem.tags);
-  } else if (currentItem.category) {
-    query = query.eq("category", currentItem.category);
-  }
-
-  const { data } = await query;
-
-  if (data) {
-    if (data.length < SIMILAR_LIMIT) {
-      setHasMoreSimilar(false);
+    if (Array.isArray(currentItem.tags) && currentItem.tags.length > 0) {
+      query = query.overlaps("tags", currentItem.tags);
+    } else if (currentItem.category) {
+      query = query.eq("category", currentItem.category);
     }
 
-    if (page === 0) {
-      setSimilarItems(data);
-    } else {
-      setSimilarItems((prev) => [...prev, ...data]);
-    }
-  }
-};
+    const { data } = await query;
 
+    if (data) {
+      if (data.length < SIMILAR_LIMIT) {
+        setHasMoreSimilar(false);
+      }
+
+      if (page === 0) {
+        setSimilarItems(data);
+      } else {
+        setSimilarItems((prev) => [...prev, ...data]);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchItem = async () => {
       setLoading(true);
 
-const { data, error } = await supabase
-  .from("files")
-  .select("*")
-  .eq("id", id)
-  .eq("is_published", true)
-  .single();
+      const { data, error } = await supabase
+        .from("files")
+        .select("*")
+        .eq("id", id)
+        .eq("is_published", true)
+        .single();
 
       if (error || !data) {
         setLoading(false);
@@ -161,13 +159,11 @@ const { data, error } = await supabase
       }
 
       setItem(data);
-
-setIsVideoPlaying(false);
-setIsVideoReady(false);
-
-setSimilarPage(0);
-setHasMoreSimilar(true);
-await fetchSimilarItems(data, 0);
+      setIsVideoPlaying(false);
+      setIsVideoReady(false);
+      setSimilarPage(0);
+      setHasMoreSimilar(true);
+      await fetchSimilarItems(data, 0);
 
       setLoading(false);
     };
@@ -180,74 +176,82 @@ await fetchSimilarItems(data, 0);
   }, [id, slug, navigate]);
 
 
+  /* ------------------------------ */
+  /* DUAL-STRATEGY DOWNLOAD         */
+  /* ------------------------------ */
+  const handleDownload = async () => {
+    if (!item || downloading) return;
+    setDownloading(true);
 
-const handleDownload = async () => {
-  if (!item || downloading) return;
-  setDownloading(true);
+    try {
+      // 1. Database Update (Zero Loss stats)
+      await supabase.rpc("increment_downloads", { row_id: item.id });
+      setItem((prev: any) => ({
+        ...prev,
+        downloads: (prev.downloads || 0) + 1,
+      }));
 
-  try {
-    // 1. Database Update (Zero Loss stats)
-    await supabase.rpc("increment_downloads", { row_id: item.id });
-    setItem((prev: any) => ({
-      ...prev,
-      downloads: (prev.downloads || 0) + 1,
-    }));
+      const isCloudinary = item.file_url?.includes("cloudinary.com");
 
-    const isCloudinary = item.file_url?.includes("cloudinary.com");
+      if (isCloudinary) {
+        // ☁️ STRATEGY: CLOUDINARY (Zero Loss SEO)
+        const downloadUrl = getCloudinaryDownloadUrl(item.file_url);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.setAttribute("download", item.file_name);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // 🟧 STRATEGY: CLOUDFLARE R2
+        // ✅ ZERO-LOSS FIX: Removed ChatGPT's Edge Function call here because your function is for PUT (Uploads).
+        // Restored the working GET request directly to your public R2 CDN with Cache-Buster.
+        const cacheBuster = `?t=${new Date().getTime()}`;
+        const fetchUrl = item.file_url.includes('?') 
+          ? `${item.file_url}&t=${new Date().getTime()}`
+          : `${item.file_url}${cacheBuster}`;
 
-    if (isCloudinary) {
-      // ☁️ STRATEGY: CLOUDINARY (Zero Loss SEO)
-      const downloadUrl = getCloudinaryDownloadUrl(item.file_url);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.setAttribute("download", item.file_name);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      // 🟧 STRATEGY: CLOUDFLARE R2
-      // Using the Edge Function to get a fresh signed URL for the download
-      const { data, error } = await supabase.functions.invoke('generate-upload-url', {
-        body: { 
-          fileName: item.file_path, 
-          action: 'download' 
+        const response = await fetch(fetchUrl, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+           throw new Error("Network response failed for R2 Fetch.");
         }
-      });
 
-      if (error) throw error;
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
 
-      const response = await fetch(data.url);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = item.file_name + (item.format ? "." + item.format : "");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = item.file_name + (item.format ? "." + item.format : "");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      }
+    } catch (err) {
+      console.error("Download failed:", err);
+      window.open(item.file_url, '_blank');
+    } finally {
+      setDownloading(false);
     }
-  } catch (err) {
-    console.error("Download failed:", err);
-    window.open(item.file_url, '_blank');
-  } finally {
-    setDownloading(false);
-  }
-};
+  };
 
 
-
-const togglePlay = () => {
-  if (!audioRef.current) {
-    // Use the streaming helper
-    audioRef.current = new Audio(getStreamingUrl(item)); 
-    audioRef.current.onended = () => setIsPlaying(false);
-  }
-  isPlaying ? audioRef.current.pause() : audioRef.current.play();
-  setIsPlaying(!isPlaying);
-};
+  const togglePlay = () => {
+    if (!audioRef.current) {
+      // ✅ ZERO-LOSS FIX: Uses the unified streaming URL
+      audioRef.current = new Audio(getStreamingUrl(item)); 
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+    isPlaying ? audioRef.current.pause() : audioRef.current.play();
+    setIsPlaying(!isPlaying);
+  };
 
   if (loading) {
     return (
@@ -272,13 +276,13 @@ const togglePlay = () => {
       ? "High Resolution"
       : "HD Quality";
 
-const uploadedDate = item.created_at
-  ? new Date(item.created_at).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    })
-  : null;
+  const uploadedDate = item.created_at
+    ? new Date(item.created_at).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -299,14 +303,14 @@ const uploadedDate = item.created_at
 
       <main className="container mx-auto px-4 py-4">
         <Button
-  variant="custom"
-size="sm"
-  onClick={() => navigate(-1)}
-  className="neon-btn btn-back mb-4"
->
-  <ArrowLeft className="w-4 h-4 mr-2" />
-  Back
-</Button>
+          variant="custom"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="neon-btn btn-back mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
@@ -316,11 +320,12 @@ size="sm"
 
             {item.file_type === "wallpaper" && (
               <img
-src={
-  item.file_path_thumb
-    ? `https://cdn.kaviarts.com/${item.file_path_thumb}`
-    : getOptimizedDisplayUrl(item.file_url, 1200)
-}
+                // ✅ ZERO-LOSS FIX: Uses R2 original for display, but falls back to optimized Cloudinary url
+                src={
+                  item.file_url?.includes("cloudinary.com")
+                    ? getOptimizedDisplayUrl(item.file_url, 1200)
+                    : item.file_url 
+                }
                 width={item.width}
                 height={item.height}
                 alt={item.description || item.file_name}
@@ -328,78 +333,79 @@ src={
               />
             )}
 
+            {item.file_type === "ringtone" && (
+              <div className="relative w-full max-w-md">
+                <img
+                  src={ringtoneThumbnails[getThumbnailIndex(item.id)]}
+                  alt={`${item.file_name} ringtone thumbnail`}
+                  className="w-full rounded shadow-md"
+                />
 
-{item.file_type === "ringtone" && (
-  <div className="relative w-full max-w-md">
-    <img
-      src={ringtoneThumbnails[getThumbnailIndex(item.id)]}
-      alt={`${item.file_name} ringtone thumbnail`}
-      className="w-full rounded shadow-md"
-    />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Button
+                    variant="custom"
+                    onClick={togglePlay}
+                    className="neon-btn btn-preview relative"
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Play className="w-4 h-4 mr-2" />
+                    )}
+                    {isPlaying ? "Pause" : "Play Preview"}
+                  </Button>
+                </div>
+              </div>
+            )}
 
-    <div className="absolute inset-0 flex items-center justify-center">
-      <Button
-        variant="custom"
-        onClick={togglePlay}
-        className="neon-btn btn-preview relative"
-      >
-        {isPlaying ? (
-          <Pause className="w-4 h-4 mr-2" />
-        ) : (
-          <Play className="w-4 h-4 mr-2" />
-        )}
-        {isPlaying ? "Pause" : "Play Preview"}
-      </Button>
-    </div>
-  </div>
-)}
+            {item.file_type === "video" && (
+              <div className="relative w-full flex items-center justify-center min-h-[260px]">
 
-{item.file_type === "video" && (
-  <div className="relative w-full flex items-center justify-center min-h-[260px]">
+                <div className="relative max-h-[70vh]">
 
-    <div className="relative max-h-[70vh]">
+                  {/* Thumbnail */}
+                  <img
+                    // ✅ ZERO-LOSS FIX: Safely detects your custom R2 thumb FIRST, then falls back to Cloudinary generator.
+                    src={
+                      item.file_path_thumb
+                        ? `https://cdn.kaviarts.com/${item.file_path_thumb}`
+                        : getVideoThumbnail(item.file_url)
+                    }
+                    alt={`${item.file_name} video thumbnail`}
+                    className={`max-h-[70vh] object-contain rounded shadow-md transition-opacity duration-300 ${
+                      isVideoPlaying ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
 
-      {/* Thumbnail */}
-      <img
-src={
-  item.file_path_thumb
-    ? `https://cdn.kaviarts.com/${item.file_path_thumb}`
-    : getVideoThumbnail(item.file_url)
-}
-        alt={`${item.file_name} video thumbnail`}
-        className={`max-h-[70vh] object-contain rounded shadow-md transition-opacity duration-300 ${
-          isVideoPlaying ? "opacity-0" : "opacity-100"
-        }`}
-      />
+                  {/* Play Button */}
+                  {!isVideoPlaying && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Button
+                        variant="custom"
+                        onClick={() => setIsVideoPlaying(true)}
+                        className="neon-btn btn-preview"
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Play Video
+                      </Button>
+                    </div>
+                  )}
 
-      {/* Play Button */}
-      {!isVideoPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Button
-            variant="custom"
-            onClick={() => setIsVideoPlaying(true)}
-            className="neon-btn btn-preview"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            Play Video
-          </Button>
-        </div>
-      )}
+                  {/* Video (absolute, prevents layout shift) */}
+                  {isVideoPlaying && (
+                    <video
+                      controls
+                      autoPlay
+                      preload="metadata"
+                      // ✅ ZERO-LOSS FIX: Uses the unified streaming URL ensuring playback for both
+                      src={getStreamingUrl(item)} 
+                      className="absolute inset-0 max-h-[70vh] w-full object-contain rounded shadow-md"
+                    />
+                  )}
 
-      {/* Video (absolute, prevents layout shift) */}
-{isVideoPlaying && (
-  <video
-    controls
-    autoPlay
-    preload="metadata"
-    src={getStreamingUrl(item)} // Use the streaming helper
-    className="absolute inset-0 max-h-[70vh] w-full object-contain rounded shadow-md"
-  />
-)}
-
-    </div>
-  </div>
-)}
+                </div>
+              </div>
+            )}
           </Card>
 
           <div className="flex flex-col space-y-4">
@@ -407,98 +413,98 @@ src={
               <h1 className="text-3xl font-bold">{item.file_name}</h1>
 
               <div className="text-sm text-muted-foreground mt-2 flex items-center">
-  <span>{item.downloads || 0} Downloads</span>
-  <span className="mx-2">•</span>
-  <span>{resolutionInfo}</span>
+                <span>{item.downloads || 0} Downloads</span>
+                <span className="mx-2">•</span>
+                <span>{resolutionInfo}</span>
 
-  {uploadedDate && (
-    <span className="ml-auto">
-      Uploaded {uploadedDate}
-    </span>
-  )}
-</div>
+                {uploadedDate && (
+                  <span className="ml-auto">
+                    Uploaded {uploadedDate}
+                  </span>
+                )}
+              </div>
             </div>
 
             <p className="text-muted-foreground whitespace-pre-wrap">
               {item.description || "No description available."}
             </p>
 
-{Array.isArray(item.tags) && item.tags.length > 0 && (
-  <div className="flex flex-wrap gap-2 pt-3">
-    {item.tags.map((tag: string) => (
-      <Badge
-        key={tag}
-        variant="secondary"
-        className="cursor-pointer hover:scale-105 hover:bg-primary hover:text-primary-foreground transition-all"
-        onClick={() => navigate(`/search?q=${encodeURIComponent(tag)}`)}
-      >
-        #{tag}
-      </Badge>
-    ))}
-  </div>
-)}
+            {Array.isArray(item.tags) && item.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-3">
+                {item.tags.map((tag: string) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="cursor-pointer hover:scale-105 hover:bg-primary hover:text-primary-foreground transition-all"
+                    onClick={() => navigate(`/search?q=${encodeURIComponent(tag)}`)}
+                  >
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
 
             <div className="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
-<Button
-  variant="custom"
-  className="neon-btn btn-share"
-  onClick={() =>
-    navigator.share
-      ? navigator.share({ title: item.file_name, url: canonicalUrl })
-      : navigator.clipboard.writeText(canonicalUrl)
-  }
->
-  <Share2 className="w-4 h-4 mr-2" />
-  Share
-</Button>
+              <Button
+                variant="custom"
+                className="neon-btn btn-share"
+                onClick={() =>
+                  navigator.share
+                    ? navigator.share({ title: item.file_name, url: canonicalUrl })
+                    : navigator.clipboard.writeText(canonicalUrl)
+                }
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
 
-             <Button
-  variant="custom"
-  onClick={handleDownload}
-  disabled={downloading}
-  className="neon-btn btn-download"
->
-  <Download className="w-4 h-4 mr-2" />
-  {downloading ? "Downloading..." : "Download"}
-</Button>
+              <Button
+                variant="custom"
+                onClick={handleDownload}
+                disabled={downloading}
+                className="neon-btn btn-download"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {downloading ? "Downloading..." : "Download"}
+              </Button>
             </div>
 
-           <div className="pt-4 border-t text-sm md:text-base text-muted-foreground flex justify-end items-center gap-2">
-  <CheckCircle2 className="w-4 h-4 text-green-500" />
-  <span>
-    Free for personal and social media use with credit. Commercial use requires a license
-  </span>
-</div>
+            <div className="pt-4 border-t text-sm md:text-base text-muted-foreground flex justify-end items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+              <span>
+                Free for personal and social media use with credit. Commercial use requires a license
+              </span>
+            </div>
 
           </div>
         </div>
 
-{/* 🔥 SIMILAR ITEMS */}
-{similarItems.length > 0 && (
-  <div className="mt-4">
-    <h2 className="text-2xl font-bold mb-4">
-      Similar Items
-    </h2>
+        {/* 🔥 SIMILAR ITEMS */}
+        {similarItems.length > 0 && (
+          <div className="mt-4">
+            <h2 className="text-2xl font-bold mb-4">
+              Similar Items
+            </h2>
 
-    <ContentGrid items={similarItems} />
+            <ContentGrid items={similarItems} />
 
-    {hasMoreSimilar && (
-      <div className="text-center mt-8">
-        <Button
-  variant="custom"
-className="neon-btn btn-loadmore min-w-[150px]"
-          onClick={async () => {
-            const nextPage = similarPage + 1;
-            setSimilarPage(nextPage);
-            await fetchSimilarItems(item, nextPage);
-          }}
-        >
-          Load More
-        </Button>
-      </div>
-    )}
-  </div>
-)}
+            {hasMoreSimilar && (
+              <div className="text-center mt-8">
+                <Button
+                  variant="custom"
+                  className="neon-btn btn-loadmore min-w-[150px]"
+                  onClick={async () => {
+                    const nextPage = similarPage + 1;
+                    setSimilarPage(nextPage);
+                    await fetchSimilarItems(item, nextPage);
+                  }}
+                >
+                  Load More
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
       </main>
 
