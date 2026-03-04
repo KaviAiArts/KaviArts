@@ -15,6 +15,7 @@ export default function SEO({
   image,
   url,
   type = "website",
+  noindex = false,
 }: SEOProps) {
   const siteTitle = "Kavi Arts";
   const fullTitle = `${title} | ${siteTitle}`;
