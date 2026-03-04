@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-
+import { getOptimizedDisplayUrl } from "@/lib/utils";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryNav from "@/components/CategoryNav";
@@ -28,6 +28,7 @@ const SkeletonCard = ({ aspect = "portrait" }: { aspect?: "portrait" | "square" 
   );
 };
 
+
 /* ------------------------------ */
 /* CONTENT SECTION COMPONENT      */
 /* ------------------------------ */
@@ -49,13 +50,19 @@ const ContentSection = ({
   skeletonCount: number;
   skeletonAspect?: "portrait" | "square";
 }) => {
-  const targetUrl =
-    `/category/${category}` + (view ? `?view=${view}&from=section` : "");
+  const targetUrl = `/category/${category}` + (view ? `?view=${view}&from=section` : "");
+  
+  // ✅ SMART CSS: Only apply content-visibility to sections below the fold
+  const isAboveFold = title === "Newest Wallpapers";
+  const visibilityStyle = isAboveFold 
+    ? {} 
+    // @ts-ignore - React types sometimes complain about contentVisibility
+    : { contentVisibility: "auto", containIntrinsicSize: "auto 400px" };
 
   return (
     <>
       {/* MOBILE */}
-      <section className="md:hidden py-4">
+      <section className="md:hidden py-4" style={visibilityStyle}>
         <div className="px-4 flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold">{title}</h2>
           <button
@@ -74,29 +81,25 @@ const ContentSection = ({
                     <SkeletonCard aspect={skeletonAspect} />
                   </div>
                 ))
-
-
               : items.map((item, index) => (
                   <div key={item.id} className="flex-shrink-0" style={{ width: "42vw", maxWidth: "190px" }}>
-{index === 0 && title === "Newest Wallpapers" ? (
-  <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
-    <ContentItem item={item} priority />
-  </Suspense>
-) : (
-  <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
-    <ContentItem item={item} />
-  </Suspense>
-)}
+                    {index === 0 && isAboveFold ? (
+                      <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
+                        <ContentItem item={item} priority />
+                      </Suspense>
+                    ) : (
+                      <Suspense fallback={<SkeletonCard aspect={skeletonAspect} />}>
+                        <ContentItem item={item} />
+                      </Suspense>
+                    )}
                   </div>
-                ))
-}
+                ))}
           </div>
         </div>
       </section>
 
-
       {/* DESKTOP */}
-      <section className="hidden md:block py-4">
+      <section className="hidden md:block py-4" style={visibilityStyle}>
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">{title}</h2>
@@ -113,22 +116,22 @@ const ContentSection = ({
               ? Array.from({ length: skeletonCount }).map((_, i) => (
                   <SkeletonCard key={i} aspect={skeletonAspect} />
                 ))
-: (category === "ringtone" ? items : items.slice(0, 6)).map((item, index) =>
-                  index < 2 ? (
+              : (category === "ringtone" ? items : items.slice(0, 6)).map((item, index) =>
+                  index < 2 && isAboveFold ? (
                     <ContentItem key={item.id} item={item} priority />
                   ) : (
                     <Suspense key={item.id} fallback={<SkeletonCard aspect={skeletonAspect} />}>
                       <ContentItem item={item} />
                     </Suspense>
                   )
-                )
-		}
+                )}
           </div>
         </div>
       </section>
     </>
   );
 };
+
 
 /* ------------------------------ */
 /* MAIN HOMEPAGE                  */
@@ -141,57 +144,74 @@ const Index = () => {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-const lcpImage =
-  newest.length > 0
-    ? newest[0]?.file_url
-    : undefined;
+// SMART LCP PRELOAD: Preloads the exact thumbnail the user will actually see
+const getLcpImage = () => {
+  const lcpItem = newest.length > 0 ? newest[0] : null;
+  if (!lcpItem) return undefined;
+
+  if (lcpItem.file_url?.includes("cloudinary")) {
+    return getOptimizedDisplayUrl(lcpItem.file_url, 320);
+  } else if (lcpItem.file_path_thumb) {
+    const path = lcpItem.file_path_thumb;
+    return path.startsWith("http") ? path : `https://cdn.kaviarts.com/${path}`;
+  }
+  return lcpItem.file_url;
+};
+
+const lcpImage = getLcpImage();
 
 useEffect(() => {
   ContentItemImport; // preload component
   loadData();
 }, []);
 
-  const loadData = async () => {
+
+const loadData = async () => {
     setLoading(true);
+    
+    // ✅ OPTIMIZED COLUMNS: Only fetching what the card actually uses (added 'title' for alt text)
+    const selectColumns = "id, title, file_name, file_type, file_url, file_path_thumb, description";
 
     const { data: newestData } = await supabase
       .from("files")
-      .select("*")
+      .select(selectColumns)
       .eq("file_type", "wallpaper")
-.eq("is_published", true)
+      .eq("is_published", true)
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(6); // Limited to 6 to save DOM nodes
 
     const { data: popularData } = await supabase
       .from("files")
-      .select("*")
+      .select(selectColumns)
       .eq("file_type", "wallpaper")
-.eq("is_published", true)
+      .eq("is_published", true)
       .order("downloads", { ascending: false })
-      .limit(12);
+      .limit(6);
 
     const { data: ringtoneData } = await supabase
       .from("files")
-      .select("*")
+      .select(selectColumns)
       .eq("file_type", "ringtone")
-.eq("is_published", true)
+      .eq("is_published", true)
       .order("downloads", { ascending: false })
-      .limit(12);
+      .limit(12); // Kept at 12 because audio cards are tiny UI elements
 
     const { data: videoData } = await supabase
       .from("files")
-      .select("*")
+      .select(selectColumns)
       .eq("file_type", "video")
-.eq("is_published", true)
+      .eq("is_published", true)
       .order("downloads", { ascending: false })
-      .limit(12);
+      .limit(6);
 
-    setNewest(newestData || []);
-    setPopularWallpapers(popularData || []);
-    setRingtones(ringtoneData || []);
-    setVideos(videoData || []);
+    if (newestData) setNewest(newestData);
+    if (popularData) setPopular(popularData);
+    if (ringtoneData) setRingtones(ringtoneData);
+    if (videoData) setVideos(videoData);
+
     setLoading(false);
   };
+
 
   return (
     <div className="home-page">

@@ -6,6 +6,7 @@ interface SEOProps {
   image?: string;
   url: string; // REQUIRED (same as before)
   type?: string;
+noindex?: boolean;
 }
 
 export default function SEO({
@@ -51,6 +52,13 @@ export default function SEO({
     // BASIC SEO
     // -----------------------------
     setMeta("description", description);
+
+if (noindex) {
+      setMeta("robots", "noindex, follow");
+    } else {
+      // Clean up noindex if we navigate back to a normal page
+      setMeta("robots", "index, follow"); 
+    }
 
     // Canonical
     let canonical = document.querySelector(

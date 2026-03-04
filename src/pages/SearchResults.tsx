@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ContentGrid from "@/components/ContentGrid";
+import SEO from "@/components/SEO";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 
@@ -98,9 +99,17 @@ const rawQuery = queryParams.get("q") || queryParams.get("query") || "";  const 
     setPage(nextPage);
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
+return (
+  <div className="min-h-screen bg-background">
+
+    <SEO 
+      title={`Search results for ${rawQuery}`}
+      description="Browse our search results."
+      url={`https://kaviarts.com/search?query=${rawQuery}`}
+      noindex={true}  // ✅ TELLS GOOGLE NOT TO INDEX SEARCH PAGES
+    />
+
+    <Header />
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-6">

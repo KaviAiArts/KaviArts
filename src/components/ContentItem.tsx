@@ -89,21 +89,24 @@ const ContentItem = ({ item, priority = false }: { item: any, priority?: boolean
 
 
 {item.file_type === "wallpaper" && (
-            <img
-              src={
-                getSafeThumbnailUrl(item.file_path_thumb) || 
-                getOptimizedDisplayUrl(item.file_url, priority ? 400 : 500)
-              }
-              width="500"
-              height="888"
-              alt={getAltText(item)}
-              loading={priority ? "eager" : "lazy"}
-              // @ts-ignore
-              fetchPriority={priority ? "high" : "auto"}
-              decoding="async"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-            />
-          )}
+  <img
+    src={
+      // SMART CHECK: Use Cloudinary magic if it's an old file, otherwise use your manual R2 thumbnail
+      item.file_url?.includes("cloudinary")
+        ? getOptimizedDisplayUrl(item.file_url, priority ? 320 : 280)
+        : getSafeThumbnailUrl(item.file_path_thumb) || item.file_url
+    }
+    // MATCHING YOUR NEW THUMBNAIL SPECS TO PREVENT CLS
+    width="400"
+    height="711"
+    alt={getAltText(item)}
+    loading={priority ? "eager" : "lazy"}
+    // @ts-ignore
+    fetchPriority={priority ? "high" : "auto"}
+    decoding="async"
+    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+  />
+)}
 
           {item.file_type === "video" && (
             <>
