@@ -169,8 +169,8 @@ useEffect(() => {
 const loadData = async () => {
     setLoading(true);
     
-    // ✅ OPTIMIZED COLUMNS: Only fetching what the card actually uses (added 'title' for alt text)
-    const selectColumns = "id, title, file_name, file_type, file_url, file_path_thumb, description";
+    // ✅ BUG 1 FIXED: Removed 'title' from the query so Supabase stops crashing
+    const selectColumns = "id, file_name, file_type, file_url, file_path_thumb, description";
 
     const { data: newestData } = await supabase
       .from("files")
@@ -178,7 +178,7 @@ const loadData = async () => {
       .eq("file_type", "wallpaper")
       .eq("is_published", true)
       .order("created_at", { ascending: false })
-      .limit(6); // Limited to 6 to save DOM nodes
+      .limit(6); 
 
     const { data: popularData } = await supabase
       .from("files")
@@ -194,7 +194,7 @@ const loadData = async () => {
       .eq("file_type", "ringtone")
       .eq("is_published", true)
       .order("downloads", { ascending: false })
-      .limit(12); // Kept at 12 because audio cards are tiny UI elements
+      .limit(12); 
 
     const { data: videoData } = await supabase
       .from("files")
@@ -204,10 +204,11 @@ const loadData = async () => {
       .order("downloads", { ascending: false })
       .limit(6);
 
-    if (newestData) setNewest(newestData);
-    if (popularData) setPopular(popularData);
-    if (ringtoneData) setRingtones(ringtoneData);
-    if (videoData) setVideos(videoData);
+    // ✅ BUG 2 FIXED: Using your exact state setter names (setPopularWallpapers instead of setPopular)
+    setNewest(newestData || []);
+    setPopularWallpapers(popularData || []);
+    setRingtones(ringtoneData || []);
+    setVideos(videoData || []);
 
     setLoading(false);
   };
