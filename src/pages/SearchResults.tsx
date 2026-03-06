@@ -14,6 +14,9 @@ function useQuery() {
 
 const ITEMS_PER_PAGE = 18;
 
+// 🔥 GLOBAL CACHE: Remembers search queries, page, and loaded results
+const searchCache: Record<string, any> = {};
+
 /* ================================
    SAFE HELPERS (NO GUESSWORK)
 ================================ */
@@ -44,23 +47,29 @@ const tagMatch = (tags: string[] | null, word: string) => {
   });
 };
 
+
+
 const SearchResults = () => {
   const queryParams = useQuery();
-const rawQuery = queryParams.get("q") || queryParams.get("query") || "";  const searchWord = normalize(rawQuery);
+  const rawQuery = queryParams.get("q") || queryParams.get("query") || "";  
+  const searchWord = normalize(rawQuery);
   const type = queryParams.get("type");
   const customTitle = queryParams.get("title");
 
-  const [results, setResults] = useState<any[]>([]);
-  const [visibleResults, setVisibleResults] = useState<any[]>([]);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  // Generate a unique cache key for this exact search
+  const cacheKey = `${searchWord}-${type}`;
+  const cached = searchCache[cacheKey];
+
+  // Initialize from cache instantly if available
+  const [results, setResults] = useState<any[]>(cached?.results || []);
+  const [visibleResults, setVisibleResults] = useState<any[]>(cached?.visibleResults || []);
+  const [page, setPage] = useState(cached?.page || 1);
+  const [loading, setLoading] = useState(!cached);
 
   const performSearch = async () => {
     if (!searchWord) return;
     setLoading(true);
 
-    // 🔥 IMPORTANT FIX:
-    // Fetch rows WITHOUT text filtering
     let query = supabase.from("files").select("*").limit(500);
 
     if (type) {
@@ -69,7 +78,6 @@ const rawQuery = queryParams.get("q") || queryParams.get("query") || "";  const 
 
     const { data } = await query;
 
-    // 🔒 ALL LOGIC HAPPENS HERE (SAFE)
     const filtered =
       data?.filter((item) => {
         const title = item.file_name?.toLowerCase() || "";
@@ -83,23 +91,54 @@ const rawQuery = queryParams.get("q") || queryParams.get("query") || "";  const 
         );
       }) || [];
 
+    const initialVisible = filtered.slice(0, ITEMS_PER_PAGE);
+
     setResults(filtered);
-    setVisibleResults(filtered.slice(0, ITEMS_PER_PAGE));
+    setVisibleResults(initialVisible);
     setPage(1);
+
+    // Save to Cache
+    searchCache[cacheKey] = {
+      results: filtered,
+      visibleResults: initialVisible,
+      page: 1,
+    };
+
     setLoading(false);
   };
 
   useEffect(() => {
-    performSearch();
+    // Check if this exact search has already been done
+    if (searchWord && searchCache[cacheKey]) {
+      setResults(searchCache[cacheKey].results);
+      setVisibleResults(searchCache[cacheKey].visibleResults);
+      setPage(searchCache[cacheKey].page);
+      setLoading(false);
+    } else {
+      performSearch();
+    }
   }, [rawQuery, type]);
 
   const loadMore = () => {
     const nextPage = page + 1;
-    setVisibleResults(results.slice(0, nextPage * ITEMS_PER_PAGE));
+    const newLimit = nextPage * ITEMS_PER_PAGE;
+    const newVisible = results.slice(0, newLimit);
+    
+    setVisibleResults(newVisible);
     setPage(nextPage);
+
+    // Update Cache to remember the loaded items
+    searchCache[cacheKey] = {
+      results,
+      visibleResults: newVisible,
+      page: nextPage,
+    };
   };
 
-return (
+  return (
+
+
+
   <div className="min-h-screen bg-background">
 
     <SEO 

@@ -11,6 +11,10 @@ import { supabase } from "@/lib/supabaseClient";
 import { getOptimizedDisplayUrl } from "@/lib/utils";
 import NotFound from "@/pages/NotFound";
 import ContentGrid from "@/components/ContentGrid";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Media } from "@capacitor-community/media";
+import { toast } from "sonner";
 
 /* ------------------------------ */
 /* ZERO-LOSS STORAGE HELPERS      */
@@ -176,25 +180,98 @@ const ItemDetails = () => {
   }, [id, slug, navigate]);
 
 
-  /* ------------------------------ */
-  /* DUAL-STRATEGY DOWNLOAD         */
-  /* ------------------------------ */
-  const handleDownload = async () => {
-    if (!item || downloading) return;
-    setDownloading(true);
 
-    try {
-      // 1. Database Update (Zero Loss stats)
-      await supabase.rpc("increment_downloads", { row_id: item.id });
-      setItem((prev: any) => ({
-        ...prev,
-        downloads: (prev.downloads || 0) + 1,
-      }));
+/* ------------------------------ /
+/ DUAL-STRATEGY DOWNLOAD         /
+/ ------------------------------ */
+const handleDownload = async () => {
+  if (!item || downloading) return;
+  setDownloading(true);
 
-      const isCloudinary = item.file_url?.includes("cloudinary.com");
+  try {
+    // 1. Database Update (Zero Loss stats)
+    await supabase.rpc("increment_downloads", { row_id: item.id });
+    setItem((prev: any) => ({
+      ...prev,
+      downloads: (prev.downloads || 0) + 1,
+    }));
+    
+    const isCloudinary = item.file_url?.includes("cloudinary.com");
+    // @ts-ignore
+    const isNativeApp = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
 
+    if (isNativeApp) {
+      // @ts-ignore
+      const { Filesystem, Directory } = await import('@capacitor/filesystem');
+      // @ts-ignore
+      const { Media } = await import('@capacitor-community/media');
+
+      const fetchUrl = isCloudinary ? item.file_url : item.file_url + `?t=${new Date().getTime()}`;
+      let ext = item.file_type === "video" ? ".mp4" : item.file_type === "ringtone" ? ".mp3" : ".jpg";
+      
+      // Clean up the filename so Android doesn't reject weird characters
+      const cleanName = item.file_name.replace(/[^a-zA-Z0-9]/g, "_");
+      const fileName = `KaviArts_${cleanName}${ext}`;
+
+      try {
+        // Download to temporary app cache
+        const downloadResult = await Filesystem.downloadFile({
+          url: fetchUrl,
+          path: fileName,
+          directory: Directory.Cache,
+        });
+
+        // 🔥 THE CAPACITOR 8 ALBUM IDENTIFIER FIX
+        const ALBUM_NAME = "KaviArts";
+        let targetAlbumId = "";
+
+        // Get all albums on the device
+        const { albums } = await Media.getAlbums();
+        let targetAlbum = albums.find((a: any) => a.name === ALBUM_NAME);
+
+        // If "KaviArts" album doesn't exist, create it
+        if (!targetAlbum) {
+          try {
+            await Media.createAlbum({ name: ALBUM_NAME });
+          } catch (createErr) {
+            console.warn("Album creation skipped (might already exist hidden):", createErr);
+          }
+          // Refresh albums to get the newly created identifier
+          const { albums: refreshedAlbums } = await Media.getAlbums();
+          targetAlbum = refreshedAlbums.find((a: any) => a.name === ALBUM_NAME);
+        }
+
+        if (targetAlbum) {
+          targetAlbumId = targetAlbum.identifier; // <--- This is what Capacitor 8 demands
+        } else {
+          throw new Error("album identifier required - Could not generate OS ID for KaviArts album");
+        }
+
+        // 🚀 Save directly to the Gallery using the REQUIRED albumIdentifier
+        if (item.file_type === "video") {
+          await Media.saveVideo({ path: downloadResult.path, albumIdentifier: targetAlbumId });
+          toast.success("Video saved to your KaviArts album!");
+        } else if (item.file_type === "wallpaper") {
+          await Media.savePhoto({ path: downloadResult.path, albumIdentifier: targetAlbumId });
+          toast.success("Wallpaper saved to your KaviArts album!");
+        } else {
+          // Audio/Ringtones go to Documents folder because Android MediaStore doesn't handle audio via this plugin
+          const fileData = await Filesystem.readFile({ path: fileName, directory: Directory.Cache });
+          await Filesystem.writeFile({ path: fileName, directory: Directory.Documents, data: fileData.data });
+          toast.success("Ringtone saved to your Documents folder!");
+        }
+
+        // Clean up temporary cache
+        await Filesystem.deleteFile({ path: fileName, directory: Directory.Cache });
+        
+      } catch (nativeError: any) {
+        console.error("Native Gallery Save Failed:", nativeError);
+        toast.error("Gallery save failed: " + (nativeError.message || "Storage access was denied."));
+      }
+
+    } else {
+      // 🌐 WEB BROWSER STRATEGY
       if (isCloudinary) {
-        // ☁️ STRATEGY: CLOUDINARY (Zero Loss SEO)
         const downloadUrl = getCloudinaryDownloadUrl(item.file_url);
         const link = document.createElement("a");
         link.href = downloadUrl;
@@ -203,44 +280,28 @@ const ItemDetails = () => {
         link.click();
         document.body.removeChild(link);
       } else {
-        // 🟧 STRATEGY: CLOUDFLARE R2
-        // ✅ ZERO-LOSS FIX: Removed ChatGPT's Edge Function call here because your function is for PUT (Uploads).
-        // Restored the working GET request directly to your public R2 CDN with Cache-Buster.
         const cacheBuster = `?t=${new Date().getTime()}`;
-        const fetchUrl = item.file_url.includes('?') 
-          ? `${item.file_url}&t=${new Date().getTime()}`
-          : `${item.file_url}${cacheBuster}`;
-
-        const response = await fetch(fetchUrl, {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        if (!response.ok) {
-           throw new Error("Network response failed for R2 Fetch.");
-        }
-
+        const fetchUrl = item.file_url.includes('?') ? `${item.file_url}&t=${new Date().getTime()}` : `${item.file_url}${cacheBuster}`;
+        const response = await fetch(fetchUrl, { method: 'GET', headers: { 'Cache-Control': 'no-cache' } });
+        if (!response.ok) throw new Error("Network response failed for R2 Fetch.");
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
-
         const link = document.createElement("a");
         link.href = blobUrl;
         link.download = item.file_name + (item.format ? "." + item.format : "");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       }
-    } catch (err) {
-      console.error("Download failed:", err);
-      window.open(item.file_url, '_blank');
-    } finally {
-      setDownloading(false);
     }
-  };
+  } catch (err) {
+    console.error("Download failed:", err);
+    toast.error("Download failed. Please try again.");
+  } finally {
+    setDownloading(false);
+  }
+};
 
 
   const togglePlay = () => {
@@ -314,9 +375,8 @@ const ItemDetails = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="relative flex flex-col items-center justify-center bg-muted/40 min-h-[260px] gap-4 p-4">
-<Badge className="absolute top-3 left-3 capitalize shadow-md 
-                   z-50 md:z-10 
-                   pointer-events-none">
+
+<Badge className="absolute top-3 left-3 capitalize shadow-md z-10 pointer-events-none">
   {item.file_type}
 </Badge>
 

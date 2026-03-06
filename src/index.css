@@ -440,38 +440,28 @@
 }
 
 /* ===================================================== */
-/* HOMEPAGE LOGO - FIXED GRADIENT TEXT */
+/* HOMEPAGE LOGO - CLEAN TEXT ONLY (No Box/Glow) */
 /* ===================================================== */
 
 .site-logo {
   font-size: 1.7rem;
   font-weight: 700;
-  padding: 6px 16px;
   line-height: 1.2;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.25);
   display: inline-block;
   position: relative;
   transition: all 0.3s ease;
-
-  /* Keep your gradient text */
+  
+  /* Matches your Hero Text gradient perfectly */
   background-image: var(--gradient-primary);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-
-  /* Permanent INNER edge glow */
-  box-shadow: inset 0 0 14px rgba(255, 0, 255, 0.6);
-
-  background-color: rgba(255,255,255,0.05);
 }
 
-/* Hover ring glow */
+/* Clean text-only hover effect */
 .site-logo:hover {
-  border-color: #ff00ff;
-  box-shadow:
-    inset 0 0 20px rgba(255, 0, 255, 0.9),
-    0 0 14px rgba(0, 255, 255, 0.7);
+  filter: brightness(1.2); /* Just brightens the text slightly, no boxes */
+  transform: scale(1.02);
 }
 
 /* ===================================================== */
@@ -633,4 +623,27 @@
     0 0 0 2px #00ffff,
     0 0 20px rgba(0,255,255,0.6),
     0 0 40px rgba(0,255,255,0.8);
+}
+
+/* ================= APP CSS ================= */
+
+html, body {
+  background-color: #000000 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* ===================================================== */
+/* HEADER Z-INDEX FIX (Stops images from scrolling over) */
+/* ===================================================== */
+header, .sticky, [class*="sticky top-0"] {
+  z-index: 40 !important;
 }

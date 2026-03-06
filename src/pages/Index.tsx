@@ -6,6 +6,7 @@ import Hero from "@/components/Hero";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 /* ✅ Lazy load heavy card component */
 const ContentItemImport = import("@/components/ContentItem");
@@ -137,12 +138,18 @@ const ContentSection = ({
 /* MAIN HOMEPAGE                  */
 /* ------------------------------ */
 
+// 🔥 GLOBAL CACHE: Keeps data in memory so the back button is instant
+let cachedHomeData: any = null;
+
 const Index = () => {
-  const [newest, setNewest] = useState<any[]>([]);
-  const [popularWallpapers, setPopularWallpapers] = useState<any[]>([]);
-  const [ringtones, setRingtones] = useState<any[]>([]);
-  const [videos, setVideos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use cached data instantly if it exists
+  const [newest, setNewest] = useState<any[]>(cachedHomeData?.newest || []);
+  const [popularWallpapers, setPopularWallpapers] = useState<any[]>(cachedHomeData?.popularWallpapers || []);
+  const [ringtones, setRingtones] = useState<any[]>(cachedHomeData?.ringtones || []);
+  const [videos, setVideos] = useState<any[]>(cachedHomeData?.videos || []);
+  
+  // If we have cached data, do NOT show the loading screen
+  const [loading, setLoading] = useState(!cachedHomeData);
 
 // SMART LCP PRELOAD: Preloads the exact thumbnail the user will actually see
 const getLcpImage = () => {
@@ -162,7 +169,10 @@ const lcpImage = getLcpImage();
 
 useEffect(() => {
   ContentItemImport; // preload component
-  loadData();
+  // Only fetch from network if we haven't cached the data yet
+  if (!cachedHomeData) {
+    loadData();
+  }
 }, []);
 
 
@@ -210,6 +220,13 @@ const loadData = async () => {
     setRingtones(ringtoneData || []);
     setVideos(videoData || []);
 
+cachedHomeData = {
+      newest: newestData || [],
+      popularWallpapers: popularData || [],
+      ringtones: ringtoneData || [],
+      videos: videoData || [],
+    };
+
     setLoading(false);
   };
 
@@ -226,52 +243,59 @@ image={lcpImage}
 
       <Header />
 
-      <main id="main-content">
-  <div className="hidden md:block">
-    <Hero />
-  </div>
+<main id="main-content">
+        {/* ✅ ZERO-LOSS NATIVE FEATURE: Pull to refresh wrapped around the content */}
+        <PullToRefresh 
+          onRefresh={loadData} 
+          pullingContent={""} // Hides the default text so it's just a clean spinner
+          backgroundColor="#09090b" // Matches your dark theme background
+        >
+          <div className="hidden md:block">
+            <Hero />
+          </div>
 
-  <CategoryNav />
+          <CategoryNav />
 
-<ContentSection
-  title="Newest Wallpapers"
-  items={newest}
-  category="wallpaper"
-  view="newest"
-  loading={loading}
-  skeletonCount={6}
-  skeletonAspect="portrait"
-/>
+          <ContentSection
+            title="Newest Wallpapers"
+            items={newest}
+            category="wallpaper"
+            view="newest"
+            loading={loading}
+            skeletonCount={6}
+            skeletonAspect="portrait"
+          />
 
-        <ContentSection
-          title="Popular Wallpapers"
-          items={popularWallpapers}
-          category="wallpaper"
-          view="popular"
-          loading={loading}
-          skeletonCount={6}
-          skeletonAspect="portrait"
-        />
+          <ContentSection
+            title="Popular Wallpapers"
+            items={popularWallpapers}
+            category="wallpaper"
+            view="popular"
+            loading={loading}
+            skeletonCount={6}
+            skeletonAspect="portrait"
+          />
 
-        <ContentSection
-          title="Popular Ringtones"
-          items={ringtones}
-          category="ringtone"
-          view="popular"
-          loading={loading}
-          skeletonCount={6}
-          skeletonAspect="square"
-        />
+          <ContentSection
+            title="Popular Ringtones"
+            items={ringtones}
+            category="ringtone"
+            view="popular"
+            loading={loading}
+            skeletonCount={6}
+            skeletonAspect="square"
+          />
 
-        <ContentSection
-          title="Popular Videos"
-          items={videos}
-          category="video"
-          view="popular"
-          loading={loading}
-          skeletonCount={6}
-          skeletonAspect="portrait"
-        />
+          <ContentSection
+            title="Popular Videos"
+            items={videos}
+            category="video"
+            view="popular"
+            loading={loading}
+            skeletonCount={6}
+            skeletonAspect="portrait"
+          />
+        </PullToRefresh>
       </main>
 
       <Footer />

@@ -26,7 +26,7 @@ const Footer = () => {
   };
 
   return (
-    <footer
+<footer
       className="bg-card border-t border-border mt-6"
       role="contentinfo"
     >

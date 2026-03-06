@@ -12,6 +12,9 @@ import SEO from "@/components/SEO";
 // ✅ 1. Define Limit per page
 const ITEMS_PER_PAGE = 18;
 
+// 🔥 GLOBAL CACHE: Remembers data, page, and loaded items per category/view combination
+const categoryCache: Record<string, any> = {};
+
 /* Skeleton Loader Component */
 const SkeletonCard = ({ aspect = "portrait" }: { aspect?: "portrait" | "square" }) => {
   const ratio = aspect === "square" ? "aspect-square" : "aspect-[9/16]";
@@ -26,35 +29,49 @@ const SkeletonCard = ({ aspect = "portrait" }: { aspect?: "portrait" | "square" 
   );
 };
 
+
+
 const CategoryView = () => {
   const { category } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ 2. Add State for Pagination
-  const [allItems, setAllItems] = useState<any[]>([]);       // Stores everything fetched
-  const [visibleItems, setVisibleItems] = useState<any[]>([]); // Stores what user sees
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-
   const params = new URLSearchParams(location.search);
   const view = params.get("view"); // newest | popular | null
   const from = params.get("from"); // section | null
 
+  // Generate a unique cache key for this exact page state
+  const cacheKey = `${category}-${view}-${from}`;
+  const cached = categoryCache[cacheKey];
+
+  // ✅ 2. Initialize State (Instantly uses cache if available)
+  const [allItems, setAllItems] = useState<any[]>(cached?.allItems || []);
+  const [visibleItems, setVisibleItems] = useState<any[]>(cached?.visibleItems || []);
+  const [page, setPage] = useState(cached?.page || 1);
+  const [loading, setLoading] = useState(!cached);
+
   useEffect(() => {
-    loadItems();
-  }, [category, view]);
+    // If we have cached data for this specific URL, restore it instantly
+    if (categoryCache[cacheKey]) {
+      setAllItems(categoryCache[cacheKey].allItems);
+      setVisibleItems(categoryCache[cacheKey].visibleItems);
+      setPage(categoryCache[cacheKey].page);
+      setLoading(false);
+    } else {
+      // Otherwise, fetch fresh data
+      loadItems();
+    }
+  }, [category, view, from]);
 
   const loadItems = async () => {
     setLoading(true);
-    // Reset page on new category load
     setPage(1); 
 
-let query = supabase
-  .from("files")
-  .select("*")
-  .eq("file_type", category)
-  .eq("is_published", true);
+    let query = supabase
+      .from("files")
+      .select("*")
+      .eq("file_type", category)
+      .eq("is_published", true);
 
     // SORTING LOGIC
     if (view === "newest") {
@@ -65,25 +82,43 @@ let query = supabase
 
     const { data } = await query;
     const fullData = data || [];
+    const initialVisible = fullData.slice(0, ITEMS_PER_PAGE);
 
-    // ✅ 3. Set Initial Data (First 12 items)
+    // ✅ 3. Set Data & Save to Cache
     setAllItems(fullData);
-    setVisibleItems(fullData.slice(0, ITEMS_PER_PAGE));
+    setVisibleItems(initialVisible);
+    
+    categoryCache[cacheKey] = {
+      allItems: fullData,
+      visibleItems: initialVisible,
+      page: 1,
+    };
     
     setLoading(false);
   };
 
-  // ✅ 4. Load More Function (Same logic as SearchResults)
+  // ✅ 4. Load More Function
   const loadMore = () => {
     const nextPage = page + 1;
     const newLimit = nextPage * ITEMS_PER_PAGE;
+    const newVisible = allItems.slice(0, newLimit);
     
     // Show next batch of items
-    setVisibleItems(allItems.slice(0, newLimit));
+    setVisibleItems(newVisible);
     setPage(nextPage);
+
+    // Update the cache so the "Back" button remembers how far down they scrolled!
+    categoryCache[cacheKey] = {
+      allItems,
+      visibleItems: newVisible,
+      page: nextPage,
+    };
   };
 
   const capitalize = (t?: string) =>
+
+
+
     t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
 
   const title =

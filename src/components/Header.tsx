@@ -96,7 +96,7 @@ const { data } = await supabase
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 glass-card border-b" role="banner">
+<header className="sticky top-0 z-50 glass-card border-b" role="banner">
       <div className="container mx-auto px-4 py-4" ref={containerRef}>
         <div className="flex items-center justify-between">
 
